@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class OficioHistorial extends Model
 {
@@ -26,23 +25,29 @@ class OficioHistorial extends Model
     |--------------------------------------------------------------------------
     */
 
-    public function oficio(): BelongsTo
+    public function oficio()
     {
         return $this->belongsTo(Oficio::class);
     }
 
-    public function usuario(): BelongsTo
+    public function usuario()
     {
         return $this->belongsTo(User::class);
     }
 
-    public function estadoAnterior(): BelongsTo
+    public function estadoAnterior()
     {
-        return $this->belongsTo(EstadoOficio::class, 'estado_anterior_id');
+        return $this->belongsTo(
+            EstadoOficio::class,
+            'estado_anterior_id'
+        );
     }
 
-    public function estadoNuevo(): BelongsTo
+    public function estadoNuevo()
     {
-        return $this->belongsTo(EstadoOficio::class, 'estado_nuevo_id');
+        return $this->belongsTo(
+            EstadoOficio::class,
+            'estado_nuevo_id'
+        );
     }
 }

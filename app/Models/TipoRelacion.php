@@ -29,6 +29,6 @@ class TipoRelacion extends Model
 
     public function relaciones(): HasMany
     {
-        return $this->hasMany(OficioRelacion::class);
+        return $this->hasMany(OficioRelacion::class, 'tipo_relacion_id');
     }
 }

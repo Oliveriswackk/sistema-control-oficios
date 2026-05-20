@@ -26,4 +26,36 @@ class OficioArchivoVersion extends Model
         'es_actual' => 'boolean',
         'es_publica' => 'boolean',
     ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | RELACIONES
+    |--------------------------------------------------------------------------
+    */
+
+    public function archivo()
+    {
+        return $this->belongsTo(OficioArchivo::class, 'oficio_archivo_id');
+    }
+
+    public function subidoPor()
+    {
+        return $this->belongsTo(User::class, 'subido_por_id');
+    }
+
+    public function versionAnterior()
+    {
+        return $this->belongsTo(
+            OficioArchivoVersion::class,
+            'version_anterior_id'
+        );
+    }
+
+    public function versionesDerivadas()
+    {
+        return $this->hasMany(
+            OficioArchivoVersion::class,
+            'version_anterior_id'
+        );
+    }
 }

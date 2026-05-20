@@ -8,6 +8,7 @@ class Turnado extends Model
 {
     protected $table = 'turnados';
 
+    
     protected $fillable = [
         'oficio_id',
         'usuario_id',
@@ -22,6 +23,7 @@ class Turnado extends Model
         'observaciones',
     ];
 
+
     protected $casts = [
         'turnado_en' => 'datetime',
         'atendido_en' => 'datetime',
@@ -29,4 +31,45 @@ class Turnado extends Model
 
         'es_principal' => 'boolean',
     ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | RELACIONES
+    |--------------------------------------------------------------------------
+    */
+
+    public function oficio()
+    {
+        return $this->belongsTo(Oficio::class);
+    }
+
+
+    public function usuario()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+
+    public function coordinacion()
+    {
+        return $this->belongsTo(Coordinacion::class);
+    }
+
+
+    public function tipoParticipacion()
+    {
+        return $this->belongsTo(TipoParticipacion::class);
+    }
+
+
+    public function estadoTurnado()
+    {
+        return $this->belongsTo(EstadoTurnado::class);
+    }
+
+
+    public function turnadoPor()
+    {
+        return $this->belongsTo(User::class, 'turnado_por_id');
+    }
 }

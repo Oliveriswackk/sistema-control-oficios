@@ -64,6 +64,7 @@ class User extends Authenticatable
         )->withTimestamps();
     }
 
+
     public function permisos(): BelongsToMany
     {
         return $this->belongsToMany(
@@ -74,30 +75,36 @@ class User extends Authenticatable
         )->withTimestamps();
     }
 
+
     public function oficiosRegistrados(): HasMany
     {
         return $this->hasMany(Oficio::class, 'usuario_registro_id');
     }
 
+
     public function turnados(): HasMany
     {
-        return $this->hasMany(Turnado::class);
+       return $this->hasMany(Turnado::class, 'usuario_id');
     }
+
 
     public function turnadosRealizados(): HasMany
     {
         return $this->hasMany(Turnado::class, 'turnado_por_id');
     }
 
+
     public function relacionesRegistradas(): HasMany
     {
         return $this->hasMany(OficioRelacion::class, 'usuario_registro_id');
     }
 
+
     public function archivosSubidos(): HasMany
     {
         return $this->hasMany(OficioArchivoVersion::class, 'subido_por_id');
     }
+
 
     public function historial(): HasMany
     {

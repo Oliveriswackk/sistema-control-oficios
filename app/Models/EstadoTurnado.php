@@ -27,6 +27,6 @@ class EstadoTurnado extends Model
 
     public function turnados(): HasMany
     {
-        return $this->hasMany(Turnado::class);
+        return $this->hasMany(Turnado::class, 'estado_turnado_id');
     }
 }

@@ -27,6 +27,6 @@ class TipoOficio extends Model
 
     public function oficios(): HasMany
     {
-        return $this->hasMany(Oficio::class);
+        return $this->hasMany(Oficio::class, 'tipo_oficio_id');
     }
 }
