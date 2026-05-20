@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('nombre_original');
             $table->string('tipo_archivo');
 
-            $table->boolean('es_sensible')->default(false);
+            $table->string('nivel_acceso')->default('interno');
 
             $table->timestamps();
 

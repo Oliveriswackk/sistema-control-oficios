@@ -16,7 +16,9 @@ return new class extends Migration
                 ->cascadeOnDelete();
 
             $table->string('ruta');
+
             $table->string('mime_type');
+
             $table->unsignedBigInteger('tamano');
 
             $table->string('hash_sha256');
@@ -25,10 +27,13 @@ return new class extends Migration
 
             $table->boolean('es_actual')->default(false);
 
+            $table->boolean('es_publica')->default(false);
+
             $table->foreignId('subido_por_id')
                 ->constrained('users');
 
-            $table->text('motivo_reemplazo')->nullable();
+            $table->text('motivo_reemplazo')
+                ->nullable();
 
             $table->foreignId('version_anterior_id')
                 ->nullable()
@@ -37,7 +42,9 @@ return new class extends Migration
             $table->timestamps();
 
             $table->index('oficio_archivo_id');
+
             $table->index('es_actual');
+
             $table->index('hash_sha256');
         });
     }
