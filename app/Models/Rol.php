@@ -9,12 +9,14 @@ class Rol extends Model
 {
     protected $table = 'roles';
 
+    
     protected $fillable = [
         'clave',
         'nombre',
         'descripcion',
         'activo',
     ];
+
 
     protected $casts = [
         'activo' => 'boolean',
@@ -33,6 +35,17 @@ class Rol extends Model
             'usuario_roles',
             'rol_id',
             'usuario_id'
+        )->withTimestamps();
+    }
+
+
+    public function permisos(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Permiso::class,
+            'rol_permiso',
+            'rol_id',
+            'permiso_id'
         )->withTimestamps();
     }
 }

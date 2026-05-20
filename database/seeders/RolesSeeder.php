@@ -1,0 +1,33 @@
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use App\Models\Rol;
+
+class RolesSeeder extends Seeder
+{
+    public function run(): void
+    {
+        Rol::insert([
+            [
+                'clave' => 'admin',
+                'nombre' => 'Administrador',
+                'descripcion' => 'Acceso total al sistema',
+                'activo' => true,
+            ],
+            [
+                'clave' => 'captura',
+                'nombre' => 'Captura',
+                'descripcion' => 'Registro y seguimiento de oficios',
+                'activo' => true,
+            ],
+            [
+                'clave' => 'consulta',
+                'nombre' => 'Consulta',
+                'descripcion' => 'Solo lectura de información',
+                'activo' => true,
+            ],
+        ]);
+    }
+}

@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -18,22 +18,13 @@ use App\Models\OficioRelacion;
 
 class Oficio extends Model
 {
-    use HasUuids;
+    use HasFactory;
 
     protected $table = 'oficios';
 
     /*
     |--------------------------------------------------------------------------
-    | CONFIG UUID / PRIMARY KEY
-    |--------------------------------------------------------------------------
-    */
-
-    public $incrementing = false;
-    protected $keyType = 'string';
-
-    /*
-    |--------------------------------------------------------------------------
-    | MASS ASSIGNMENT
+    | FILLABLE
     |--------------------------------------------------------------------------
     */
 
@@ -49,6 +40,7 @@ class Oficio extends Model
         'fecha_limite',
         'requiere_respuesta',
         'es_sensible',
+        'sigla_origen',
         'destinatario_principal_id',
         'coordinacion_origen_id',
         'usuario_registro_id',
