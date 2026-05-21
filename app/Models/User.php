@@ -76,6 +76,21 @@ class User extends Authenticatable
     }
 
 
+    public function hasPermission(string $permission): bool
+    {
+        return $this->roles
+            ->load('permisos')
+            ->flatMap->permisos
+            ->contains('clave', $permission);
+    }
+
+
+    public function hasRole(string $role): bool
+    {
+        return $this->roles->contains('clave', $role);
+    }
+
+
     public function oficiosRegistrados(): HasMany
     {
         return $this->hasMany(Oficio::class, 'usuario_registro_id');
@@ -110,4 +125,5 @@ class User extends Authenticatable
     {
         return $this->hasMany(OficioHistorial::class, 'usuario_id');
     }
+
 }

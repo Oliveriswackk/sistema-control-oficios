@@ -20,7 +20,7 @@ class PermissionMiddleware
             ->flatMap->permisos
             ->contains('clave', $permission);
 
-        if (!$hasPermission) {
+        if (!$user->hasPermission($permission)) {
             abort(403, 'No autorizado por permiso');
         }
 

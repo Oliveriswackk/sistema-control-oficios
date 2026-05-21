@@ -16,7 +16,7 @@ class RoleMiddleware
             abort(401);
         }
 
-        if (!$user->roles->contains('clave', $role)) {
+        if (!$user->hasRole($role)) {
             abort(403, 'No autorizado por rol');
         }
 
