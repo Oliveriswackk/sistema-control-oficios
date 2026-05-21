@@ -29,21 +29,80 @@ class Oficio extends Model
     */
 
     protected $fillable = [
+
         'uuid',
+
         'numero_oficio',
+        'consecutivo',
+
         'tipo_oficio_id',
         'estado_id',
+
         'asunto',
         'descripcion',
+
         'fecha_oficio',
         'fecha_recepcion',
         'fecha_limite',
+
         'requiere_respuesta',
         'es_sensible',
-        'sigla_origen',
-        'destinatario_principal_id',
+
+        /*
+        |--------------------------------------------------------------------------
+        | Remitente
+        |--------------------------------------------------------------------------
+        */
+
+        'remitente_nombre',
+        'remitente_cargo',
+        'remitente_dependencia',
+
+        /*
+        |--------------------------------------------------------------------------
+        | Destinatario
+        |--------------------------------------------------------------------------
+        */
+
+        'destinatario_nombre',
+        'destinatario_cargo',
+        'destinatario_dependencia',
+
+        /*
+        |--------------------------------------------------------------------------
+        | Quien elabora
+        |--------------------------------------------------------------------------
+        */
+
+        'quien_elabora_nombre',
+        'quien_elabora_cargo',
+
+        /*
+        |--------------------------------------------------------------------------
+        | Internos
+        |--------------------------------------------------------------------------
+        */
+
+        'responsable_inicial_id',
+
         'coordinacion_origen_id',
+
         'usuario_registro_id',
+
+        /*
+        |--------------------------------------------------------------------------
+        | Referencias
+        |--------------------------------------------------------------------------
+        */
+
+        'link_documento',
+
+        /*
+        |--------------------------------------------------------------------------
+        | Flujo
+        |--------------------------------------------------------------------------
+        */
+
         'respondido_en',
         'cerrado_en',
         'cancelado_en',
@@ -56,15 +115,21 @@ class Oficio extends Model
     */
 
     protected $casts = [
+
         'fecha_oficio' => 'date',
+
         'fecha_recepcion' => 'date',
+
         'fecha_limite' => 'date',
 
         'requiere_respuesta' => 'boolean',
+
         'es_sensible' => 'boolean',
 
         'respondido_en' => 'datetime',
+
         'cerrado_en' => 'datetime',
+
         'cancelado_en' => 'datetime',
     ];
 
@@ -76,46 +141,81 @@ class Oficio extends Model
 
     public function tipo(): BelongsTo
     {
-        return $this->belongsTo(TipoOficio::class, 'tipo_oficio_id');
+        return $this->belongsTo(
+            TipoOficio::class,
+            'tipo_oficio_id'
+        );
     }
 
     public function estado(): BelongsTo
     {
-        return $this->belongsTo(EstadoOficio::class, 'estado_id');
+        return $this->belongsTo(
+            EstadoOficio::class,
+            'estado_id'
+        );
     }
 
     public function coordinacionOrigen(): BelongsTo
     {
-        return $this->belongsTo(Coordinacion::class, 'coordinacion_origen_id');
+        return $this->belongsTo(
+            Coordinacion::class,
+            'coordinacion_origen_id'
+        );
     }
 
     public function usuarioRegistro(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'usuario_registro_id');
+        return $this->belongsTo(
+            User::class,
+            'usuario_registro_id'
+        );
+    }
+
+    public function responsableInicial(): BelongsTo
+    {
+        return $this->belongsTo(
+            User::class,
+            'responsable_inicial_id'
+        );
     }
 
     public function turnados(): HasMany
     {
-        return $this->hasMany(Turnado::class, 'oficio_id');
+        return $this->hasMany(
+            Turnado::class,
+            'oficio_id'
+        );
     }
 
     public function archivos(): HasMany
     {
-        return $this->hasMany(OficioArchivo::class, 'oficio_id');
+        return $this->hasMany(
+            OficioArchivo::class,
+            'oficio_id'
+        );
     }
 
     public function historial(): HasMany
     {
-        return $this->hasMany(OficioHistorial::class, 'oficio_id');
+        return $this->hasMany(
+            OficioHistorial::class,
+            'oficio_id'
+        );
     }
 
     public function relacionesOrigen(): HasMany
     {
-        return $this->hasMany(OficioRelacion::class, 'oficio_origen_id');
+        return $this->hasMany(
+            OficioRelacion::class,
+            'oficio_origen_id'
+        );
     }
 
     public function relacionesRelacionadas(): HasMany
     {
-        return $this->hasMany(OficioRelacion::class, 'oficio_relacionado_id');
+        return $this->hasMany(
+            OficioRelacion::class,
+            'oficio_relacionado_id'
+        );
     }
 }
