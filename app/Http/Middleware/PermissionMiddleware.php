@@ -16,10 +16,6 @@ class PermissionMiddleware
             abort(401);
         }
 
-        $hasPermission = $user->roles
-            ->flatMap->permisos
-            ->contains('clave', $permission);
-
         if (!$user->hasPermission($permission)) {
             abort(403, 'No autorizado por permiso');
         }

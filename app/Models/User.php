@@ -5,9 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Rol;
+use App\Models\Permiso;
+use App\Models\Oficio;
+use App\Models\Turnado;
+use App\Models\OficioRelacion;
+use App\Models\OficioArchivoVersion;
+use App\Models\OficioHistorial;
 
 class User extends Authenticatable
 {
@@ -79,8 +85,7 @@ class User extends Authenticatable
     public function hasPermission(string $permission): bool
     {
         return $this->roles
-            ->load('permisos')
-            ->flatMap->permisos
+            ->flatMap(fn ($role) => $role->permisos)
             ->contains('clave', $permission);
     }
 

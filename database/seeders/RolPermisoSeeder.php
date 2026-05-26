@@ -25,7 +25,7 @@ class RolPermisoSeeder extends Seeder
             $permisos['puede_turnar']->id,
         ]);
 
-        // CONSULTA → solo lectura (si agregas luego permiso de ver)
+        // CONSULTA → solo lectura
         $consulta->permisos()->sync([]);
     }
 }
