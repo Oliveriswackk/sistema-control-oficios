@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\OficioController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -23,21 +24,20 @@ require __DIR__.'/auth.php';
 
 /*
 |--------------------------------------------------------------------------
-| DASHBOARD (usuario autenticado + verificado)
-|--------------------------------------------------------------------------
-*/
-
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
-
-/*
-|--------------------------------------------------------------------------
 | RUTAS AUTENTICADAS
 |--------------------------------------------------------------------------
 */
 
 Route::middleware('auth')->group(function () {
+
+    /*
+    |------------------------------
+    | DASHBOARD
+    |------------------------------
+    */
+    Route::get('/dashboard', function () {
+        return view('dashboard');
+    })->middleware('verified')->name('dashboard');
 
     /*
     |------------------------------
@@ -55,7 +55,29 @@ Route::middleware('auth')->group(function () {
 
     /*
     |------------------------------
-    | RUTAS POR PERMISOS
+    | OFICIOS
+    |------------------------------
+    */
+    Route::get('/oficios', [OficioController::class, 'index'])
+        ->name('oficios.index');
+
+    Route::post('/oficios', [OficioController::class, 'store'])
+        ->name('oficios.store');
+
+    Route::get('/oficios/{oficio}', [OficioController::class, 'show'])
+        ->name('oficios.show');
+
+    Route::post('/oficios/{oficio}/turnar', [OficioController::class, 'turnar'])
+        ->middleware('permission:puede_turnar')
+        ->name('oficios.turnar');
+
+    Route::post('/oficios/{oficio}/cerrar', [OficioController::class, 'cerrar'])
+        ->middleware('permission:puede_cerrar')
+        ->name('oficios.cerrar');
+
+    /*
+    |------------------------------
+    | PERMISOS / ROLES
     |------------------------------
     */
 
@@ -63,14 +85,7 @@ Route::middleware('auth')->group(function () {
         return 'sensibles';
     })->middleware('permission:puede_ver_sensibles');
 
-    /*
-    |------------------------------
-    | RUTAS POR ROLES
-    |------------------------------
-    */
-
     Route::get('/admin', function () {
         return 'solo admin';
     })->middleware('role:admin');
-
 });
