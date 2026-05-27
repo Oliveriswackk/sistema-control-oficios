@@ -9,7 +9,7 @@ class RolesSeeder extends Seeder
 {
     public function run(): void
     {
-        Rol::insert([
+        $roles = [
             [
                 'clave' => 'admin',
                 'nombre' => 'Administrador',
@@ -28,6 +28,13 @@ class RolesSeeder extends Seeder
                 'descripcion' => 'Solo lectura de información',
                 'activo' => true,
             ],
-        ]);
+        ];
+
+        foreach ($roles as $role) {
+            Rol::updateOrCreate(
+                ['clave' => $role['clave']],
+                $role
+            );
+        }
     }
 }

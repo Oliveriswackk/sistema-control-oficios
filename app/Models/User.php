@@ -67,18 +67,7 @@ class User extends Authenticatable
             'usuario_roles',
             'usuario_id',
             'rol_id'
-        )->withTimestamps();
-    }
-
-
-    public function permisos(): BelongsToMany
-    {
-        return $this->belongsToMany(
-            Permiso::class,
-            'usuario_permisos',
-            'usuario_id',
-            'permiso_id'
-        )->withTimestamps();
+        )->with('permisos')->withTimestamps();
     }
 
 

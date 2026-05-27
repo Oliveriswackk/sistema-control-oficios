@@ -14,6 +14,7 @@ return new class extends Migration
             $table->string('nombre');
             $table->text('descripcion')->nullable();
             $table->boolean('activo')->default(true);
+            $table->timestamps();
         });
 
         Schema::create('permisos', function (Blueprint $table) {
@@ -21,6 +22,7 @@ return new class extends Migration
             $table->string('clave')->unique();
             $table->string('nombre');
             $table->text('descripcion')->nullable();
+            $table->timestamps();
         });
 
         Schema::create('usuario_roles', function (Blueprint $table) {

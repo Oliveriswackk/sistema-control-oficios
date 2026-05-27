@@ -9,7 +9,7 @@ class PermisosSeeder extends Seeder
 {
     public function run(): void
     {
-        Permiso::insert([
+        $permisos = [
             [
                 'clave' => 'puede_registrar_oficios',
                 'nombre' => 'Registrar oficios',
@@ -35,6 +35,13 @@ class PermisosSeeder extends Seeder
                 'nombre' => 'Ver información sensible',
                 'descripcion' => 'Acceso a documentos sensibles del sistema',
             ],
-        ]);
+        ];
+
+        foreach ($permisos as $permiso) {
+            Permiso::updateOrCreate(
+                ['clave' => $permiso['clave']],
+                $permiso
+            );
+        }
     }
 }

@@ -10,10 +10,14 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             CoordinacionesSeeder::class,
-            UsersSeeder::class,
+
+            // 1. seguridad base
             RolesSeeder::class,
             PermisosSeeder::class,
             RolPermisoSeeder::class,
+
+            // 2. usuarios al final
+            UsersSeeder::class,
         ]);
     }
 }

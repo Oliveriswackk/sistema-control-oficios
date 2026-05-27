@@ -10,22 +10,32 @@ class RolPermisoSeeder extends Seeder
 {
     public function run(): void
     {
-        $admin = Rol::where('clave', 'admin')->first();
-        $captura = Rol::where('clave', 'captura')->first();
-        $consulta = Rol::where('clave', 'consulta')->first();
+        $admin = Rol::where('clave', 'admin')->firstOrFail();
+        $captura = Rol::where('clave', 'captura')->firstOrFail();
+        $consulta = Rol::where('clave', 'consulta')->firstOrFail();
 
         $permisos = Permiso::all()->keyBy('clave');
 
-        // ADMIN → todo
-        $admin->permisos()->sync($permisos->pluck('id'));
+        // ADMIN → todos los permisos
+        $admin->permisos()->sync(
+            $permisos->pluck('id')->toArray()
+        );
 
-        // CAPTURA → operar
+        // CAPTURA → operación base
         $captura->permisos()->sync([
-            $permisos['puede_registrar_oficios']->id,
-            $permisos['puede_turnar']->id,
+            $permisos['puede_registrar_oficios']->id ?? null,
+            $permisos['puede_turnar']->id ?? null,
         ]);
 
-        // CONSULTA → solo lectura
+        // limpiar nulls por seguridad
+        $captura->permisos()->sync(
+            collect([
+                $permisos['puede_registrar_oficios']->id ?? null,
+                $permisos['puede_turnar']->id ?? null,
+            ])->filter()->values()->toArray()
+        );
+
+        // CONSULTA → sin permisos operativos
         $consulta->permisos()->sync([]);
     }
 }
