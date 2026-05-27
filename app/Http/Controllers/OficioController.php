@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreOficioRequest;
+use Illuminate\Support\Str;
 use App\Models\Oficio;
 use Illuminate\Http\Request;
 
@@ -17,6 +19,7 @@ class OficioController extends Controller
         $this->authorize('viewAny', Oficio::class);
 
         $oficios = Oficio::query()
+            ->with(['historial'])
             ->latest()
             ->paginate(20);
 
@@ -40,12 +43,12 @@ class OficioController extends Controller
     | GUARDAR OFICIO
     |--------------------------------------------------------------------------
     */
-    public function store(Request $request)
+    public function store(StoreOficioRequest $request)
     {
         $this->authorize('create', Oficio::class);
 
         $oficio = Oficio::create([
-            'uuid' => \Str::uuid(),
+            'uuid' => (string) Str::uuid(),
 
             'numero_oficio' => $request->numero_oficio,
             'consecutivo' => $request->consecutivo,
@@ -79,6 +82,16 @@ class OficioController extends Controller
             'usuario_registro_id' => auth()->id(),
 
             'link_documento' => $request->link_documento,
+
+            // estado base del flujo (IMPORTANTE del modelo nuevo)
+            'estado_actual' => 'registrado',
+        ]);
+
+        // EVENTO BASE DE TRAZABILIDAD (mínimo viable)
+        $oficio->historial()->create([
+            'usuario_id' => auth()->id(),
+            'evento' => 'OFICIO_REGISTRADO',
+            'descripcion' => 'Oficio creado en sistema',
         ]);
 
         return response()->json($oficio);

@@ -96,16 +96,17 @@ class Oficio extends Model
         */
 
         'link_documento',
+        'estado_actual',
 
         /*
         |--------------------------------------------------------------------------
         | Flujo
         |--------------------------------------------------------------------------
-        */
+        
 
         'respondido_en',
         'cerrado_en',
-        'cancelado_en',
+        'cancelado_en',*/
     ];
 
     /*
