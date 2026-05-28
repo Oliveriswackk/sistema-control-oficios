@@ -68,10 +68,14 @@ Route::middleware('auth')->group(function () {
     | OFICIOS
     |------------------------------
     */
-    Route::get('/oficios-ui', [OficioController::class, 'index']);
+    Route::get('/oficios-ui', [OficioController::class, 'index'])
+        ->name('oficios.ui');
 
     Route::post('/oficios', [OficioController::class, 'store'])
         ->name('oficios.store');
+
+    Route::get('/oficios-ui/{oficio}', [OficioController::class, 'show'])
+        ->name('oficios.show.ui');
 
     Route::get('/oficios/{oficio}', [OficioController::class, 'show'])
         ->name('oficios.show');

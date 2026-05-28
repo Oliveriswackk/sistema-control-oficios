@@ -87,18 +87,18 @@ class OficioController extends Controller
 
             'link_documento' => $request->link_documento,
 
-            // estado base del flujo (IMPORTANTE del modelo nuevo)
-            'estado_actual' => 'registrado',
         ]);
 
         // EVENTO BASE DE TRAZABILIDAD (mínimo viable)
         $oficio->historial()->create([
             'usuario_id' => auth()->id(),
-            'evento' => 'OFICIO_REGISTRADO',
-            'descripcion' => 'Oficio creado en sistema',
+            'accion' => 'oficio_creado',
+            'descripcion' => 'Oficio creado desde interfaz web',
         ]);
 
-        return response()->json($oficio);
+        return redirect()
+        ->route('oficios.ui')
+        ->with('success', 'Oficio creado correctamente');
     }
 
     /*
@@ -110,7 +110,7 @@ class OficioController extends Controller
     {
         $this->authorize('view', $oficio);
 
-        return response()->json($oficio);
+        return response()->json($oficio); //Pendiente cambiar
     }
 
     /*
