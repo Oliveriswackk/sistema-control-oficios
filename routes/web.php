@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\OficioController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Ui\OficioUiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -39,6 +40,15 @@ Route::middleware('auth')->group(function () {
         return view('dashboard');
     })->middleware('verified')->name('dashboard');
 
+
+    Route::get('/oficios-ui', [OficioController::class, 'indexUi'])
+    ->middleware('auth')
+    ->name('oficios.ui');
+
+        
+    Route::get('/oficios-ui/{oficio}', [OficioUiController::class, 'show'])
+        ->name('oficios.show.ui');
+
     /*
     |------------------------------
     | PERFIL
@@ -58,8 +68,7 @@ Route::middleware('auth')->group(function () {
     | OFICIOS
     |------------------------------
     */
-    Route::get('/oficios', [OficioController::class, 'index'])
-        ->name('oficios.index');
+    Route::get('/oficios-ui', [OficioController::class, 'index']);
 
     Route::post('/oficios', [OficioController::class, 'store'])
         ->name('oficios.store');

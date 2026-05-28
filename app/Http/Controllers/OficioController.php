@@ -16,14 +16,18 @@ class OficioController extends Controller
     */
     public function index()
     {
-        $this->authorize('viewAny', Oficio::class);
-
-        $oficios = Oficio::query()
-            ->with(['historial'])
+        $oficios = Oficio::with(['estado', 'turnados'])
             ->latest()
             ->paginate(20);
 
-        return response()->json($oficios);
+        return view('oficios.index-ui', compact('oficios'));
+    }
+
+    public function indexUi()
+    {
+        $oficios = Oficio::with('estado')->latest()->get();
+
+        return view('oficios.index-ui', compact('oficios'));
     }
 
     /*
@@ -116,13 +120,27 @@ class OficioController extends Controller
     */
     public function turnar(Request $request, Oficio $oficio)
     {
-        $this->authorize('turnar', $oficio);
-
-        // aquí después conectamos tabla turnados
-        return response()->json([
-            'message' => 'Oficio turnado (placeholder)',
-            'oficio_id' => $oficio->id
+        $request->validate([
+            'usuario_id' => 'required',
+            'coordinacion_id' => 'required',
+            'tipo_participacion_id' => 'required',
         ]);
+
+        \App\Models\Turnado::create([
+            'oficio_id' => $oficio->id,
+            'usuario_id' => $request->usuario_id,
+            'coordinacion_id' => $request->coordinacion_id,
+            'tipo_participacion_id' => $request->tipo_participacion_id,
+            'estado_turnado_id' => 1,
+
+            'turnado_por_id' => auth()->id(),
+            'turnado_en' => now(),
+
+            'es_principal' => true,
+            'observaciones' => $request->observaciones,
+        ]);
+
+        return redirect()->back();
     }
 
     /*
