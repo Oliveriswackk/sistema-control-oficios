@@ -11,12 +11,16 @@ class DatabaseSeeder extends Seeder
         $this->call([
             CoordinacionesSeeder::class,
 
-            // 1. seguridad base
+            // 1. Catalogos
+            TiposOficioSeeder::class,
+            EstadosOficioSeeder::class,
+        
+            // 2. seguridad base
             RolesSeeder::class,
             PermisosSeeder::class,
             RolPermisoSeeder::class,
 
-            // 2. usuarios al final
+            // 3. Usuarios
             UsersSeeder::class,
         ]);
     }
