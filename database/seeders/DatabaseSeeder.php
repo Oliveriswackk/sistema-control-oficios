@@ -11,17 +11,19 @@ class DatabaseSeeder extends Seeder
         $this->call([
             CoordinacionesSeeder::class,
 
-            // 1. Catalogos
-            TiposOficioSeeder::class,
-            EstadosOficioSeeder::class,
-        
-            // 2. seguridad base
+            // 1. Seguridad base
             RolesSeeder::class,
             PermisosSeeder::class,
             RolPermisoSeeder::class,
 
-            // 3. Usuarios
+            // 2. Usuarios
             UsersSeeder::class,
+
+            // 3. Catalogos
+            TiposOficioSeeder::class,
+            EstadosOficioSeeder::class,
+            TiposParticipacionSeeder::class,
+            EstadosTurnadoSeeder::class,
         ]);
     }
 }
