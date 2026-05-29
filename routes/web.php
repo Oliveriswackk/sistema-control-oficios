@@ -1,9 +1,9 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
+
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\OficioController;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Ui\OficioUiController;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,7 +17,7 @@ Route::get('/', function () {
 
 /*
 |--------------------------------------------------------------------------
-| AUTH (Breeze)
+| AUTH
 |--------------------------------------------------------------------------
 */
 
@@ -32,28 +32,21 @@ require __DIR__.'/auth.php';
 Route::middleware('auth')->group(function () {
 
     /*
-    |------------------------------
+    |--------------------------------------------------------------------------
     | DASHBOARD
-    |------------------------------
+    |--------------------------------------------------------------------------
     */
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->middleware('verified')->name('dashboard');
 
-
-    Route::get('/oficios-ui', [OficioController::class, 'indexUi'])
-    ->middleware('auth')
-    ->name('oficios.ui');
-
-        
-    Route::get('/oficios-ui/{oficio}', [OficioUiController::class, 'show'])
-        ->name('oficios.show.ui');
+    Route::get('/dashboard', [OficioController::class, 'dashboard'])
+        ->middleware('verified')
+        ->name('dashboard');
 
     /*
-    |------------------------------
+    |--------------------------------------------------------------------------
     | PERFIL
-    |------------------------------
+    |--------------------------------------------------------------------------
     */
+
     Route::get('/profile', [ProfileController::class, 'edit'])
         ->name('profile.edit');
 
@@ -64,34 +57,37 @@ Route::middleware('auth')->group(function () {
         ->name('profile.destroy');
 
     /*
-    |------------------------------
+    |--------------------------------------------------------------------------
     | OFICIOS
-    |------------------------------
+    |--------------------------------------------------------------------------
     */
-    Route::get('/oficios-ui', [OficioController::class, 'index'])
-        ->name('oficios.ui');
 
-    Route::post('/oficios', [OficioController::class, 'store'])
-        ->name('oficios.store');
+    // LISTADO
+    Route::get('/oficios', [OficioController::class, 'index'])
+        ->name('oficios.index');
 
-    Route::get('/oficios-ui/{oficio}', [OficioController::class, 'show'])
-        ->name('oficios.show.ui');
-
+    // DETALLE
     Route::get('/oficios/{oficio}', [OficioController::class, 'show'])
         ->name('oficios.show');
 
+    // CREAR
+    Route::post('/oficios', [OficioController::class, 'store'])
+        ->name('oficios.store');
+
+    // TURNAR
     Route::post('/oficios/{oficio}/turnar', [OficioController::class, 'turnar'])
         ->middleware('permission:puede_turnar')
         ->name('oficios.turnar');
 
+    // CERRAR
     Route::post('/oficios/{oficio}/cerrar', [OficioController::class, 'cerrar'])
         ->middleware('permission:puede_cerrar')
         ->name('oficios.cerrar');
 
     /*
-    |------------------------------
-    | PERMISOS / ROLES
-    |------------------------------
+    |--------------------------------------------------------------------------
+    | PRUEBAS PERMISOS
+    |--------------------------------------------------------------------------
     */
 
     Route::get('/sensibles', function () {
@@ -101,4 +97,5 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin', function () {
         return 'solo admin';
     })->middleware('role:admin');
+
 });

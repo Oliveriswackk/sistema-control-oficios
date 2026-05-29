@@ -30,9 +30,18 @@ class OficioController extends Controller
         return view('oficios.index-ui', compact('oficios'));
     }
 
+    public function dashboard()
+    {
+        $oficios = Oficio::with(['estado', 'turnados'])
+            ->latest()
+            ->get();
+
+        return view('dashboard', compact('oficios'));
+    }
+
     /*
     |--------------------------------------------------------------------------
-    | CREAR FORM (si luego hay vista)
+    | CREAR FORM 
     |--------------------------------------------------------------------------
     */
     public function create()
