@@ -50,11 +50,11 @@
 
         <li class="nav-item">
 
-            <a class="nav-link" href="{{ route('dashboard') }}">
+            <a class="nav-link" href="{{ route('home') }}">
 
                 <i class="fas fa-fw fa-home"></i>
 
-                <span>Dashboard</span>
+                <span>Inicio</span>
 
             </a>
 
@@ -68,7 +68,7 @@
 
         <li class="nav-item">
 
-            <a class="nav-link" href="{{ route('oficios.index') }}">
+            <a class="nav-link" href="{{ route('dashboard') }}">
 
                 <i class="fas fa-inbox"></i>
 
@@ -112,21 +112,33 @@
 
                         <li class="nav-item dropdown no-arrow">
 
-                            <a
-                                class="nav-link dropdown-toggle"
-                                href="#"
-                                id="userDropdown"
-                                role="button"
-                                data-toggle="dropdown"
-                            >
+                            <a class="nav-link dropdown-toggle d-flex align-items-center"
+                            href="#"
+                            id="userDropdown"
+                            role="button"
+                            data-toggle="dropdown"
+                            aria-haspopup="true"
+                            aria-expanded="false">
 
-                                <span class="mr-2 d-none d-lg-inline text-gray-600 small">
-                                    {{ Auth::user()->name }}
-                                </span>
+                                <!-- Avatar / Icono -->
+                                <i class="fas fa-user-circle fa-lg text-gray-600"></i>
+
+                                <!-- Info usuario -->
+                                <div class="ml-2 d-flex flex-column text-left">
+
+                                    <span class="text-gray-800 font-weight-bold small">
+                                        {{ Auth::user()->name }}
+                                    </span>
+
+                                    <span class="text-gray-500" style="font-size: 11px; line-height: 1;">
+                                        {{ ucfirst(Auth::user()->role->name ?? 'usuario') }}
+                                    </span>
+
+                                </div>
 
                             </a>
 
-                            <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in">
+                            <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
 
                                 <form
                                     method="POST"
@@ -173,7 +185,7 @@
                 <div class="copyright text-center my-auto">
 
                     <span>
-                        Sistema de Control de Oficios
+                        Sistema de Control de Oficios &copy; {{ date('Y') }} - Desarrollado por SESEA
                     </span>
 
                 </div>

@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreOficioRequest;
-use Illuminate\Support\Str;
 use App\Models\Oficio;
+use App\Models\Turnado;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class OficioController extends Controller
 {
@@ -37,6 +39,21 @@ class OficioController extends Controller
             ->get();
 
         return view('dashboard', compact('oficios'));
+    }
+    /*
+    |--------------------------------------------------------------------------
+    | HOME (BANDEJA TRABAJO)
+    |--------------------------------------------------------------------------
+    */
+    public function home()
+    {
+        $turnados = Turnado::with('oficio')
+            ->where('usuario_id', Auth::id())
+            ->whereNull('cerrado_en')
+            ->latest()
+            ->get();
+
+        return view('home', compact('turnados'));
     }
 
     /*
@@ -106,8 +123,8 @@ class OficioController extends Controller
         ]);
 
         return redirect()
-        ->route('oficios.ui')
-        ->with('success', 'Oficio creado correctamente');
+            ->route('dashboard')
+            ->with('success', 'Oficio creado correctamente');
     }
 
     /*

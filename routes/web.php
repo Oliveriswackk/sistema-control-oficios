@@ -30,7 +30,6 @@ require __DIR__.'/auth.php';
 */
 
 Route::middleware('auth')->group(function () {
-
     /*
     |--------------------------------------------------------------------------
     | DASHBOARD
@@ -41,6 +40,13 @@ Route::middleware('auth')->group(function () {
         ->middleware('verified')
         ->name('dashboard');
 
+    /*
+    |--------------------------------------------------------------------------
+    | HOME (Bandeja)
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/home', [OficioController::class, 'home'])
+        ->name('home');
     /*
     |--------------------------------------------------------------------------
     | PERFIL
