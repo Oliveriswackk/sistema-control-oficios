@@ -62,7 +62,7 @@ class OficioController extends Controller
         if (auth()->user()->hasPermission('puede_cerrar')) {
 
             $listosCerrar = Oficio::with('turnados')
-                ->where('estado_id', '!=', 5) // ❗ EXCLUYE CERRADOS
+                ->where('estado_id', 3) // SOLO activos en estado "en proceso / listo"
                 ->get()
                 ->filter(function ($oficio) {
 
@@ -169,6 +169,10 @@ class OficioController extends Controller
     */
     public function turnar(Request $request, Oficio $oficio)
     {
+        if ($oficio->estado_id == 5) {
+            return back()->with('error', 'No se puede turnar un oficio cerrado');
+        }
+        
         $request->validate([
             'usuario_id' => 'required',
             'coordinacion_id' => 'required',

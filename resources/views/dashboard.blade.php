@@ -60,9 +60,15 @@
                             </td>
 
                             <td>
-                                <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#modalTurnar{{ $oficio->id }}">
-                                    Turnar
-                                </button>
+                                @if($oficio->estado_id != 5)
+                                    <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#modalTurnar{{ $oficio->id }}">
+                                        Turnar
+                                    </button>
+                                @else
+                                    <span class="badge badge-secondary">
+                                        Cerrado
+                                    </span>
+                                @endif
                             </td>
                             
                         </tr>
@@ -331,3 +337,15 @@
 </div>
 
 @endsection
+
+@if(session('success'))
+<script>
+    Alerts.success("{{ session('success') }}");
+</script>
+@endif
+
+@if(session('error'))
+<script>
+    Alerts.error("{{ session('error') }}");
+</script>
+@endif
