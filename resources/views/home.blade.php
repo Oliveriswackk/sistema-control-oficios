@@ -10,96 +10,232 @@
             Mi Bandeja
         </h1>
 
+        <ul class="nav nav-tabs mb-3" id="homeTabs" role="tablist">
+
+            <li class="nav-item" role="presentation">
+                <a class="nav-link active" data-toggle="tab" href="#bandeja" role="tab">
+                    {{ $turnados->count() }} Bandeja
+                </a>
+            </li>
+
+            @if(auth()->user()->hasPermission('puede_cerrar'))
+
+                <li class="nav-item" role="presentation">
+                    <a class="nav-link" data-toggle="tab" href="#cerrar" role="tab">
+                        {{ $listosCerrar->count() }} Listos para cerrar
+                    </a>
+                </li>
+
+            @endif
+
+        </ul>
+
     </div>
 
-    <div class="card shadow mb-4">
+    <div class="tab-content">
 
-        <div class="card-header py-3">
+        {{-- BANDEJA --}}
 
-            <h6 class="m-0 font-weight-bold text-primary">
-                Oficios Pendientes
-            </h6>
+        <div class="tab-pane fade show active" id="bandeja" role="tabpanel" aria-labelledby="bandeja-tab">
 
-        </div>
+            <div class="card shadow mb-4">
 
-        <div class="card-body">
+                <div class="card-header py-3">
 
-            <div class="table-responsive">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        Oficios Pendientes
+                    </h6>
 
-                <table class="table table-bordered">
+                </div>
 
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Número</th>
-                            <th>Asunto</th>
-                            <th>Turnado en</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
+                <div class="card-body">
 
-                    <tbody>
+                    <div class="table-responsive">
 
-                        @forelse($turnados as $turnado)
+                        <table class="table table-bordered">
 
-                            <tr>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Número</th>
+                                    <th>Asunto</th>
+                                    <th>Turnado en</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
 
-                                <td>
-                                    {{ $turnado->oficio->id }}
-                                </td>
+                            <tbody>
 
-                                <td>
-                                    {{ $turnado->oficio->numero_oficio }}
-                                </td>
+                                @forelse($turnados as $turnado)
 
-                                <td>
-                                    {{ $turnado->oficio->asunto }}
-                                </td>
+                                    <tr>
 
-                                <td>
-                                    {{ $turnado->turnado_en }}
-                                </td>
+                                        <td>{{ $turnado->oficio->id }}</td>
 
-                                <td>
+                                        <td>{{ $turnado->oficio->numero_oficio }}</td>
 
-                                    <a href="{{ route('oficios.show', $turnado->oficio->id) }}" class="btn btn-sm btn-primary" >
-                                        Ver
-                                    </a>
+                                        <td>{{ $turnado->oficio->asunto }}</td>
 
-                                    <form method="POST" action="{{ route('turnados.atender', $turnado) }}" class="d-inline">
-                                        @csrf
+                                        <td>{{ $turnado->turnado_en }}</td>
 
-                                        <button type="submit" class="btn btn-sm btn-success">
-                                            Atendido
-                                        </button>
-                                    </form>
+                                        <td>
 
-                                </td>
+                                            <a href="{{ route('oficios.show', $turnado->oficio->id) }}" class="btn btn-sm btn-primary">
+                                                Ver
+                                            </a>
 
-                            </tr>
+                                            <form
+                                                method="POST"
+                                                action="{{ route('turnados.atender', $turnado) }}"
+                                                class="d-inline"
+                                            >
+                                                @csrf
 
-                        @empty
+                                                <button type="submit" class="btn btn-sm btn-success">
+                                                    Atendido
+                                                </button>
 
-                            <tr>
+                                            </form>
 
-                                <td colspan="5" class="text-center">
-                                    Sin oficios pendientes
-                                </td>
+                                        </td>
 
-                            </tr>
+                                    </tr>
 
-                        @endforelse
+                                @empty
 
-                    </tbody>
+                                    <tr>
 
-                </table>
+                                        <td colspan="5" class="text-center">
+                                            Sin oficios pendientes
+                                        </td>
+
+                                    </tr>
+
+                                @endforelse
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
 
             </div>
 
         </div>
 
-    </div>
+        {{-- LISTOS PARA CERRAR --}}
 
+        @if(auth()->user()->hasPermission('puede_cerrar'))
+            <div class="tab-pane fade" id="cerrar" role="tabpanel" aria-labelledby="cerrar-tab">
+
+                <div class="card shadow mb-4">
+
+                    <div class="card-header py-3">
+
+                        <h6 class="m-0 font-weight-bold text-success">
+                            Oficios Listos para Cierre
+                        </h6>
+
+                    </div>
+
+                    <div class="card-body">
+
+                        <div class="table-responsive">
+
+                            <table class="table table-bordered">
+
+                                <thead>
+
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Número</th>
+                                        <th>Asunto</th>
+                                        <th>Acciones</th>
+                                    </tr>
+
+                                </thead>
+
+                                <tbody>
+
+                                    @forelse($listosCerrar as $oficio)
+
+                                        <tr>
+
+                                            <td>{{ $oficio->id }}</td>
+
+                                            <td>{{ $oficio->numero_oficio }}</td>
+
+                                            <td>{{ $oficio->asunto }}</td>
+
+                                            <td>
+                                                <a href="{{ route ('oficios.show', $oficio) }}" class="btn btn-primary btn-sm">
+                                                    Ver
+                                                </a>
+
+                                                <form method="POST" action="{{ route('oficios.cerrar', $oficio) }}" class="d-inline">
+                                                    @csrf
+
+                                                    <button type="submit" class="btn btn-success btn-sm">
+                                                        Cerrar oficio
+                                                    </button>
+
+                                                </form>
+
+                                            </td>
+
+                                        </tr>
+
+                                    @empty
+
+                                        <tr>
+
+                                            <td colspan="4" class="text-center">
+                                                No hay oficios listos para cerrar
+                                            </td>
+
+                                        </tr>
+
+                                    @endforelse
+
+                                </tbody>
+
+                            </table>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        @endif
+
+    </div>
 </div>
+   
+    <!--
+    |--------------------------------------------------------------------------
+    | SCRIPTS
+    |--------------------------------------------------------------------------
+    -->
+    <script>
+        $(document).ready(function () {
+
+            $('#homeTabs a').on('click', function (e) {
+                e.preventDefault();
+                $(this).tab('show');
+            });
+
+            // restaurar tab desde URL hash
+            let hash = window.location.hash;
+            if (hash) {
+                $('#homeTabs a[href="' + hash + '"]').tab('show');
+            }
+
+        });
+    </script>
 
 @endsection

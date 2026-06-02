@@ -57,7 +57,22 @@ class OficioController extends Controller
             ->latest()
             ->get();
 
-        return view('home', compact('turnados'));
+        $listosCerrar = collect();
+
+        if (auth()->user()->hasPermission('puede_cerrar')) {
+
+            $listosCerrar = Oficio::with('turnados')
+                ->where('estado_id', '!=', 5) // ❗ EXCLUYE CERRADOS
+                ->get()
+                ->filter(function ($oficio) {
+
+                    return $oficio->turnados->isNotEmpty()
+                        && $oficio->turnados->every(fn ($t) => $t->estado_turnado_id === 3);
+                })
+                ->values();
+        }
+
+        return view('home', compact('turnados', 'listosCerrar'));
     }
 
 
@@ -143,7 +158,7 @@ class OficioController extends Controller
     {
         $this->authorize('view', $oficio);
 
-        return response()->json($oficio); //Pendiente cambiar
+        return view('oficios.show', compact('oficio'));
     }
 
 
@@ -223,7 +238,7 @@ class OficioController extends Controller
 
         // validar que todos los turnados estén atendidos o cerrados
         $pendientes = $oficio->turnados()
-            ->where('estado_turnado_id', '!=', 3)
+            ->whereIn('estado_turnado_id', [1, 2])
             ->exists();
 
         if ($pendientes) {
