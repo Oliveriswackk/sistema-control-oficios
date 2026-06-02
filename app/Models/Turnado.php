@@ -4,6 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+
+// TODO:
+// Revisar cálculo automático del estado general del oficio.
+// Actualmente se marca como turnado al crear el primer turnado.
+
+
 class Turnado extends Model
 {
     protected $table = 'turnados';

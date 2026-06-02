@@ -85,6 +85,9 @@ Route::middleware('auth')->group(function () {
         ->middleware('permission:puede_turnar')
         ->name('oficios.turnar');
 
+    Route::post('/turnados/{turnado}/atender', [OficioController::class, 'atender'])
+        ->name('turnados.atender');
+
     // CERRAR
     Route::post('/oficios/{oficio}/cerrar', [OficioController::class, 'cerrar'])
         ->middleware('permission:puede_cerrar')

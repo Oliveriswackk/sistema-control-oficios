@@ -70,12 +70,28 @@ class User extends Authenticatable
         )->with('permisos')->withTimestamps();
     }
 
+    /* Permisos */
+    public function permisos(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Permiso::class,
+            'usuario_permisos',
+            'usuario_id',
+            'permiso_id'
+        );
+    }
 
+    
     public function hasPermission(string $permission): bool
     {
-        return $this->roles
+        $porRol = $this->roles
             ->flatMap(fn ($role) => $role->permisos)
             ->contains('clave', $permission);
+
+        $directo = $this->permisos
+            ->contains('clave', $permission);
+
+        return $porRol || $directo;
     }
 
 

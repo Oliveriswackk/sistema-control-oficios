@@ -62,12 +62,17 @@
 
                                 <td>
 
-                                    <a
-                                        href="{{ route('oficios.show', $turnado->oficio->id) }}"
-                                        class="btn btn-sm btn-primary"
-                                    >
+                                    <a href="{{ route('oficios.show', $turnado->oficio->id) }}" class="btn btn-sm btn-primary" >
                                         Ver
                                     </a>
+
+                                    <form method="POST" action="{{ route('turnados.atender', $turnado) }}" class="d-inline">
+                                        @csrf
+
+                                        <button type="submit" class="btn btn-sm btn-success">
+                                            Atendido
+                                        </button>
+                                    </form>
 
                                 </td>
 

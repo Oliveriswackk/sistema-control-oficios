@@ -21,13 +21,7 @@ class RolPermisoSeeder extends Seeder
             $permisos->pluck('id')->toArray()
         );
 
-        // CAPTURA → operación base
-        $captura->permisos()->sync([
-            $permisos['puede_registrar_oficios']->id ?? null,
-            $permisos['puede_turnar']->id ?? null,
-        ]);
-
-        // limpiar nulls por seguridad
+        // CAPTURA → operación base (limpiar nulls por seguridad)
         $captura->permisos()->sync(
             collect([
                 $permisos['puede_registrar_oficios']->id ?? null,

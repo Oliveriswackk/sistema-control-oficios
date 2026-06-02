@@ -11,16 +11,16 @@ class EstadosOficioSeeder extends Seeder
     {
         DB::table('estados_oficio')->insert([
             [
-                'clave' => 'pendiente',
-                'nombre' => 'Pendiente',
+                'clave' => 'registrado',
+                'nombre' => 'Registrado',
                 'color' => '#6c757d',
                 'orden' => 1,
                 'es_final' => false,
                 'activo' => true,
             ],
             [
-                'clave' => 'en_proceso',
-                'nombre' => 'En proceso',
+                'clave' => 'en_seguimiento',
+                'nombre' => 'En seguimiento',
                 'color' => '#0d6efd',
                 'orden' => 2,
                 'es_final' => false,
@@ -35,9 +35,9 @@ class EstadosOficioSeeder extends Seeder
                 'activo' => true,
             ],
             [
-                'clave' => 'respondido',
-                'nombre' => 'Respondido',
-                'color' => '#20c997',
+                'clave' => 'vencido',
+                'nombre' => 'Vencido',
+                'color' => '#830352',
                 'orden' => 4,
                 'es_final' => false,
                 'activo' => true,

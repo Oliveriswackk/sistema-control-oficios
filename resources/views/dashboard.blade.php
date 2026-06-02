@@ -87,11 +87,7 @@
                                             Turnar Oficio
                                         </h5>
 
-                                        <button
-                                            type="button"
-                                            class="close"
-                                            data-dismiss="modal"
-                                        >
+                                        <button type="button"  class="close" data-dismiss="modal">
                                             <span>&times;</span>
                                         </button>
 
@@ -101,35 +97,9 @@
 
                                         <div class="form-group">
 
-                                            <label>Usuario</label>
-
-                                            <select
-                                                name="usuario_id"
-                                                class="form-control"
-                                                required
-                                            >
-
-                                                @foreach(\App\Models\User::all() as $usuario)
-
-                                                    <option value="{{ $usuario->id }}">
-                                                        {{ $usuario->name }}
-                                                    </option>
-
-                                                @endforeach
-
-                                            </select>
-
-                                        </div>
-
-                                        <div class="form-group">
-
                                             <label>Coordinación</label>
 
-                                            <select
-                                                name="coordinacion_id"
-                                                class="form-control"
-                                                required
-                                            >
+                                            <select name="coordinacion_id" class="form-control" required>
 
                                                 @foreach(\App\Models\Coordinacion::all() as $coord)
 
@@ -145,13 +115,27 @@
 
                                         <div class="form-group">
 
+                                            <label>Persona a cargo</label>
+
+                                            <select name="usuario_id" class="form-control" required>
+
+                                                @foreach(\App\Models\User::all() as $usuario)
+
+                                                    <option value="{{ $usuario->id }}">
+                                                        {{ $usuario->name }}
+                                                    </option>
+
+                                                @endforeach
+
+                                            </select>
+
+                                        </div>
+
+                                        <div class="form-group">
+
                                             <label>Tipo participación</label>
 
-                                            <select
-                                                name="tipo_participacion_id"
-                                                class="form-control"
-                                                required
-                                            >
+                                            <select name="tipo_participacion_id" class="form-control" required>
 
                                                 @foreach(\App\Models\TipoParticipacion::all() as $tipo)
 
@@ -169,11 +153,7 @@
 
                                             <label>Observaciones</label>
 
-                                            <textarea
-                                                name="observaciones"
-                                                class="form-control"
-                                                rows="3"
-                                            ></textarea>
+                                            <textarea  name="observaciones" class="form-control" rows="3"></textarea>
 
                                         </div>
 
@@ -181,18 +161,11 @@
 
                                     <div class="modal-footer">
 
-                                        <button
-                                            type="submit"
-                                            class="btn btn-warning"
-                                        >
+                                        <button type="submit" class="btn btn-warning">
                                             Turnar
                                         </button>
 
-                                        <button
-                                            type="button"
-                                            class="btn btn-secondary"
-                                            data-dismiss="modal"
-                                        >
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
                                             Cancelar
                                         </button>
 

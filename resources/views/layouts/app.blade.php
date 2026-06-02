@@ -54,7 +54,7 @@
 
                 <i class="fas fa-fw fa-home"></i>
 
-                <span>Inicio</span>
+                <span>Bandeja de Trabajo</span>
 
             </a>
 

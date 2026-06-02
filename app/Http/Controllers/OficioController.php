@@ -25,12 +25,14 @@ class OficioController extends Controller
         return view('oficios.index-ui', compact('oficios'));
     }
 
+
     public function indexUi()
     {
         $oficios = Oficio::with('estado')->latest()->get();
 
         return view('oficios.index-ui', compact('oficios'));
     }
+
 
     public function dashboard()
     {
@@ -40,6 +42,8 @@ class OficioController extends Controller
 
         return view('dashboard', compact('oficios'));
     }
+
+
     /*
     |--------------------------------------------------------------------------
     | HOME (BANDEJA TRABAJO)
@@ -49,12 +53,13 @@ class OficioController extends Controller
     {
         $turnados = Turnado::with('oficio')
             ->where('usuario_id', Auth::id())
-            ->whereNull('cerrado_en')
+            ->whereIn('estado_turnado_id', [1, 2])
             ->latest()
             ->get();
 
         return view('home', compact('turnados'));
     }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -67,6 +72,7 @@ class OficioController extends Controller
 
         return response()->json(['message' => 'ok']);
     }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -127,6 +133,7 @@ class OficioController extends Controller
             ->with('success', 'Oficio creado correctamente');
     }
 
+
     /*
     |--------------------------------------------------------------------------
     | VER OFICIO
@@ -138,6 +145,7 @@ class OficioController extends Controller
 
         return response()->json($oficio); //Pendiente cambiar
     }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -169,6 +177,41 @@ class OficioController extends Controller
         return redirect()->back();
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | ATENDER TURNADO
+    |--------------------------------------------------------------------------
+    */
+    public function atender(Turnado $turnado)
+    {
+        abort_unless(
+            $turnado->usuario_id === auth()->id(),
+            403
+        );
+
+        if ($turnado->atendido_en) {
+            return back();
+        }
+
+        $turnado->update([
+            'estado_turnado_id' => 3,
+            'atendido_en' => now(),
+        ]);
+
+        $turnado->oficio->historial()->create([
+            'usuario_id' => auth()->id(),
+            'accion' => 'turnado_atendido',
+            'descripcion' => 'El responsable marcó el turnado como atendido',
+        ]);
+
+        return back()->with(
+            'success',
+            'Turnado atendido'
+        );
+    }
+
+
     /*
     |--------------------------------------------------------------------------
     | CERRAR
@@ -178,13 +221,26 @@ class OficioController extends Controller
     {
         $this->authorize('cerrar', $oficio);
 
+        // validar que todos los turnados estén atendidos o cerrados
+        $pendientes = $oficio->turnados()
+            ->where('estado_turnado_id', '!=', 3)
+            ->exists();
+
+        if ($pendientes) {
+            return back()->with('error', 'No se puede cerrar: hay turnados pendientes');
+        }
+
         $oficio->update([
+            'estado_id' => 5, // cerrado
             'cerrado_en' => now(),
         ]);
 
-        return response()->json([
-            'message' => 'Oficio cerrado',
-            'oficio_id' => $oficio->id
+        $oficio->historial()->create([
+            'usuario_id' => auth()->id(),
+            'accion' => 'oficio_cerrado',
+            'descripcion' => 'Oficio cerrado desde recepción',
         ]);
+
+        return back()->with('success', 'Oficio cerrado');
     }
 }

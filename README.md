@@ -178,3 +178,14 @@ database/seeders/UsersSeeder.php
 - No existe borrado físico.
 - Los PDFs mantienen historial de versiones.
 - El sistema soporta atención paralela mediante turnados.
+
+```text
+Las coordinaciones actuales son provisionales para el MVP.
+
+La estructura organizacional definitiva será revisada
+durante la etapa de estabilización operativa.
+
+La nomenclatura institucional de oficios (ST, CA, CVIYSC,
+UIG, CC-SEA, etc.) es independiente de las coordinaciones
+operativas utilizadas para asignación de responsables.
+```
