@@ -340,17 +340,4 @@
     </div>
 
 </div>
-
 @endsection
-
-@if(session('success'))
-<script>
-    Alerts.success("{{ session('success') }}");
-</script>
-@endif
-
-@if(session('error'))
-<script>
-    Alerts.error("{{ session('error') }}");
-</script>
-@endif

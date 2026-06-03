@@ -84,11 +84,7 @@
                                                 Ver
                                             </a>
 
-                                            <form
-                                                method="POST"
-                                                action="{{ route('turnados.atender', $turnado) }}"
-                                                class="d-inline"
-                                            >
+                                            <form method="POST" action="{{ route('turnados.atender', $turnado) }}" class="d-inline form-atender-turnado">
                                                 @csrf
 
                                                 <button type="submit" class="btn btn-sm btn-success">
@@ -174,7 +170,7 @@
                                                     Ver
                                                 </a>
 
-                                                <form method="POST" action="{{ route('oficios.cerrar', $oficio) }}" class="d-inline">
+                                                <form method="POST" action="{{ route('oficios.cerrar', $oficio) }}" class="d-inline form-cerrar-oficio">
                                                     @csrf
 
                                                     <button type="submit" class="btn btn-success btn-sm">
@@ -216,26 +212,25 @@
     </div>
 </div>
    
-    <!--
-    |--------------------------------------------------------------------------
-    | SCRIPTS
-    |--------------------------------------------------------------------------
-    -->
-    <script>
-        $(document).ready(function () {
+@endsection
 
-            $('#homeTabs a').on('click', function (e) {
-                e.preventDefault();
-                $(this).tab('show');
-            });
+@section('scripts')
+<script>
 
-            // restaurar tab desde URL hash
-            let hash = window.location.hash;
-            if (hash) {
-                $('#homeTabs a[href="' + hash + '"]').tab('show');
-            }
+$(document).ready(function () {
 
-        });
-    </script>
+    $('#homeTabs a').on('click', function (e) {
+        e.preventDefault();
+        $(this).tab('show');
+    });
 
+    let hash = window.location.hash;
+
+    if (hash) {
+        $('#homeTabs a[href="' + hash + '"]').tab('show');
+    }
+
+});
+
+</script>
 @endsection

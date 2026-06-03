@@ -62,7 +62,7 @@ class OficioController extends Controller
         if (auth()->user()->hasPermission('puede_cerrar')) {
 
             $listosCerrar = Oficio::with('turnados')
-                ->where('estado_id', 3) // SOLO activos en estado "en proceso / listo"
+                ->where('estado_id', 3) // Solo activos en estado "en proceso / listo"
                 ->get()
                 ->filter(function ($oficio) {
 
@@ -91,7 +91,7 @@ class OficioController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | GUARDAR OFICIO
+    | GUARDAR OFICIO / CREAR
     |--------------------------------------------------------------------------
     */
     public function store(StoreOficioRequest $request)
@@ -193,7 +193,7 @@ class OficioController extends Controller
             'observaciones' => $request->observaciones,
         ]);
 
-        return redirect()->back();
+        return back()->with('success', 'Oficio turnado correctamente');
     }
 
 

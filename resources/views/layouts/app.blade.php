@@ -199,6 +199,7 @@
 </div>
 
 {{-- SCRIPTS --}}
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -208,10 +209,123 @@
 
 {{-- DATATABLES --}}
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
 
+{{-- SWEETALERT2 --}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+
+window.Alerts = {
+
+    success(message) {
+        return Swal.fire({
+            icon: 'success',
+            title: 'Éxito',
+            text: message,
+            confirmButtonText: 'Aceptar'
+        });
+    },
+
+    error(message) {
+        return Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: message,
+            confirmButtonText: 'Aceptar'
+        });
+    },
+
+    warning(message) {
+        return Swal.fire({
+            icon: 'warning',
+            title: 'Atención',
+            text: message,
+            confirmButtonText: 'Aceptar'
+        });
+    },
+
+    confirm(message) {
+        return Swal.fire({
+            icon: 'warning',
+            title: 'Confirmación',
+            text: message,
+            showCancelButton: true,
+            confirmButtonText: 'Sí',
+            cancelButtonText: 'Cancelar',
+            reverseButtons: true
+        });
+    }
+
+};
+
+</script>
+
 @yield('scripts')
+
+@if(session('success'))
+<script>
+    Alerts.success(@json(session('success')));
+</script>
+@endif
+
+@if(session('error'))
+<script>
+    Alerts.error(@json(session('error')));
+</script>
+@endif
+
+@if(session('warning'))
+<script>
+    Alerts.warning(@json(session('warning')));
+</script>
+@endif
+
+<script>
+// Confirmación para marcar turnado como atendido
+document.addEventListener('DOMContentLoaded', () => {
+
+    document.querySelectorAll('.form-atender-turnado')
+        .forEach(form => {
+
+            form.addEventListener('submit', async function(e) {
+
+                e.preventDefault();
+
+                const result = await Alerts.confirm(
+                    '¿Desea marcar este turnado como atendido?'
+                );
+
+                if(result.isConfirmed) {
+                    form.submit();
+                }
+
+            });
+
+        });
+// Confirmación para cerrar oficio
+    document.querySelectorAll('.form-cerrar-oficio')
+        .forEach(form => {
+
+            form.addEventListener('submit', async function(e) {
+
+                e.preventDefault();
+
+                const result = await Alerts.confirm(
+                    '¿Desea cerrar este oficio?'
+                );
+
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+
+            });
+
+        });
+
+});
+
+</script>
 
 </body>
 </html>

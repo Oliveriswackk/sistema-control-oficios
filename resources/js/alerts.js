@@ -29,10 +29,10 @@ export function warning(message) {
 export function confirm(message) {
     return Swal.fire({
         icon: 'warning',
-        title: 'Confirmación',
+        title: '¿Estás seguro?',
         text: message,
         showCancelButton: true,
-        confirmButtonText: 'Sí',
+        confirmButtonText: 'Sí, continuar',
         cancelButtonText: 'Cancelar',
         reverseButtons: true
     });
