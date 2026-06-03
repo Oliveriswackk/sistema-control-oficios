@@ -60,6 +60,10 @@
                             </td>
 
                             <td>
+                                <a href="{{ route('oficios.show', $oficio) }}" class="btn btn-sm btn-primary">
+                                    Ver
+                                </a>
+
                                 @if($oficio->estado_id != 5)
                                     <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#modalTurnar{{ $oficio->id }}">
                                         Turnar
@@ -69,6 +73,7 @@
                                         Cerrado
                                     </span>
                                 @endif
+                                
                             </td>
                             
                         </tr>
