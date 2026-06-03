@@ -33,7 +33,7 @@
                                 <button class="btn btn-warning btn-sm"
                                         data-bs-toggle="modal"
                                         data-bs-target="#turnarModal"
-                                        data-id="{{ $oficio->id }}">
+                                        data-id="{{ $turnado->oficio->id }}">
                                     Turnar
                                 </button>
 

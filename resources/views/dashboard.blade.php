@@ -60,9 +60,9 @@
                             </td>
 
                             <td>
-                                <a href="{{ route('oficios.show', $oficio) }}" class="btn btn-sm btn-primary">
+                                <button class="btn btn-primary btn-ver-oficio" data-id="{{ $oficio->id }}">
                                     Ver
-                                </a>
+                                </button>
 
                                 @if($oficio->estado_id != 5)
                                     <button class="btn btn-sm btn-warning" data-toggle="modal" data-target="#modalTurnar{{ $oficio->id }}">
@@ -77,6 +77,7 @@
                             </td>
                             
                         </tr>
+                    
                         
                     {{-- MODAL TURNAR --}}
                     <div class="modal fade" id="modalTurnar{{ $oficio->id }}" tabindex="-1" role="dialog">
@@ -316,18 +317,11 @@
 
                 <div class="modal-footer">
 
-                    <button
-                        type="submit"
-                        class="btn btn-primary"
-                    >
+                    <button type="submit" class="btn btn-primary">
                         Guardar
                     </button>
 
-                    <button
-                        type="button"
-                        class="btn btn-secondary"
-                        data-dismiss="modal"
-                    >
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
                         Cancelar
                     </button>
 
@@ -340,4 +334,19 @@
     </div>
 
 </div>
+@endsection
+
+@section('scripts')
+<script>
+
+$(document).ready(function () {
+
+    // Ver Detalles del Oficio
+    $('.btn-ver-oficio').on('click', function () {
+        Oficios.open($(this).data('id'), false);
+    });
+
+});
+
+</script>
 @endsection

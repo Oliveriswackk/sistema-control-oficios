@@ -151,14 +151,60 @@ class OficioController extends Controller
 
     /*
     |--------------------------------------------------------------------------
+    | ACTUALIZAR OFICIO
+    |--------------------------------------------------------------------------
+    */
+    public function update(Request $request, Oficio $oficio)
+    {
+        $this->authorize('update', $oficio);
+
+        $oficio->update([
+            'numero_oficio' => $request->numero_oficio,
+            'consecutivo' => $request->consecutivo,
+            'asunto' => $request->asunto,
+            'descripcion' => $request->descripcion,
+        ]);
+
+        return response()->json([
+            'message' => 'Oficio actualizado correctamente'
+        ]);
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | DETALLE OFICIO (endpoint para obtener datos)
+    |--------------------------------------------------------------------------
+    */
+    public function detalle(Oficio $oficio)
+    {
+        return response()->json([
+            'id' => $oficio->id,
+            'numero_oficio' => $oficio->numero_oficio,
+            'consecutivo' => $oficio->consecutivo,
+            'asunto' => $oficio->asunto,
+            'descripcion' => $oficio->descripcion,
+            'fecha_oficio' => $oficio->fecha_oficio,
+            'fecha_recepcion' => $oficio->fecha_recepcion,
+            'estado' => $oficio->estado->nombre ?? null,
+        ]);
+    }
+
+    /*
+    |--------------------------------------------------------------------------
     | VER OFICIO
     |--------------------------------------------------------------------------
     */
     public function show(Oficio $oficio)
     {
-        $this->authorize('view', $oficio);
-
-        return view('oficios.show', compact('oficio'));
+        return response()->json(
+            $oficio->load([
+                'estado',
+                'tipoOficio',
+                'turnados.usuario',
+                'historial.usuario'
+            ])
+        );
     }
 
 

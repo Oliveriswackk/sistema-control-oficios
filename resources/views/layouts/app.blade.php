@@ -198,69 +198,85 @@
 
 </div>
 
-{{-- SCRIPTS --}}
 
+{{-- =========================================================
+|  LIBRERÍAS BASE (CORE UI)
+========================================================= --}}
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
 
+
+{{-- SB ADMIN --}}
 <script src="{{ asset('vendor/jquery-easing/jquery.easing.min.js') }}"></script>
 <script src="{{ asset('js/sb-admin-2.min.js') }}"></script>
 
-{{-- DATATABLES --}}
+
+{{-- =========================================================
+|  PLUGINS EXTERNOS
+========================================================= --}}
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap4.min.js"></script>
 
-{{-- SWEETALERT2 --}}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-
-window.Alerts = {
-
-    success(message) {
-        return Swal.fire({
-            icon: 'success',
-            title: 'Éxito',
-            text: message,
-            confirmButtonText: 'Aceptar'
-        });
-    },
-
-    error(message) {
-        return Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: message,
-            confirmButtonText: 'Aceptar'
-        });
-    },
-
-    warning(message) {
-        return Swal.fire({
-            icon: 'warning',
-            title: 'Atención',
-            text: message,
-            confirmButtonText: 'Aceptar'
-        });
-    },
-
-    confirm(message) {
-        return Swal.fire({
-            icon: 'warning',
-            title: 'Confirmación',
-            text: message,
-            showCancelButton: true,
-            confirmButtonText: 'Sí',
-            cancelButtonText: 'Cancelar',
-            reverseButtons: true
-        });
-    }
-
-};
-
+    window.USER_CAN_EDIT = @json(
+        auth()->user()->hasRole('admin') ||
+        auth()->user()->hasPermission('puede_registrar')
+    );
 </script>
 
+{{-- =========================================================
+|  SISTEMA DE ALERTAS (GLOBAL)
+========================================================= --}}
+<script>
+    window.Alerts = {
+
+        success(message) {
+            return Swal.fire({
+                icon: 'success',
+                title: 'Éxito',
+                text: message,
+                confirmButtonText: 'Aceptar'
+            });
+        },
+
+        error(message) {
+            return Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: message,
+                confirmButtonText: 'Aceptar'
+            });
+        },
+
+        warning(message) {
+            return Swal.fire({
+                icon: 'warning',
+                title: 'Atención',
+                text: message,
+                confirmButtonText: 'Aceptar'
+            });
+        },
+
+        confirm(message) {
+            return Swal.fire({
+                icon: 'warning',
+                title: 'Confirmación',
+                text: message,
+                showCancelButton: true,
+                confirmButtonText: 'Sí',
+                cancelButtonText: 'Cancelar',
+                reverseButtons: true
+            });
+        }
+    };
+</script>
+
+
+{{-- =========================================================
+|  FLASH MESSAGES (SESSION)
+========================================================= --}}
 @yield('scripts')
 
 @if(session('success'))
@@ -281,51 +297,308 @@ window.Alerts = {
 </script>
 @endif
 
+
+{{-- =========================================================
+|  CONFIRMACIONES GLOBALES (FORMULARIOS)
+========================================================= --}}
 <script>
-// Confirmación para marcar turnado como atendido
-document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', () => {
 
-    document.querySelectorAll('.form-atender-turnado')
-        .forEach(form => {
+        // Atender turnado
+        document.querySelectorAll('.form-atender-turnado')
+            .forEach(form => {
 
-            form.addEventListener('submit', async function(e) {
+                form.addEventListener('submit', async function(e) {
+                    e.preventDefault();
 
-                e.preventDefault();
+                    const result = await Alerts.confirm(
+                        '¿Desea marcar este turnado como atendido?'
+                    );
 
-                const result = await Alerts.confirm(
-                    '¿Desea marcar este turnado como atendido?'
-                );
-
-                if(result.isConfirmed) {
-                    form.submit();
-                }
-
-            });
-
-        });
-// Confirmación para cerrar oficio
-    document.querySelectorAll('.form-cerrar-oficio')
-        .forEach(form => {
-
-            form.addEventListener('submit', async function(e) {
-
-                e.preventDefault();
-
-                const result = await Alerts.confirm(
-                    '¿Desea cerrar este oficio?'
-                );
-
-                if (result.isConfirmed) {
-                    form.submit();
-                }
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
 
             });
 
+        // Cerrar oficio
+        document.querySelectorAll('.form-cerrar-oficio')
+            .forEach(form => {
+
+                form.addEventListener('submit', async function(e) {
+                    e.preventDefault();
+
+                    const result = await Alerts.confirm(
+                        '¿Desea cerrar este oficio?'
+                    );
+
+                    if (result.isConfirmed) {
+                        form.submit();
+                    }
+                });
+
+            });
+
+    });
+</script>
+
+
+{{-- =========================================================
+|  MODULO OFICIOS (MODAL GLOBAL SYSTEM)
+========================================================= --}}
+<script>
+
+window.Oficios = {
+
+    /*
+    |--------------------------------------------------------------------------
+    | ABRIR MODAL
+    |--------------------------------------------------------------------------
+    */
+    open(id, editable = false) {
+
+        $('#modalGlobalTitle').text('Detalle del Oficio');
+        $('#modalGlobalBody').html('<div class="text-center">Cargando...</div>');
+
+        ModalState.reset();
+
+        const canEdit = Oficios.canEdit();
+
+        // Mostrar/ocultar footer según permisos
+        $('#modalGlobalFooter').toggle(canEdit);
+
+        // Reset botón guardar
+        $('#btnGuardarOficio')
+            .prop('disabled', true);
+
+        $('#modalGlobal').modal('show');
+
+        Oficios.bindClose();
+
+        $.get('/oficios/' + id + '/detalle', (oficio) => {
+
+            ModalState.original = oficio;
+
+            const html = this.renderDetalle(oficio, canEdit);
+
+            $('#modalGlobalBody').html(html);
+
+            if (canEdit) {
+                this.enableChangeDetection();
+                this.bindSave();
+            }
+
         });
 
-});
+    },
+
+    /*
+    |--------------------------------------------------------------------------
+    | PERMISOS
+    |--------------------------------------------------------------------------
+    */
+    canEdit() {
+        return window.USER_CAN_EDIT === true;
+    },
+
+    /*
+    |--------------------------------------------------------------------------
+    | RENDER
+    |--------------------------------------------------------------------------
+    */
+    renderDetalle(oficio, editable = false) {
+
+        const ro = editable ? '' : 'readonly';
+
+        return `
+            <div class="row">
+
+                <div class="col-md-6">
+                    <label>Número de Oficio</label>
+                    <input class="form-control" name="numero_oficio"
+                        value="${oficio.numero_oficio ?? ''}" ${ro}>
+                </div>
+
+                <div class="col-md-6">
+                    <label>Consecutivo</label>
+                    <input class="form-control" name="consecutivo"
+                        value="${oficio.consecutivo ?? ''}" ${ro}>
+                </div>
+
+                <div class="col-md-12 mt-3">
+                    <label>Asunto</label>
+                    <input class="form-control" name="asunto"
+                        value="${oficio.asunto ?? ''}" ${ro}>
+                </div>
+
+                <div class="col-md-12 mt-3">
+                    <label>Descripción</label>
+                    <textarea class="form-control" name="descripcion" ${ro}>${oficio.descripcion ?? ''}</textarea>
+                </div>
+
+            </div>
+        `;
+    },
+
+    /*
+    |--------------------------------------------------------------------------
+    | DETECTAR CAMBIOS
+    |--------------------------------------------------------------------------
+    */
+    enableChangeDetection() {
+
+        const $inputs = $('#modalGlobalBody').find('input, textarea');
+
+        $inputs.off('input.oficios').on('input.oficios', () => {
+
+            ModalState.changed = true;
+
+            $('#btnGuardarOficio').prop('disabled', false);
+
+        });
+
+    },
+
+    /*
+    |--------------------------------------------------------------------------
+    | CERRAR
+    |--------------------------------------------------------------------------
+    */
+    bindClose() {
+
+    $(document).off('click', '.btn-cerrar-modal');
+
+        $(document).on('click', '.btn-cerrar-modal', function () {
+
+            if (ModalState.changed) {
+
+                Alerts.confirm('Tienes cambios sin guardar. ¿Cerrar?')
+                    .then(result => {
+
+                        if (result.isConfirmed) {
+                            $('#modalGlobal').modal('hide');
+                        }
+
+                    });
+
+            } else {
+                $('#modalGlobal').modal('hide');
+            }
+
+        });
+
+    },
+
+    /*
+    |--------------------------------------------------------------------------
+    | GUARDAR
+    |--------------------------------------------------------------------------
+    */
+    bindSave() {
+
+        $('#btnGuardarOficio')
+            .off('click')
+            .on('click', () => {
+
+                const data = {};
+
+                $('#modalGlobalBody')
+                    .find('input, textarea')
+                    .each(function () {
+                        const name = $(this).attr('name');
+                        if (name) {
+                            data[name] = $(this).val();
+                        }
+                    });
+
+                $.ajax({
+                    url: `/oficios/${ModalState.original.id}`,
+                    method: 'POST',
+                    data: {
+                        ...data,
+                        _method: 'PUT',
+                        _token: $('meta[name="csrf-token"]').attr('content')
+                    },
+
+                    success: () => {
+
+                        Alerts.success('Oficio actualizado');
+
+                        ModalState.changed = false;
+
+                        $('#btnGuardarOficio').prop('disabled', true);
+
+                        $('#modalGlobal').modal('hide');
+                    },
+
+                    error: (xhr) => {
+                        console.log(xhr.responseText);
+                        Alerts.error('Error al guardar');
+                    }
+                });
+
+            });
+
+    }
+
+};
+
+window.ModalState = {
+
+    original: null,
+    changed: false,
+
+    reset() {
+        this.original = null;
+        this.changed = false;
+    }
+
+};
 
 </script>
+
+
+{{-- =========================================================
+|  MODAL GLOBAL (REUTILIZABLE)
+========================================================= --}}
+<div class="modal fade" id="modalGlobal" tabindex="-1" role="dialog" data-backdrop="static">
+
+    <div class="modal-dialog modal-xl" role="document">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+
+                <h5 class="modal-title" id="modalGlobalTitle">Cargando...</h5>
+
+                <button type="button" class="close btn-cerrar-modal">
+                    <span>&times;</span>
+                </button>
+
+            </div>
+
+            <div class="modal-body" id="modalGlobalBody">
+                Cargando...
+            </div>
+
+            <div class="modal-footer" id="modalGlobalFooter">
+
+                <button type="button" class="btn btn-secondary btn-cerrar-modal">
+                    Cerrar
+                </button>
+
+                <button type="button" class="btn btn-success" id="btnGuardarOficio" disabled>
+                    Guardar cambios
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
 
 </body>
 </html>

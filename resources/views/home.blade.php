@@ -80,9 +80,9 @@
 
                                         <td>
 
-                                            <a href="{{ route('oficios.show', $turnado->oficio->id) }}" class="btn btn-sm btn-primary">
+                                            <button class="btn btn-primary btn-ver-oficio" data-id="{{ $turnado->oficio->id }}">
                                                 Ver
-                                            </a>
+                                            </button>
 
                                             <form method="POST" action="{{ route('turnados.atender', $turnado) }}" class="d-inline form-atender-turnado">
                                                 @csrf
@@ -166,9 +166,9 @@
                                             <td>{{ $oficio->asunto }}</td>
 
                                             <td>
-                                                <a href="{{ route ('oficios.show', $oficio) }}" class="btn btn-primary btn-sm">
+                                                <button class="btn btn-primary btn-ver-oficio" data-id="{{ $oficio->id }}">
                                                     Ver
-                                                </a>
+                                                </button>
 
                                                 <form method="POST" action="{{ route('oficios.cerrar', $oficio) }}" class="d-inline form-cerrar-oficio">
                                                     @csrf
@@ -219,6 +219,7 @@
 
 $(document).ready(function () {
 
+    // Tabs de las tablas
     $('#homeTabs a').on('click', function (e) {
         e.preventDefault();
         $(this).tab('show');
@@ -230,6 +231,10 @@ $(document).ready(function () {
         $('#homeTabs a[href="' + hash + '"]').tab('show');
     }
 
+    // Modal detalles del oficio
+    $('.btn-ver-oficio').on('click', function () {
+        Oficios.open($(this).data('id'), false);
+    });
 });
 
 </script>

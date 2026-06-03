@@ -76,9 +76,21 @@ Route::middleware('auth')->group(function () {
     Route::get('/oficios/{oficio}', [OficioController::class, 'show'])
         ->name('oficios.show');
 
+    //endpoint para obtener datos 
+    Route::get(
+        '/oficios/{oficio}/detalle',
+        [OficioController::class, 'detalle']
+    )->name('oficios.detalle');
+
+    Route::get('/oficios/{oficio}/detalle', [OficioController::class, 'detalle']);
+
     // CREAR
     Route::post('/oficios', [OficioController::class, 'store'])
         ->name('oficios.store');
+
+    // ACTUALIZAR OFICIO (EDITAR)
+    Route::put('/oficios/{oficio}', [OficioController::class, 'update'])
+        ->name('oficios.update');
 
     // TURNAR
     Route::post('/oficios/{oficio}/turnar', [OficioController::class, 'turnar'])

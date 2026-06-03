@@ -36,7 +36,7 @@ class UsersSeeder extends Seeder
 
         $recepcion = User::create([
             'name' => 'Daniela Ruiz',
-            'email' => 'recepcion@seasea.test',
+            'email' => 'recepcion@sesea.test',
             'password' => Hash::make('123456789'),
         ]);
 
@@ -59,7 +59,7 @@ class UsersSeeder extends Seeder
 
         $juridico = User::create([
             'name' => 'Dania Perez',
-            'email' => 'juridico@seasea.test',
+            'email' => 'juridico@sesea.test',
             'password' => Hash::make('123456789'),
         ]);
 
@@ -73,7 +73,7 @@ class UsersSeeder extends Seeder
 
         $riesgos = User::create([
             'name' => 'Oscar Arroyo',
-            'email' => 'riesgos@seasea.test',
+            'email' => 'riesgos@sesea.test',
             'password' => Hash::make('123456789'),
         ]);
 
