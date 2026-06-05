@@ -19,6 +19,12 @@ class CoordinacionesSeeder extends Seeder
             ],
 
             [
+                'clave' => 'CS',
+                'nombre' => 'Oficina del C. Secretario',
+                'activo' => true,
+            ],
+
+            [
                 'clave' => 'VIN',
                 'nombre' => 'Vinculación',
                 'activo' => true,

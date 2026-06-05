@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreOficioRequest;
 use App\Models\Oficio;
 use App\Models\Turnado;
+use App\Models\EstadoOficio;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -91,7 +92,7 @@ class OficioController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | GUARDAR OFICIO / CREAR
+    | GUARDAR / CREAR
     |--------------------------------------------------------------------------
     */
     public function store(StoreOficioRequest $request)
@@ -99,42 +100,40 @@ class OficioController extends Controller
         $this->authorize('create', Oficio::class);
 
         $oficio = Oficio::create([
-            'uuid' => (string) Str::uuid(),
+        'uuid' => (string) Str::uuid(),
 
-            'numero_oficio' => $request->numero_oficio,
-            'consecutivo' => $request->consecutivo,
+        'numero_oficio' => $request->numero_oficio,
+        'consecutivo' => $request->consecutivo,
+        'tipo_oficio_id' => $request->tipo_oficio_id,
+        'asunto' => $request->asunto,
+        'descripcion' => $request->descripcion,
 
-            'tipo_oficio_id' => $request->tipo_oficio_id,
-            'estado_id' => $request->estado_id,
+        'fecha_oficio' => $request->fecha_oficio,
+        'fecha_recepcion' => $request->fecha_recepcion,
+        'fecha_limite' => $request->fecha_limite,
 
-            'asunto' => $request->asunto,
-            'descripcion' => $request->descripcion,
+        'requiere_respuesta' => $request->requiere_respuesta ?? 0,
+        'es_sensible' => $request->es_sensible ?? 0,
 
-            'fecha_oficio' => $request->fecha_oficio,
-            'fecha_recepcion' => $request->fecha_recepcion,
-            'fecha_limite' => $request->fecha_limite,
+        'remitente_nombre' => $request->remitente_nombre,
+        'remitente_cargo' => $request->remitente_cargo,
+        'remitente_dependencia' => $request->remitente_dependencia,
 
-            'requiere_respuesta' => $request->requiere_respuesta ?? false,
-            'es_sensible' => $request->es_sensible ?? false,
+        'destinatario_nombre' => $request->destinatario_nombre,
+        'destinatario_cargo' => $request->destinatario_cargo,
+        'destinatario_dependencia' => $request->destinatario_dependencia,
 
-            'remitente_nombre' => $request->remitente_nombre,
-            'remitente_cargo' => $request->remitente_cargo,
-            'remitente_dependencia' => $request->remitente_dependencia,
+        'quien_elabora_nombre' => $request->quien_elabora_nombre,
+        'quien_elabora_cargo' => $request->quien_elabora_cargo,
 
-            'destinatario_nombre' => $request->destinatario_nombre,
-            'destinatario_cargo' => $request->destinatario_cargo,
-            'destinatario_dependencia' => $request->destinatario_dependencia,
+        'link_documento' => $request->link_documento,
 
-            'quien_elabora_nombre' => $request->quien_elabora_nombre,
-            'quien_elabora_cargo' => $request->quien_elabora_cargo,
-
-            'responsable_inicial_id' => auth()->id(),
-            'coordinacion_origen_id' => $request->coordinacion_origen_id,
-            'usuario_registro_id' => auth()->id(),
-
-            'link_documento' => $request->link_documento,
-
-        ]);
+        // SISTEMA 
+        'estado_id' => EstadoOficio::REGISTRADO,
+        'usuario_registro_id' => auth()->id(),
+        'responsable_inicial_id' => auth()->id(),
+        'coordinacion_origen_id' => 1,
+    ]);
 
         // EVENTO BASE DE TRAZABILIDAD (mínimo viable)
         $oficio->historial()->create([
@@ -156,16 +155,43 @@ class OficioController extends Controller
     */
     public function update(Request $request, Oficio $oficio)
     {
-        $this->authorize('update', $oficio);
-
         $oficio->update([
+
             'numero_oficio' => $request->numero_oficio,
             'consecutivo' => $request->consecutivo,
+
             'asunto' => $request->asunto,
             'descripcion' => $request->descripcion,
+
+            'fecha_oficio' => $request->fecha_oficio,
+            'fecha_recepcion' => $request->fecha_recepcion,
+            'fecha_limite' => $request->fecha_limite,
+
+            'requiere_respuesta' => $request->boolean('requiere_respuesta'),
+            'es_sensible' => $request->boolean('es_sensible'),
+
+            'remitente_nombre' => $request->remitente_nombre,
+            'remitente_cargo' => $request->remitente_cargo,
+            'remitente_dependencia' => $request->remitente_dependencia,
+
+            'destinatario_nombre' => $request->destinatario_nombre,
+            'destinatario_cargo' => $request->destinatario_cargo,
+            'destinatario_dependencia' => $request->destinatario_dependencia,
+
+            'quien_elabora_nombre' => $request->quien_elabora_nombre,
+            'quien_elabora_cargo' => $request->quien_elabora_cargo,
+
+            'link_documento' => $request->link_documento,
+        ]);
+
+        $oficio->historial()->create([
+            'usuario_id' => auth()->id(),
+            'accion' => 'oficio_editado',
+            'descripcion' => 'Se actualizaron datos generales del oficio',
         ]);
 
         return response()->json([
+            'success' => true,
             'message' => 'Oficio actualizado correctamente'
         ]);
     }
@@ -173,19 +199,41 @@ class OficioController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | DETALLE OFICIO (endpoint para obtener datos)
+    | DETALLE OFICIO
     |--------------------------------------------------------------------------
     */
     public function detalle(Oficio $oficio)
     {
         return response()->json([
+
             'id' => $oficio->id,
+
             'numero_oficio' => $oficio->numero_oficio,
             'consecutivo' => $oficio->consecutivo,
+
             'asunto' => $oficio->asunto,
             'descripcion' => $oficio->descripcion,
+
             'fecha_oficio' => $oficio->fecha_oficio,
             'fecha_recepcion' => $oficio->fecha_recepcion,
+            'fecha_limite' => $oficio->fecha_limite,
+
+            'requiere_respuesta' => $oficio->requiere_respuesta,
+            'es_sensible' => $oficio->es_sensible,
+
+            'remitente_nombre' => $oficio->remitente_nombre,
+            'remitente_cargo' => $oficio->remitente_cargo,
+            'remitente_dependencia' => $oficio->remitente_dependencia,
+
+            'destinatario_nombre' => $oficio->destinatario_nombre,
+            'destinatario_cargo' => $oficio->destinatario_cargo,
+            'destinatario_dependencia' => $oficio->destinatario_dependencia,
+
+            'quien_elabora_nombre' => $oficio->quien_elabora_nombre,
+            'quien_elabora_cargo' => $oficio->quien_elabora_cargo,
+
+            'link_documento' => $oficio->link_documento,
+
             'estado' => $oficio->estado->nombre ?? null,
         ]);
     }
@@ -215,17 +263,17 @@ class OficioController extends Controller
     */
     public function turnar(Request $request, Oficio $oficio)
     {
-        if ($oficio->estado_id == 5) {
+        if ($oficio->estado_id == EstadoOficio::CERRADO ) {
             return back()->with('error', 'No se puede turnar un oficio cerrado');
         }
-        
+
         $request->validate([
             'usuario_id' => 'required',
             'coordinacion_id' => 'required',
             'tipo_participacion_id' => 'required',
         ]);
 
-        \App\Models\Turnado::create([
+        $turnado = \App\Models\Turnado::create([
             'oficio_id' => $oficio->id,
             'usuario_id' => $request->usuario_id,
             'coordinacion_id' => $request->coordinacion_id,
@@ -238,6 +286,14 @@ class OficioController extends Controller
             'es_principal' => true,
             'observaciones' => $request->observaciones,
         ]);
+
+        /* Si el tipo de participación es "responsable", actualizar la coordinación origen del oficio */
+        if ((int) $request->tipo_participacion_id === 1) {
+
+            $oficio->update([
+                'coordinacion_origen_id' => $request->coordinacion_id,
+            ]);
+        }
 
         return back()->with('success', 'Oficio turnado correctamente');
     }
@@ -296,7 +352,7 @@ class OficioController extends Controller
         }
 
         $oficio->update([
-            'estado_id' => 5, // cerrado
+            'estado_id' => EstadoOficio::CERRADO,
             'cerrado_en' => now(),
         ]);
 
