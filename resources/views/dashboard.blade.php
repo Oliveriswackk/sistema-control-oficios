@@ -1,3 +1,5 @@
+{{-- Vista Oficios --}}
+
 @extends('layouts.app')
 <style>
 
@@ -71,6 +73,17 @@
     </button>
 </div>
 
+
+{{-- Filtros de búsqueda --}}
+
+<form method="GET">
+
+    @include('oficios.partials.oficio-search')
+
+</form>
+
+
+{{-- Tabla de Oficios --}}
 <div class="card shadow mb-4">
 
     <div class="card-header py-3">

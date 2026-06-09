@@ -1,3 +1,5 @@
+{{-- Vista Bandeja de Trabajo --}}
+
 @extends('layouts.app')
 
 @section('content')

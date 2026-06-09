@@ -72,7 +72,7 @@
 </div>
 
 <div class="col-md-12 mb-3">
-    <label>Link documento</label>
+    <label>Link</label>
     <input type="text" name="link_documento" class="form-control form-control-sm">
 </div>
 
