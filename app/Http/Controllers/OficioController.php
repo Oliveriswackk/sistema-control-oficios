@@ -307,6 +307,19 @@ class OficioController extends Controller
     }
 
 
+    public function turnarModal(Oficio $oficio)
+    {
+        $coordinaciones = \App\Models\Coordinacion::with('users')->get();
+
+        $tiposParticipacion = \App\Models\TipoParticipacion::all();
+
+        return view('oficios.modals.turnar', compact(
+            'oficio',
+            'coordinaciones',
+            'tiposParticipacion'
+        ));
+    }
+
     /*
     |--------------------------------------------------------------------------
     | ATENDER TURNADO

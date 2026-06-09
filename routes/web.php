@@ -79,43 +79,37 @@ Route::middleware('auth')->group(function () {
     | OFICIOS
     |--------------------------------------------------------------------------
     */
-
+    
     // LISTADO
     Route::get('/oficios', [OficioController::class, 'index'])
         ->name('oficios.index');
 
-    // DETALLE
-    Route::get('/oficios/{oficio}', [OficioController::class, 'show'])
-        ->name('oficios.show');
-
-    //endpoint para obtener datos 
-    Route::get(
-        '/oficios/{oficio}/detalle',
-        [OficioController::class, 'detalle']
-    )->name('oficios.detalle');
-
-    Route::get('/oficios/{oficio}/detalle', [OficioController::class, 'detalle']);
+    // DETALLE (HTML modal o vista)
+    Route::get('/oficios/{oficio}/detalle', [OficioController::class, 'detalle'])
+        ->name('oficios.detalle');
 
     // CREAR
     Route::post('/oficios', [OficioController::class, 'store'])
         ->name('oficios.store');
 
-    // ACTUALIZAR OFICIO (EDITAR)
+    // ACTUALIZAR
     Route::put('/oficios/{oficio}', [OficioController::class, 'update'])
         ->name('oficios.update');
 
-    // TURNAR
+    // MODAL TURNAR (GET)
+    Route::get('/oficios/{oficio}/turnar', [OficioController::class, 'turnarModal'])
+        ->name('oficios.turnar.modal');
+
+    // GUARDAR TURNAR (POST SINGLE)
     Route::post('/oficios/{oficio}/turnar', [OficioController::class, 'turnar'])
         ->middleware('permission:puede_turnar')
         ->name('oficios.turnar');
-
-    Route::post('/turnados/{turnado}/atender', [OficioController::class, 'atender'])
-        ->name('turnados.atender');
 
     // CERRAR
     Route::post('/oficios/{oficio}/cerrar', [OficioController::class, 'cerrar'])
         ->middleware('permission:puede_cerrar')
         ->name('oficios.cerrar');
+    
 
     /*
     |--------------------------------------------------------------------------

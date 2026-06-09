@@ -509,6 +509,25 @@ window.Oficios = {
 
 };
 
+$(document).on('change', '.turnado-check', function () {
+
+    const row = $(this).closest('tr');
+    const select = row.find('.tipo-participacion');
+
+    if (this.checked) {
+
+        row.addClass('table-primary');
+        select.prop('disabled', false);
+
+    } else {
+
+        row.removeClass('table-primary');
+        select.prop('disabled', true).val('');
+
+    }
+
+});
+
 window.ModalState = {
 
     original: null,

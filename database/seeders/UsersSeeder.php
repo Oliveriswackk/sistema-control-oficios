@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\User;
 use App\Models\Rol;
+use App\Models\Permiso;
 use Illuminate\Support\Facades\Hash;
 
 class UsersSeeder extends Seeder
@@ -14,12 +15,13 @@ class UsersSeeder extends Seeder
         $adminRole = Rol::where('clave', 'admin')->first();
         $capturaRole = Rol::where('clave', 'captura')->first();
 
+        $permisoCerrar = Permiso::where('clave', 'puede_cerrar')->first();
+
         /*
         |--------------------------------------------------------------------------
         | ADMIN
         |--------------------------------------------------------------------------
         */
-
         $admin = User::create([
             'name' => 'Oliver Coronado',
             'email' => 'admin@sesea.test',
@@ -28,12 +30,15 @@ class UsersSeeder extends Seeder
 
         $admin->roles()->attach($adminRole->id);
 
+        $admin->coordinaciones()->attach([
+            1, 2
+        ]);
+
         /*
         |--------------------------------------------------------------------------
         | RECEPCIÓN
         |--------------------------------------------------------------------------
         */
-
         $recepcion = User::create([
             'name' => 'Daniela Ruiz',
             'email' => 'recepcion@sesea.test',
@@ -42,21 +47,17 @@ class UsersSeeder extends Seeder
 
         $recepcion->roles()->attach($capturaRole->id);
 
-        $permisoCerrar = \App\Models\Permiso::where(
-            'clave',
-            'puede_cerrar'
-        )->first();
+        $recepcion->permisos()->attach($permisoCerrar->id);
 
-        $recepcion->permisos()->attach(
-            $permisoCerrar->id
-        );
+        $recepcion->coordinaciones()->attach([
+            1
+        ]);
 
         /*
         |--------------------------------------------------------------------------
         | JURÍDICO
         |--------------------------------------------------------------------------
         */
-
         $juridico = User::create([
             'name' => 'Dania Perez',
             'email' => 'juridico@sesea.test',
@@ -65,12 +66,15 @@ class UsersSeeder extends Seeder
 
         $juridico->roles()->attach($capturaRole->id);
 
+        $juridico->coordinaciones()->attach([
+            2
+        ]);
+
         /*
         |--------------------------------------------------------------------------
         | RIESGOS
         |--------------------------------------------------------------------------
         */
-
         $riesgos = User::create([
             'name' => 'Oscar Arroyo',
             'email' => 'riesgos@sesea.test',
@@ -78,5 +82,9 @@ class UsersSeeder extends Seeder
         ]);
 
         $riesgos->roles()->attach($capturaRole->id);
+
+        $riesgos->coordinaciones()->attach([
+            3
+        ]);
     }
 }

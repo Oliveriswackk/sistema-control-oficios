@@ -60,6 +60,17 @@ class User extends Authenticatable
     |--------------------------------------------------------------------------
     */
 
+    public function coordinaciones()
+    {
+        return $this->belongsToMany(
+            Coordinacion::class,
+            'coordinacion_user',
+            'user_id',
+            'coordinacion_id'
+        );
+    }
+
+
     public function roles(): BelongsToMany
     {
         return $this->belongsToMany(

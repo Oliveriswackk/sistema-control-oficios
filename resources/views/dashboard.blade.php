@@ -177,5 +177,25 @@ $(document).ready(function () {
 
 });
 
+// Abrir modal Turnar
+function abrirTurnar(oficioId) {
+
+    $('#modalGlobalTitle').text('Turnar oficio');
+
+    $('#modalGlobalBody').html('<div class="text-center p-3">Cargando...</div>');
+
+    $('#modalGlobal').modal('show');
+
+    $.ajax({
+        url: `/oficios/${oficioId}/turnar`,
+        method: 'GET',
+        success: function (html) {
+            $('#modalGlobalBody').html(html);
+        },
+        error: function () {
+            $('#modalGlobalBody').html('<div class="text-danger p-3">Error cargando modal</div>');
+        }
+    });
+}
 </script>
 @endsection
