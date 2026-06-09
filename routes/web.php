@@ -62,6 +62,18 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])
         ->name('profile.destroy');
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | FILTROS Y DATATABLES
+    |--------------------------------------------------------------------------
+    */
+
+    // Consumo para tablas de oficos
+    Route::get('/oficios/datatable', [OficioController::class, 'datatable'])
+        ->name('oficios.datatable');
+
+    
     /*
     |--------------------------------------------------------------------------
     | OFICIOS

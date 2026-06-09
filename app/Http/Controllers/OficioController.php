@@ -364,4 +364,92 @@ class OficioController extends Controller
 
         return back()->with('success', 'Oficio cerrado');
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | DATATABLE
+    |--------------------------------------------------------------------------
+    */
+    public function datatable(Request $request)
+    {
+        $query = Oficio::with('estado');
+
+        /*
+        |--------------------------------------------------------------------------
+        | Número de oficio
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->filled('numero_oficio')) {
+
+            $query->where(
+                'numero_oficio',
+                'like',
+                '%' . $request->numero_oficio . '%'
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Asunto
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->filled('asunto')) {
+
+            $query->where(
+                'asunto',
+                'like',
+                '%' . $request->asunto . '%'
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Remitente
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->filled('remitente_dependencia')) {
+
+            $query->where(
+                'remitente_dependencia',
+                'like',
+                '%' . $request->remitente_dependencia . '%'
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Destinatario
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->filled('destinatario_dependencia')) {
+
+            $query->where(
+                'destinatario_dependencia',
+                'like',
+                '%' . $request->destinatario_dependencia . '%'
+            );
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Coordinación origen
+        |--------------------------------------------------------------------------
+        */
+
+        if ($request->filled('coordinacion_origen_id')) {
+
+            $query->where(
+                'coordinacion_origen_id',
+                $request->coordinacion_origen_id
+            );
+        }
+
+        return response()->json(
+            $query->latest()->get()
+        );
+    }
 }
