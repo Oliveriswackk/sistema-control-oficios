@@ -365,32 +365,28 @@ window.Oficios = {
 
         const canEdit = Oficios.canEdit();
 
-        // Mostrar/ocultar footer según permisos
-        $('#modalGlobalFooter').toggle(canEdit);
-
-        // Reset botón guardar
         $('#btnGuardarOficio')
+            .toggle(canEdit)
             .prop('disabled', true);
 
         $('#modalGlobal').modal('show');
 
-        Oficios.bindClose();
-
-        $.get('/oficios/' + id + '/detalle', (oficio) => {
-
-            ModalState.original = oficio;
-
-            const html = this.renderDetalle(oficio, canEdit);
+        $.get('/oficios/' + id + '/detalle', (html) => {
 
             $('#modalGlobalBody').html(html);
 
+            ModalState.original = { id };
+
+            Oficios.enableChangeDetection();
+
             if (canEdit) {
-                this.enableChangeDetection();
-                this.bindSave();
+                Oficios.bindSave();
             }
+
         });
 
     },
+
 
     /*
     |--------------------------------------------------------------------------
@@ -401,328 +397,6 @@ window.Oficios = {
         return window.USER_CAN_EDIT === true;
     },
 
-    /*
-    |--------------------------------------------------------------------------
-    | RENDER (mismios campos al crear)
-    |--------------------------------------------------------------------------
-    */
-    renderDetalle(oficio, editable = false) {
-
-        const ro = editable ? '' : 'readonly';
-
-        const disabled = editable ? '' : 'disabled';
-
-        const tipo = String(oficio.tipo_oficio_id ?? '');
-        const req = Number(oficio.requiere_respuesta || 0);
-        const sens = Number(oficio.es_sensible || 0);
-        
-        return `
-            <div>
-
-                {{-- =========================
-                    IDENTIFICACIÓN
-                ========================= --}}
-                <h6 class="text-primary font-weight-bold mb-2">Identificación</h6>
-
-                <div class="row">
-
-                    <div class="col-md-4 mb-2">
-                        <label>Número Oficio</label>
-                        <input type="text" name="numero_oficio"
-                            class="form-control form-control-sm"
-                            value="${oficio.numero_oficio ?? ''}" ${ro}>
-                    </div>
-
-                    <div class="col-md-4 mb-2">
-                        <label>Consecutivo</label>
-                        <input type="text" name="consecutivo"
-                            class="form-control form-control-sm"
-                            value="${oficio.consecutivo ?? ''}" ${ro}>
-                    </div>
-
-                    <div class="col-md-4 mb-2">
-                        <label>Asunto</label>
-                        <input type="text" name="asunto"
-                            class="form-control form-control-sm"
-                            value="${oficio.asunto ?? ''}" ${ro}>
-                    </div>
-
-                </div>
-
-                {{-- =========================
-                    FECHAS
-                ========================= --}}
-                <div class="row">
-
-                    <div class="col-md-4 mb-2">
-                        <label>Fecha oficio</label>
-                        <input type="date" name="fecha_oficio"
-                            class="form-control form-control-sm"
-                            value="${oficio.fecha_oficio ? oficio.fecha_oficio.substring(0, 10) : ''}" ${ro}>
-                    </div>
-
-                    <div class="col-md-4 mb-2">
-                        <label>Fecha recepción</label>
-                        <input type="date" name="fecha_recepcion"
-                            class="form-control form-control-sm"
-                            value="${oficio.fecha_recepcion ? oficio.fecha_recepcion.substring(0, 10) : ''}" ${ro}>
-                    </div>
-
-                    <div class="col-md-4 mb-2">
-                        <label>Fecha límite</label>
-                        <input type="date" name="fecha_limite"
-                            class="form-control form-control-sm"
-                            value="${oficio.fecha_limite ? oficio.fecha_limite.substring(0, 10) : ''}" ${ro}>
-                    </div>
-
-                </div>
-
-                {{-- =========================
-                    CONTENIDO
-                ========================= --}}
-                <h6 class="text-primary font-weight-bold mb-2">Contenido del Oficio</h6>
-
-                <div class="col-md-12 mb-3">
-
-                    <label>Descripción</label>
-
-                    <textarea name="descripcion"
-                        class="form-control form-control-sm"
-                        rows="3" ${ro}>${oficio.descripcion ?? ''}</textarea>
-
-                </div>
-
-                <div class="col-md-12 mb-3">
-                    <label>Link documento</label>
-                    <input type="text" name="link_documento"
-                        class="form-control form-control-sm"
-                        value="${oficio.link_documento ?? ''}" ${ro}>
-                </div>
-
-                {{-- =========================
-                    REMITENTE
-                ========================= --}}
-                <h6 class="text-primary font-weight-bold mb-2">Remitente</h6>
-
-                <div class="row">
-
-                    <div class="col-md-4 mb-2">
-                        <label>Nombre</label>
-                        <input type="text" name="remitente_nombre"
-                            class="form-control form-control-sm"
-                            value="${oficio.remitente_nombre ?? ''}" ${ro}>
-                    </div>
-
-                    <div class="col-md-4 mb-2">
-                        <label>Cargo</label>
-                        <input type="text" name="remitente_cargo"
-                            class="form-control form-control-sm"
-                            value="${oficio.remitente_cargo ?? ''}" ${ro}>
-                    </div>
-
-                    <div class="col-md-4 mb-2">
-                        <label>Dependencia</label>
-                        <input type="text" name="remitente_dependencia"
-                            class="form-control form-control-sm"
-                            value="${oficio.remitente_dependencia ?? ''}" ${ro}>
-                    </div>
-
-                </div>
-
-                {{-- =========================
-                    DESTINATARIO
-                ========================= --}}
-                <h6 class="text-primary font-weight-bold mb-2">Destinatario</h6>
-
-                <div class="row">
-
-                    <div class="col-md-4 mb-2">
-                        <label>Nombre</label>
-                        <input type="text" name="destinatario_nombre"
-                            class="form-control form-control-sm"
-                            value="${oficio.destinatario_nombre ?? ''}" ${ro}>
-                    </div>
-
-                    <div class="col-md-4 mb-2">
-                        <label>Cargo</label>
-                        <input type="text" name="destinatario_cargo"
-                            class="form-control form-control-sm"
-                            value="${oficio.destinatario_cargo ?? ''}" ${ro}>
-                    </div>
-
-                    <div class="col-md-4 mb-2">
-                        <label>Dependencia</label>
-                        <input type="text" name="destinatario_dependencia"
-                            class="form-control form-control-sm"
-                            value="${oficio.destinatario_dependencia ?? ''}" ${ro}>
-                    </div>
-
-                </div>
-
-                {{-- =========================
-                    ELABORADOR
-                ========================= --}}
-                <h6 class="text-primary font-weight-bold mb-2">Elaborador</h6>
-
-                <div class="row">
-
-                    <div class="col-md-4 mb-2">
-                        <label>Nombre</label>
-                        <input type="text" name="quien_elabora_nombre"
-                            class="form-control form-control-sm"
-                            value="${oficio.quien_elabora_nombre ?? ''}" ${ro}>
-                    </div>
-
-                    <div class="col-md-4 mb-2">
-                        <label>Cargo</label>
-                        <input type="text" name="quien_elabora_cargo"
-                            class="form-control form-control-sm"
-                            value="${oficio.quien_elabora_cargo ?? ''}" ${ro}>
-                    </div>
-
-                </div>
-
-
-                {{-- =========================
-                    FLAGS OPERATIVOS
-                ========================= --}}
-                <h6 class="text-primary font-weight-bold mb-2">Configuración</h6>
-
-                <div class="row">
-
-                    {{-- REQUIERE RESPUESTA --}}
-                    <div class="col-md-4 mb-2">
-
-                        <label>Requiere respuesta</label>
-
-                        <div class="d-flex">
-
-                            <div class="custom-control custom-radio mr-3">
-                                <input
-                                    type="radio"
-                                    id="req_no"
-                                    name="requiere_respuesta"
-                                    value="0"
-                                    class="custom-control-input"
-                                    ${oficio.requiere_respuesta == 0 ? 'checked' : ''}
-                                    ${ro}
-                                >
-                                <label class="custom-control-label" for="req_no">No</label>
-                            </div>
-
-                            <div class="custom-control custom-radio">
-                                <input
-                                    type="radio"
-                                    id="req_si"
-                                    name="requiere_respuesta"
-                                    value="1"
-                                    class="custom-control-input"
-                                    ${oficio.requiere_respuesta == 1 ? 'checked' : ''}
-                                    ${ro}
-                                >
-                                <label class="custom-control-label" for="req_si">Sí</label>
-                            </div>
-
-                        </div>
-                    </div>
-
-                    {{-- SENSIBLE --}}
-                    <div class="col-md-4 mb-2">
-
-                        <label>Documento sensible</label>
-
-                        <div class="d-flex">
-
-                            <div class="custom-control custom-radio mr-3">
-                                <input
-                                    type="radio"
-                                    id="sens_no"
-                                    name="es_sensible"
-                                    value="0"
-                                    class="custom-control-input"
-                                    ${oficio.es_sensible == 0 ? 'checked' : ''}
-                                    ${ro}
-                                >
-                                <label class="custom-control-label" for="sens_no">No</label>
-                            </div>
-
-                            <div class="custom-control custom-radio">
-                                <input
-                                    type="radio"
-                                    id="sens_si"
-                                    name="es_sensible"
-                                    value="1"
-                                    class="custom-control-input"
-                                    ${oficio.es_sensible == 1 ? 'checked' : ''}
-                                    ${ro}
-                                >
-                                <label class="custom-control-label" for="sens_si">Sí</label>
-                            </div>
-
-                        </div>
-                    </div>
-
-                    {{-- TIPO OFICIO --}}
-                    <div class="col-md-4 mb-2">
-
-                        <label>Tipo de oficio</label>
-
-                        <div>
-
-                            <div class="custom-control custom-radio">
-                                <input
-                                    type="radio"
-                                    id="tipo_enviado"
-                                    name="tipo_oficio_id"
-                                    value="1"
-                                    class="custom-control-input"
-                                    ${tipo === '1' ? 'checked' : ''}
-                                    ${ro}
-                                >
-                                <label class="custom-control-label" for="tipo_enviado">
-                                    Enviado
-                                </label>
-                            </div>
-
-                            <div class="custom-control custom-radio">
-                                <input
-                                    type="radio"
-                                    id="tipo_recibido"
-                                    name="tipo_oficio_id"
-                                    value="2"
-                                    class="custom-control-input"
-                                    ${tipo === '2' ? 'checked' : ''}
-                                    ${ro}
-                                >
-                                <label class="custom-control-label" for="tipo_recibido">
-                                    Recibido
-                                </label>
-                            </div>
-
-                            <div class="custom-control custom-radio">
-                                <input
-                                    type="radio"
-                                    id="tipo_cpc"
-                                    name="tipo_oficio_id"
-                                    value="3"
-                                    class="custom-control-input"
-                                    ${tipo === '3' ? 'checked' : ''}
-                                    ${ro}
-                                >
-                                <label class="custom-control-label" for="tipo_cpc">
-                                    Recibido CPC
-                                </label>
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-        `;
-    },
 
     /*
     |--------------------------------------------------------------------------
@@ -731,7 +405,7 @@ window.Oficios = {
     */
     enableChangeDetection() {
 
-        const $inputs = $('#modalGlobalBody').find('input, textarea');
+        const $inputs = $('#modalGlobalBody').find('input, textarea, select');
 
         $inputs.off('input.oficios').on('input.oficios', () => {
 
@@ -786,14 +460,23 @@ window.Oficios = {
 
                 const data = {};
 
-                $('#modalGlobalBody')
-                    .find('input, textarea')
-                    .each(function () {
-                        const name = $(this).attr('name');
-                        if (name) {
+                const $container = $('#modalGlobalBody');
+
+                // inputs normales
+                $container.find('input[name], textarea[name], select[name]').each(function () {
+
+                    const name = $(this).attr('name');
+
+                    if (!name) return;
+
+                    if ($(this).is(':radio')) {
+                        if ($(this).is(':checked')) {
                             data[name] = $(this).val();
                         }
-                    });
+                    } else {
+                        data[name] = $(this).val();
+                    }
+                });
 
                 $.ajax({
                     url: `/oficios/${ModalState.original.id}`,
@@ -822,7 +505,6 @@ window.Oficios = {
                 });
 
             });
-
     }
 
 };
@@ -839,6 +521,7 @@ window.ModalState = {
 
 };
 
+window.Oficios.bindClose();
 </script>
 
 

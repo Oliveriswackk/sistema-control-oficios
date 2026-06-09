@@ -169,6 +169,7 @@ class OficioController extends Controller
 
             'requiere_respuesta' => $request->boolean('requiere_respuesta'),
             'es_sensible' => $request->boolean('es_sensible'),
+            'tipo_oficio_id' => $request->tipo_oficio_id,
 
             'remitente_nombre' => $request->remitente_nombre,
             'remitente_cargo' => $request->remitente_cargo,
@@ -201,7 +202,7 @@ class OficioController extends Controller
     |--------------------------------------------------------------------------
     | DETALLE OFICIO
     |--------------------------------------------------------------------------
-    */
+    
     public function detalle(Oficio $oficio)
     {
         return response()->json([
@@ -236,6 +237,13 @@ class OficioController extends Controller
 
             'estado' => $oficio->estado->nombre ?? null,
         ]);
+    }*/
+
+    public function detalle(Oficio $oficio)
+    {
+        $editable = auth()->user()->hasRole('admin'); 
+
+        return view('oficios.modals.detalle', compact('oficio', 'editable'));
     }
 
     /*
