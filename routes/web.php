@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\OficioController;
+use App\Http\Controllers\TurnadoController;
+use App\Models\Turnado;
 
 /*
 |--------------------------------------------------------------------------
@@ -100,16 +102,28 @@ Route::middleware('auth')->group(function () {
     Route::get('/oficios/{oficio}/turnar', [OficioController::class, 'turnarModal'])
         ->name('oficios.turnar.modal');
 
+        
     // GUARDAR TURNAR (POST SINGLE)
     Route::post('/oficios/{oficio}/turnar', [OficioController::class, 'turnar'])
         ->middleware('permission:puede_turnar')
         ->name('oficios.turnar');
+
 
     // CERRAR
     Route::post('/oficios/{oficio}/cerrar', [OficioController::class, 'cerrar'])
         ->middleware('permission:puede_cerrar')
         ->name('oficios.cerrar');
     
+
+    /*
+    |--------------------------------------------------------------------------
+    | TURNADOS
+    |--------------------------------------------------------------------------
+    */
+
+    Route::post('/turnados/{turnado}/atender', [OficioController::class, 'atender'])
+        ->name('turnados.atender');
+
 
     /*
     |--------------------------------------------------------------------------

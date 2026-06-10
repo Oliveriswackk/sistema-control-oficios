@@ -271,39 +271,70 @@ class OficioController extends Controller
     */
     public function turnar(Request $request, Oficio $oficio)
     {
-        if ($oficio->estado_id == EstadoOficio::CERRADO ) {
-            return back()->with('error', 'No se puede turnar un oficio cerrado');
+        if ($oficio->estado_id == EstadoOficio::CERRADO) {
+
+            return back()->with(
+                'error',
+                'No se puede turnar un oficio cerrado'
+            );
         }
 
-        $request->validate([
-            'usuario_id' => 'required',
-            'coordinacion_id' => 'required',
-            'tipo_participacion_id' => 'required',
-        ]);
+        $participaciones = $request->input('participacion', []);
 
-        $turnado = \App\Models\Turnado::create([
-            'oficio_id' => $oficio->id,
-            'usuario_id' => $request->usuario_id,
-            'coordinacion_id' => $request->coordinacion_id,
-            'tipo_participacion_id' => $request->tipo_participacion_id,
-            'estado_turnado_id' => 1,
+        $responsableEncontrado = false;
 
-            'turnado_por_id' => auth()->id(),
-            'turnado_en' => now(),
+        foreach ($participaciones as $coordId => $usuarios) {
 
-            'es_principal' => true,
-            'observaciones' => $request->observaciones,
-        ]);
+            foreach ($usuarios as $userId => $tipoId) {
 
-        /* Si el tipo de participación es "responsable", actualizar la coordinación origen del oficio */
-        if ((int) $request->tipo_participacion_id === 1) {
+                if (empty($tipoId)) {
+                    continue;
+                }
 
-            $oficio->update([
-                'coordinacion_origen_id' => $request->coordinacion_id,
-            ]);
+                Turnado::create([
+
+                    'oficio_id' => $oficio->id,
+
+                    'usuario_id' => $userId,
+
+                    'coordinacion_id' => $coordId,
+
+                    'tipo_participacion_id' => $tipoId,
+
+                    'estado_turnado_id' => 1,
+
+                    'turnado_por_id' => auth()->id(),
+
+                    'turnado_en' => now(),
+
+                    'es_principal' => false,
+
+                    'observaciones' => $request->observaciones,
+                ]);
+
+                if ((int)$tipoId === 1) {
+
+                    $responsableEncontrado = true;
+
+                    $oficio->update([
+                        'coordinacion_origen_id' => $coordId
+                    ]);
+                }
+            }
         }
 
-        return back()->with('success', 'Oficio turnado correctamente');
+        if (!$responsableEncontrado) {
+
+            return back()->with(
+                'error',
+                'Debe existir al menos un Responsable Operativo'
+            );
+        }
+
+        return back()->with(
+            'success',
+            'Turnado registrado correctamente'
+        );
     }
 
 

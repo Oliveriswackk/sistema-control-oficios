@@ -13,43 +13,43 @@ class CoordinacionesSeeder extends Seeder
 
         /*      == Coordinaciones Internas == */
             [
-                'clave' => 'OP',
+                'clave' => 'OP', // 1
                 'nombre' => 'Oficialía de Partes',
                 'activo' => true,
             ],
 
             [
-                'clave' => 'CS',
+                'clave' => 'CS', // 2
                 'nombre' => 'Oficina del C. Secretario',
                 'activo' => true,
             ],
 
             [
-                'clave' => 'VIN',
+                'clave' => 'VIN', // 3
                 'nombre' => 'Vinculación',
                 'activo' => true,
             ],
 
             [
-                'clave' => 'RIS',
+                'clave' => 'RIS', // 4
                 'nombre' => 'Riesgos y Políticas Públicas',
                 'activo' => true,
             ],
 
             [
-                'clave' => 'JUR',
+                'clave' => 'JUR', // 5
                 'nombre' => 'Asuntos Jurídicos',
                 'activo' => true,
             ],
             
             [
-                'clave' => 'SIS',
+                'clave' => 'SIS', // 6
                 'nombre' => 'Servicios Tecnológicos',
                 'activo' => true,
             ],
             
             [
-                'clave' => 'CA', 
+                'clave' => 'CA', // 7
                 'nombre' => 'Coordinación Administrativa',
                 'activo' => true,
             ],

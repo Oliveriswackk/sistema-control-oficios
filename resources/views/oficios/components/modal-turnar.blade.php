@@ -50,12 +50,6 @@
 
                 </div>
 
-                <div class="modal-footer">
-                    <button class="btn btn-primary" type="submit">
-                        Turnar
-                    </button>
-                </div>
-
             </div>
 
         </form>

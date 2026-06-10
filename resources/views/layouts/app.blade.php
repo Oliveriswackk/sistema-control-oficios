@@ -358,8 +358,23 @@ window.Oficios = {
     */
     open(id, editable = false) {
 
+        $('#btnGuardarOficio').show();
+
         $('#modalGlobalTitle').text('Detalle del Oficio');
+
         $('#modalGlobalBody').html('<div class="text-center">Cargando...</div>');
+        
+        $('#modalGlobalFooter').html(`
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary btn-cerrar-modal">
+                Cerrar
+            </button>
+
+            <button type="button" class="btn btn-success" id="btnGuardarOficio" disabled>
+                Guardar cambios
+            </button>
+        </div>
+        `);
 
         ModalState.reset();
 
@@ -553,6 +568,7 @@ window.Oficios.bindClose();
 
         <div class="modal-content">
 
+            {{-- Header --}}
             <div class="modal-header">
 
                 <h5 class="modal-title" id="modalGlobalTitle">Cargando...</h5>
@@ -563,20 +579,14 @@ window.Oficios.bindClose();
 
             </div>
 
+            {{-- Contenido --}}
             <div class="modal-body" id="modalGlobalBody">
                 Cargando...
             </div>
 
-            <div class="modal-footer" id="modalGlobalFooter">
-
-                <button type="button" class="btn btn-secondary btn-cerrar-modal">
-                    Cerrar
-                </button>
-
-                <button type="button" class="btn btn-success" id="btnGuardarOficio" disabled>
-                    Guardar cambios
-                </button>
-
+            {{-- Footer (vacio) --}}
+            <div id="modalGlobalFooter">
+                
             </div>
 
         </div>

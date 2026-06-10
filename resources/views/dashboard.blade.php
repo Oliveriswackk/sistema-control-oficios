@@ -143,14 +143,19 @@
                 </div>
 
                 {{-- FOOTER --}}
-                <div class="modal-footer py-2">
+                <div class="modal-footer">
 
-                    <button type="button" class="btn btn-sm btn-secondary" data-dismiss="modal">
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-dismiss="modal">
                         Cancelar
                     </button>
 
-                    <button type="submit" class="btn btn-sm btn-primary">
-                        Guardar oficio
+                    <button
+                        type="submit"
+                        class="btn btn-primary">
+                        Guardar Oficio
                     </button>
 
                 </div>
@@ -172,30 +177,137 @@ $(document).ready(function () {
 
     // Ver Detalles del Oficio
     $('.btn-ver-oficio').on('click', function () {
-        Oficios.open($(this).data('id'), false);
+
+        Oficios.open(
+            $(this).data('id'),
+            false
+        );
+
     });
 
 });
 
-// Abrir modal Turnar
+
+// =========================================================
+// ABRIR MODAL TURNAR
+// =========================================================
 function abrirTurnar(oficioId) {
 
     $('#modalGlobalTitle').text('Turnar oficio');
 
     $('#modalGlobalBody').html('<div class="text-center p-3">Cargando...</div>');
 
+    $('#modalGlobalFooter').html(`
+    <div class="modal-footer">
+        <button type="button"
+                class="btn btn-secondary btn-cerrar-modal">
+            Cerrar
+        </button>
+
+        <button type="button"
+                class="btn btn-primary"
+                id="btnGuardarTurnado">
+            Guardar turnado
+        </button>
+    </div>
+    `);
+
     $('#modalGlobal').modal('show');
 
     $.ajax({
+
         url: `/oficios/${oficioId}/turnar`,
+
         method: 'GET',
+
         success: function (html) {
+
             $('#modalGlobalBody').html(html);
+
         },
+
         error: function () {
-            $('#modalGlobalBody').html('<div class="text-danger p-3">Error cargando modal</div>');
+
+            $('#modalGlobalBody').html(
+                '<div class="text-danger p-3">Error cargando modal</div>'
+            );
+
         }
+
     });
+
 }
+
+
+// =========================================================
+// GUARDAR TURNADO
+// =========================================================
+$(document).on('click', '#btnGuardarTurnado', function () {
+
+    const form = $('#modalGlobalBody').find('form');
+
+    if (!form.length) {
+        Alerts.error('No se encontró el formulario de turnado');
+        return;
+    }
+
+    // validación simple del navegador
+    if (!form[0].checkValidity()) {
+        form[0].reportValidity();
+        return;
+    }
+
+    form.submit();
+});
+
+
+// =========================================================
+// MOSTRAR / OCULTAR COORDINACIONES
+// =========================================================
+$(document).on('change', '.coord-toggle', function () {
+
+    const id = $(this).data('id');
+
+    const block = $('#modalGlobalBody')
+        .find(`.coord-block[data-coord="${id}"]`);
+
+    if ($(this).is(':checked')) {
+
+        block.show();
+
+    } else {
+
+        block.hide();
+
+    }
+
+});
+
+
+// =========================================================
+// SELECCIÓN DE USUARIOS
+// =========================================================
+$(document).on('change', '.user-check', function () {
+
+    const row = $(this).closest('tr');
+
+    const select = row.find('.participation-select');
+
+    if ($(this).is(':checked')) {
+
+        row.addClass('table-primary');
+
+        select.prop('disabled', false);
+
+    } else {
+
+        row.removeClass('table-primary');
+
+        select.prop('disabled', true);
+
+    }
+
+});
+
 </script>
 @endsection

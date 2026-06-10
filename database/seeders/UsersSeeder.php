@@ -31,7 +31,7 @@ class UsersSeeder extends Seeder
         $admin->roles()->attach($adminRole->id);
 
         $admin->coordinaciones()->attach([
-            1, 2
+            6
         ]);
 
         /*
@@ -67,7 +67,7 @@ class UsersSeeder extends Seeder
         $juridico->roles()->attach($capturaRole->id);
 
         $juridico->coordinaciones()->attach([
-            2
+            5
         ]);
 
         /*
@@ -84,7 +84,7 @@ class UsersSeeder extends Seeder
         $riesgos->roles()->attach($capturaRole->id);
 
         $riesgos->coordinaciones()->attach([
-            3
+            4
         ]);
     }
 }
