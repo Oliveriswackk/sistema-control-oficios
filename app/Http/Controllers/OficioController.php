@@ -135,12 +135,11 @@ class OficioController extends Controller
         'coordinacion_origen_id' => 1,
     ]);
 
-        // EVENTO BASE DE TRAZABILIDAD (mínimo viable)
-        $oficio->historial()->create([
-            'usuario_id' => auth()->id(),
-            'accion' => 'oficio_creado',
-            'descripcion' => 'Oficio creado desde interfaz web',
-        ]);
+        // Registro bitácora - Crear
+        $oficio->registrarEvento(
+            'oficio_creado',
+            'Oficio creado desde interfaz web'
+        );
 
         return redirect()
             ->route('dashboard')
@@ -330,6 +329,21 @@ class OficioController extends Controller
                 'Debe existir al menos un Responsable Operativo'
             );
         }
+
+        //Registro bitácora - Turnado
+        $estadoAnterior = $oficio->estado_id;
+
+        $oficio->update([
+            'estado_id' => EstadoOficio::TURNADO
+        ]);
+
+        $oficio->historial()->create([
+            'usuario_id' => auth()->id(),
+            'accion' => 'oficio_turnado',
+            'descripcion' => 'Se registró un nuevo turnado',
+            'estado_anterior_id' => $estadoAnterior,
+            'estado_nuevo_id' => EstadoOficio::TURNADO,
+        ]);
 
         return back()->with(
             'success',

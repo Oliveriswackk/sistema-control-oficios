@@ -219,4 +219,29 @@ class Oficio extends Model
             'oficio_relacionado_id'
         );
     }
+    
+
+    /*
+    |--------------------------------------------------------------------------
+    | TRAZABILIDAD
+    |--------------------------------------------------------------------------
+    */
+    public function registrarEvento(
+        string $accion,
+        ?string $descripcion = null,
+        ?int $estadoAnterior = null,
+        ?int $estadoNuevo = null,
+        ?string $entidad = null,
+        ?int $entidadId = null
+    ) {
+        return $this->historial()->create([
+            'usuario_id' => auth()->id(),
+            'accion' => $accion,
+            'descripcion' => $descripcion,
+            'estado_anterior_id' => $estadoAnterior,
+            'estado_nuevo_id' => $estadoNuevo,
+            'entidad_relacionada' => $entidad,
+            'entidad_relacionada_id' => $entidadId,
+        ]);
+    }
 }

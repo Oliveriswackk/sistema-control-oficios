@@ -1,3 +1,6 @@
+{{-- MODAL Crear Oficio --}}
+
+
 {{-- =========================
     IDENTIFICACIÓN
 ========================= --}}
@@ -48,6 +51,121 @@
     <div class="col-md-4 mb-2">
         <label>Fecha límite</label>
         <input type="date" name="fecha_limite" class="form-control form-control-sm">
+    </div>
+
+</div>
+
+{{-- =========================
+    FLAGS OPERATIVOS
+========================= --}}
+<div class="row">
+
+    <div class="col-md-4 mb-2">
+
+        <label>Requiere respuesta
+            <span class="text-danger">*</span>
+        </label>
+
+        <div class="d-flex">
+
+            <div class="custom-control custom-radio mr-3">
+                <input type="radio" id="req_no" name="requiere_respuesta"
+                    value="0" class="custom-control-input" required>
+                <label class="custom-control-label" for="req_no">No</label>
+            </div>
+
+            <div class="custom-control custom-radio">
+                <input type="radio" id="req_si" name="requiere_respuesta"
+                    value="1" class="custom-control-input">
+                <label class="custom-control-label" for="req_si">Sí</label>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-4 mb-2">
+
+        <label>Documento sensible</label>
+
+        <div class="d-flex">
+
+            <div class="custom-control custom-radio mr-3">
+                <input type="radio" id="sens_no" name="es_sensible"
+                    value="0" class="custom-control-input" checked>
+                <label class="custom-control-label" for="sens_no">No</label>
+            </div>
+
+            <div class="custom-control custom-radio">
+                <input type="radio" id="sens_si" name="es_sensible"
+                    value="1" class="custom-control-input">
+                <label class="custom-control-label" for="sens_si">Sí</label>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-4 mb-2">
+
+        <label>
+            Tipo de oficio
+            <span class="text-danger">*</span>
+        </label>
+
+        <div class="d-flex flex-wrap">
+
+            <div class="custom-control custom-radio mr-4 mb-2">
+                <input
+                    type="radio"
+                    id="tipo_enviado"
+                    name="tipo_oficio_id"
+                    value="1"
+                    class="custom-control-input"
+                    checked
+                >
+                <label
+                    class="custom-control-label"
+                    for="tipo_enviado"
+                >
+                    Enviado
+                </label>
+            </div>
+
+            <div class="custom-control custom-radio mr-4 mb-2">
+                <input
+                    type="radio"
+                    id="tipo_recibido"
+                    name="tipo_oficio_id"
+                    value="2"
+                    class="custom-control-input"
+                >
+                <label
+                    class="custom-control-label"
+                    for="tipo_recibido"
+                >
+                    Recibido
+                </label>
+            </div>
+
+            <div class="custom-control custom-radio mb-2">
+                <input
+                    type="radio"
+                    id="tipo_cpc"
+                    name="tipo_oficio_id"
+                    value="3"
+                    class="custom-control-input"
+                >
+                <label
+                    class="custom-control-label"
+                    for="tipo_cpc"
+                >
+                    Recibido CPC
+                </label>
+            </div>
+
+        </div>
+
     </div>
 
 </div>
@@ -145,121 +263,6 @@
     <div class="col-md-4 mb-2">
         <label>Cargo</label>
         <input type="text" name="quien_elabora_cargo" class="form-control form-control-sm">
-    </div>
-
-</div>
-
-{{-- =========================
-    FLAGS OPERATIVOS
-========================= --}}
-<div class="row">
-
-    <div class="col-md-4 mb-2">
-
-        <label>Requiere respuesta
-            <span class="text-danger">*</span>
-        </label>
-
-        <div class="d-flex">
-
-            <div class="custom-control custom-radio mr-3">
-                <input type="radio" id="req_no" name="requiere_respuesta"
-                    value="0" class="custom-control-input" required>
-                <label class="custom-control-label" for="req_no">No</label>
-            </div>
-
-            <div class="custom-control custom-radio">
-                <input type="radio" id="req_si" name="requiere_respuesta"
-                    value="1" class="custom-control-input">
-                <label class="custom-control-label" for="req_si">Sí</label>
-            </div>
-
-        </div>
-
-    </div>
-
-    <div class="col-md-4 mb-2">
-
-        <label>Documento sensible</label>
-
-        <div class="d-flex">
-
-            <div class="custom-control custom-radio mr-3">
-                <input type="radio" id="sens_no" name="es_sensible"
-                    value="0" class="custom-control-input" checked>
-                <label class="custom-control-label" for="sens_no">No</label>
-            </div>
-
-            <div class="custom-control custom-radio">
-                <input type="radio" id="sens_si" name="es_sensible"
-                    value="1" class="custom-control-input">
-                <label class="custom-control-label" for="sens_si">Sí</label>
-            </div>
-
-        </div>
-
-    </div>
-
-    <div class="col-md-4 mb-2">
-
-        <label>
-            Tipo de oficio
-            <span class="text-danger">*</span>
-        </label>
-
-        <div>
-
-            <div class="custom-control custom-radio">
-                <input
-                    type="radio"
-                    id="tipo_enviado"
-                    name="tipo_oficio_id"
-                    value="1"
-                    class="custom-control-input"
-                    checked
-                >
-                <label
-                    class="custom-control-label"
-                    for="tipo_enviado"
-                >
-                    Enviado
-                </label>
-            </div>
-
-            <div class="custom-control custom-radio">
-                <input
-                    type="radio"
-                    id="tipo_recibido"
-                    name="tipo_oficio_id"
-                    value="2"
-                    class="custom-control-input"
-                >
-                <label
-                    class="custom-control-label"
-                    for="tipo_recibido"
-                >
-                    Recibido
-                </label>
-            </div>
-
-            <div class="custom-control custom-radio">
-                <input
-                    type="radio"
-                    id="tipo_cpc"
-                    name="tipo_oficio_id"
-                    value="3"
-                    class="custom-control-input"
-                >
-                <label
-                    class="custom-control-label"
-                    for="tipo_cpc"
-                >
-                    Recibido CPC
-                </label>
-            </div>
-
-        </div>
-
     </div>
 
 </div>

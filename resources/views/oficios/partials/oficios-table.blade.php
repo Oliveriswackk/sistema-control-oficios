@@ -1,3 +1,4 @@
+{{-- TABLA OFICIOS --}}
 <div class="table-responsive">
 
     <table class="table table-bordered" id="{{ $tableId ?? 'tabla-oficios' }}">

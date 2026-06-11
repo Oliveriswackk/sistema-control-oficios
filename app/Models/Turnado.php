@@ -78,31 +78,4 @@ class Turnado extends Model
     {
         return $this->belongsTo(User::class, 'turnado_por_id');
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | EVENTOS
-    |--------------------------------------------------------------------------
-    */
-    protected static function booted()
-    {
-        static::created(function ($turnado) {
-
-            $oficio = $turnado->oficio;
-
-            // 1. actualizar estado del oficio
-            $oficio->estado_id = 3; // "turnado" (confirmado en tu seed)
-            $oficio->save();
-
-            // 2. registrar historial mínimo
-            \DB::table('oficio_historial')->insert([
-                'oficio_id' => $oficio->id,
-                'usuario_id' => $turnado->turnado_por_id,
-                'accion' => 'turnado_creado',
-                'descripcion' => 'Se generó turnado operativo',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        });
-    }
 }
