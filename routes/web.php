@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\OficioController;
 use App\Http\Controllers\TurnadoController;
+use App\Http\Controllers\OficioArchivoController;
 use App\Models\Turnado;
 
 /*
@@ -108,6 +109,9 @@ Route::middleware('auth')->group(function () {
         ->middleware('permission:puede_turnar')
         ->name('oficios.turnar');
 
+    // CARGAR ARCHIVO PDF
+    Route::post('/oficios/{oficio}/archivos', [OficioArchivoController::class, 'store'])
+        ->name('oficios.archivos.store');
 
     // CERRAR
     Route::post('/oficios/{oficio}/cerrar', [OficioController::class, 'cerrar'])

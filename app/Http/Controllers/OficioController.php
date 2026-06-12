@@ -199,55 +199,27 @@ class OficioController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | DETALLE OFICIO
+    | DETALLES
     |--------------------------------------------------------------------------
-    
+    */
     public function detalle(Oficio $oficio)
     {
-        return response()->json([
+        $editable = auth()->user()->hasRole('admin');
 
-            'id' => $oficio->id,
-
-            'numero_oficio' => $oficio->numero_oficio,
-            'consecutivo' => $oficio->consecutivo,
-
-            'asunto' => $oficio->asunto,
-            'descripcion' => $oficio->descripcion,
-
-            'fecha_oficio' => $oficio->fecha_oficio,
-            'fecha_recepcion' => $oficio->fecha_recepcion,
-            'fecha_limite' => $oficio->fecha_limite,
-
-            'requiere_respuesta' => $oficio->requiere_respuesta,
-            'es_sensible' => $oficio->es_sensible,
-
-            'remitente_nombre' => $oficio->remitente_nombre,
-            'remitente_cargo' => $oficio->remitente_cargo,
-            'remitente_dependencia' => $oficio->remitente_dependencia,
-
-            'destinatario_nombre' => $oficio->destinatario_nombre,
-            'destinatario_cargo' => $oficio->destinatario_cargo,
-            'destinatario_dependencia' => $oficio->destinatario_dependencia,
-
-            'quien_elabora_nombre' => $oficio->quien_elabora_nombre,
-            'quien_elabora_cargo' => $oficio->quien_elabora_cargo,
-
-            'link_documento' => $oficio->link_documento,
-
-            'estado' => $oficio->estado->nombre ?? null,
+        $oficio->load([
+            'archivos.versiones'
         ]);
-    }*/
 
-    public function detalle(Oficio $oficio)
-    {
-        $editable = auth()->user()->hasRole('admin'); 
-
-        return view('oficios.modals.detalle', compact('oficio', 'editable'));
+        return view(
+            'oficios.modals.detalle',
+            compact('oficio', 'editable')
+        );
     }
 
+    
     /*
     |--------------------------------------------------------------------------
-    | VER OFICIO
+    | VER
     |--------------------------------------------------------------------------
     */
     public function show(Oficio $oficio)

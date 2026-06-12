@@ -1,5 +1,4 @@
 <div>
-
     {{-- =========================
         IDENTIFICACIÓN
     ========================= --}}
@@ -311,4 +310,154 @@
 
     </div>
 
+    {{-- SUBIR ARCHIVO PDF --}}
+    <hr>
+
+    <h6 class="text-primary font-weight-bold mb-2">
+        Documentos
+    </h6>
+
+    @if($oficio->archivos->count())
+
+        @foreach($oficio->archivos as $archivo)
+
+            @php
+                $versionActual = $archivo->versiones
+                    ->where('es_actual', true)
+                    ->first();
+            @endphp
+
+            @if($versionActual)
+
+                <div class="border rounded p-2 mb-2">
+
+                    <strong>
+                        {{ $archivo->nombre_original }}
+                    </strong>
+
+                    <br>
+
+                    <small class="text-muted">
+                        Versión {{ $versionActual->version }}
+                    </small>
+
+                    <br>
+
+                    <div class="mt-2">
+
+                        <a
+                            href="{{ asset('storage/' . $versionActual->ruta) }}"
+                            target="_blank"
+                            class="btn btn-sm btn-outline-primary"
+                        >
+                            Ver PDF
+                        </a>
+
+                        @if(
+                            auth()->user()->hasRole('admin') ||
+                            auth()->user()->hasPermission('puede_registrar')
+                        )
+
+                            <button
+                                type="button"
+                                class="btn btn-sm btn-indigo"
+                                onclick="
+                                    document
+                                        .getElementById('reemplazo-{{ $archivo->id }}')
+                                        .classList
+                                        .toggle('d-none')
+                                "
+                            >
+                                Reemplazar PDF
+                            </button>
+
+                            <div id="reemplazo-{{ $archivo->id }}" class="d-none mt-3">
+
+                                <form
+                                    method="POST"
+                                    action="{{ route('oficios.archivos.store', $oficio->id) }}"
+                                    enctype="multipart/form-data"
+                                >
+
+                                    @csrf
+
+                                    <div class="form-group">
+
+                                        <label>
+                                            Nuevo PDF
+                                        </label>
+
+                                        <input
+                                            type="file"
+                                            name="archivo"
+                                            accept="application/pdf"
+                                            class="form-control"
+                                            required
+                                        >
+
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        class="btn btn-primary btn-sm"
+                                    >
+                                        Guardar nueva versión
+                                    </button>
+
+                                </form>
+
+                            </div>
+
+                        @endif
+
+                    </div>
+
+                </div>
+
+            @endif
+
+        @endforeach
+
+    @else
+
+        <div class="alert alert-warning">
+            Este oficio no tiene documentos cargados.
+        </div>
+
+        @if(
+            auth()->user()->hasRole('admin') ||
+            auth()->user()->hasPermission('puede_registrar')
+        )
+
+            <form
+                method="POST"
+                action="{{ route('oficios.archivos.store', $oficio->id) }}"
+                enctype="multipart/form-data"
+            >
+
+                @csrf
+
+                <div class="form-group">
+
+                    <label>Subir PDF principal</label>
+
+                    <input
+                        type="file"
+                        name="archivo"
+                        accept="application/pdf"
+                        class="form-control"
+                        required
+                    >
+
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-sm">
+                    Subir PDF
+                </button>
+
+            </form>
+
+        @endif
+
+    @endif
 </div>
