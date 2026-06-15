@@ -64,7 +64,7 @@
 
         <div class="mt-3">
 
-            <button class="btn btn-primary">
+            <button type="submit" id="btnBuscarOficios" class="btn btn-primary">
                 Buscar
             </button>
 

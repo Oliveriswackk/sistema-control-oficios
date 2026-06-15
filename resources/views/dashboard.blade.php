@@ -75,7 +75,7 @@
 
 {{-- Filtros de búsqueda --}}
 
-<form method="GET">
+<form method="GET" action="{{ route('dashboard') }}">
 
     @include('oficios.partials.oficio-search')
 
@@ -183,6 +183,23 @@ $(document).ready(function () {
         );
 
     });
+
+     $('#tabla-oficios').DataTable({
+        pageLength: 10,
+        order: [[0, 'desc']],
+        language: {
+            url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-MX.json'
+        }
+    });
+
+});
+
+// =========================================================
+// DATATABLES
+// =========================================================
+$(document).ready(function () {
+
+   //
 
 });
 
@@ -301,6 +318,5 @@ $(document).on('change', '.user-check', function () {
     }
 
 });
-
 </script>
 @endsection

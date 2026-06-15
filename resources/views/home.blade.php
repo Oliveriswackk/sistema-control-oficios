@@ -54,7 +54,7 @@
 
                     <div class="table-responsive">
 
-                        <table class="table table-bordered">
+                        <table class="table table-bordered" id="tabla-bandeja">
 
                             <thead>
                                 <tr>
@@ -68,7 +68,7 @@
 
                             <tbody>
 
-                                @forelse($turnados as $turnado)
+                                @foreach($turnados as $turnado)
 
                                     <tr>
 
@@ -82,14 +82,20 @@
 
                                         <td>
 
-                                            <button class="btn btn-primary btn-ver-oficio" data-id="{{ $turnado->oficio->id }}">
+                                            <button
+                                                class="btn btn-primary btn-ver-oficio"
+                                                data-id="{{ $turnado->oficio->id }}">
                                                 Ver
                                             </button>
 
-                                            <form method="POST" action="{{ route('turnados.atender', $turnado) }}" class="d-inline form-atender-turnado">
+                                            <form method="POST"
+                                                action="{{ route('turnados.atender', $turnado) }}"
+                                                class="d-inline form-atender-turnado">
+
                                                 @csrf
 
-                                                <button type="submit" class="btn btn-sm btn-success">
+                                                <button type="submit"
+                                                        class="btn btn-sm btn-success">
                                                     Atendido
                                                 </button>
 
@@ -98,19 +104,7 @@
                                         </td>
 
                                     </tr>
-
-                                @empty
-
-                                    <tr>
-
-                                        <td colspan="5" class="text-center">
-                                            Sin oficios pendientes
-                                        </td>
-
-                                    </tr>
-
-                                @endforelse
-
+                                @endforeach
                             </tbody>
 
                         </table>
@@ -142,7 +136,7 @@
 
                         <div class="table-responsive">
 
-                            <table class="table table-bordered">
+                            <table class="table table-bordered" id="tabla-cerrar">
 
                                 <thead>
 
@@ -157,7 +151,7 @@
 
                                 <tbody>
 
-                                    @forelse($listosCerrar as $oficio)
+                                    @foreach($listosCerrar as $oficio)
 
                                         <tr>
 
@@ -168,14 +162,22 @@
                                             <td>{{ $oficio->asunto }}</td>
 
                                             <td>
-                                                <button class="btn btn-primary btn-ver-oficio" data-id="{{ $oficio->id }}">
+
+                                                <button
+                                                    class="btn btn-primary btn-ver-oficio"
+                                                    data-id="{{ $oficio->id }}">
                                                     Ver
                                                 </button>
 
-                                                <form method="POST" action="{{ route('oficios.cerrar', $oficio) }}" class="d-inline form-cerrar-oficio">
+                                                <form method="POST"
+                                                    action="{{ route('oficios.cerrar', $oficio) }}"
+                                                    class="d-inline form-cerrar-oficio">
+
                                                     @csrf
 
-                                                    <button type="submit" class="btn btn-success btn-sm">
+                                                    <button
+                                                        type="submit"
+                                                        class="btn btn-success btn-sm">
                                                         Cerrar oficio
                                                     </button>
 
@@ -185,17 +187,7 @@
 
                                         </tr>
 
-                                    @empty
-
-                                        <tr>
-
-                                            <td colspan="4" class="text-center">
-                                                No hay oficios listos para cerrar
-                                            </td>
-
-                                        </tr>
-
-                                    @endforelse
+                                    @endforeach
 
                                 </tbody>
 
@@ -237,6 +229,28 @@ $(document).ready(function () {
     $('.btn-ver-oficio').on('click', function () {
         Oficios.open($(this).data('id'), false);
     });
+
+    // Tabla bandeja
+    $('#tabla-bandeja').DataTable({
+        pageLength: 10,
+        order: [[0, 'desc']],
+        language: {
+            url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-MX.json'
+        }
+    });
+
+    @if(auth()->user()->hasPermission('puede_cerrar'))
+
+    // Tabla cerrar
+    $('#tabla-cerrar').DataTable({
+        pageLength: 10,
+        order: [[0, 'desc']],
+        language: {
+            url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-MX.json'
+        }
+    });
+
+    @endif
 });
 
 </script>
