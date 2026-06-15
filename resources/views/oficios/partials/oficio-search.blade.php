@@ -54,9 +54,9 @@
                 <label>Coordinación origen</label>
                 <input
                     type="text"
-                    name="coordinacion_origen"
+                    name="coordinacion_origen_id"
                     class="form-control"
-                    value="{{ request('coordinacion_origen') }}"
+                    value="{{ request('coordinacion_origen_id') }}"
                 >
             </div>
 

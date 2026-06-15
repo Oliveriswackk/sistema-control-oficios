@@ -35,13 +35,68 @@ class OficioController extends Controller
     }
 
 
-    public function dashboard()
+    public function dashboard(Request $request)
     {
-        $oficios = Oficio::with(['estado', 'turnados'])
+        $query = Oficio::with(['estado', 'turnados']);
+
+        //No. Oficio
+        if ($request->filled('numero_oficio')) {
+
+            $query->where(
+                'numero_oficio',
+                'like',
+                '%' . $request->numero_oficio . '%'
+            );
+        }
+
+        //Asunto
+        if ($request->filled('asunto')) {
+
+            $query->where(
+                'asunto',
+                'like',
+                '%' . $request->asunto . '%'
+            );
+        }
+
+        //Remitente
+        if ($request->filled('remitente_dependencia')) {
+
+            $query->where(
+                'remitente_dependencia',
+                'like',
+                '%' . $request->remitente_dependencia . '%'
+            );
+        }
+
+        //Destinatario
+        if ($request->filled('destinatario_dependencia')) {
+
+            $query->where(
+                'destinatario_dependencia',
+                'like',
+                '%' . $request->destinatario_dependencia . '%'
+            );
+        }
+
+        //Coordinación Respondable
+        if ($request->filled('coordinacion_origen_id')) {
+
+            $query->where(
+                'coordinacion_origen_id',
+                $request->coordinacion_origen_id
+            );
+
+        }
+
+        $oficios = $query
             ->latest()
             ->get();
 
-        return view('dashboard', compact('oficios'));
+        return view(
+            'dashboard',
+            compact('oficios')
+        );
     }
 
 
