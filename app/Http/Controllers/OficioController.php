@@ -97,9 +97,20 @@ class OficioController extends Controller
             ->latest()
             ->get();
 
+        $oficiosRelacionables = Oficio::select(
+            'id',
+            'numero_oficio',
+            'asunto'
+        )
+        ->latest()
+        ->get();
+
         return view(
             'dashboard',
-            compact('oficios')
+            compact(
+                'oficios',
+                'oficiosRelacionables'
+            )
         );
     }
 
@@ -158,43 +169,55 @@ class OficioController extends Controller
     {
         $this->authorize('create', Oficio::class);
 
+        if ($request->filled('respuesta_a_oficio_id')) {
+
+            $padre = Oficio::find($request->respuesta_a_oficio_id);
+
+            if (!$padre) {
+                return back()->with('error', 'Oficio padre no existe');
+            }
+
+            if ($padre->estado_id === EstadoOficio::CERRADO) {
+                return back()->with('error', 'No puedes responder un oficio cerrado');
+            }
+        }
+
         $oficio = Oficio::create([
-        'uuid' => (string) Str::uuid(),
+            'uuid' => (string) Str::uuid(),
 
-        'numero_oficio' => $request->numero_oficio,
-        'consecutivo' => $request->consecutivo,
-        'tipo_oficio_id' => $request->tipo_oficio_id,
-        'asunto' => $request->asunto,
-        'descripcion' => $request->descripcion,
+            'numero_oficio' => $request->numero_oficio,
+            'consecutivo' => $request->consecutivo,
+            'tipo_oficio_id' => $request->tipo_oficio_id,
+            'asunto' => $request->asunto,
+            'descripcion' => $request->descripcion,
 
-        'fecha_oficio' => $request->fecha_oficio,
-        'fecha_recepcion' => $request->fecha_recepcion,
-        'fecha_limite' => $request->fecha_limite,
+            'fecha_oficio' => $request->fecha_oficio,
+            'fecha_recepcion' => $request->fecha_recepcion,
+            'fecha_limite' => $request->fecha_limite,
 
-        'requiere_respuesta' => $request->requiere_respuesta ?? 0,
-        'es_sensible' => $request->es_sensible ?? 0,
+            'requiere_respuesta' => $request->requiere_respuesta ?? 0,
+            'respuesta_a_oficio_id' => $request->respuesta_a_oficio_id,
+            'es_sensible' => $request->es_sensible ?? 0,
 
-        'remitente_nombre' => $request->remitente_nombre,
-        'remitente_cargo' => $request->remitente_cargo,
-        'remitente_dependencia' => $request->remitente_dependencia,
+            'remitente_nombre' => $request->remitente_nombre,
+            'remitente_cargo' => $request->remitente_cargo,
+            'remitente_dependencia' => $request->remitente_dependencia,
 
-        'destinatario_nombre' => $request->destinatario_nombre,
-        'destinatario_cargo' => $request->destinatario_cargo,
-        'destinatario_dependencia' => $request->destinatario_dependencia,
+            'destinatario_nombre' => $request->destinatario_nombre,
+            'destinatario_cargo' => $request->destinatario_cargo,
+            'destinatario_dependencia' => $request->destinatario_dependencia,
 
-        'quien_elabora_nombre' => $request->quien_elabora_nombre,
-        'quien_elabora_cargo' => $request->quien_elabora_cargo,
+            'quien_elabora_nombre' => $request->quien_elabora_nombre,
+            'quien_elabora_cargo' => $request->quien_elabora_cargo,
 
-        'link_documento' => $request->link_documento,
+            'link_documento' => $request->link_documento,
 
-        // SISTEMA 
-        'estado_id' => EstadoOficio::REGISTRADO,
-        'usuario_registro_id' => auth()->id(),
-        'responsable_inicial_id' => auth()->id(),
-        'coordinacion_origen_id' => 1,
-    ]);
+            'estado_id' => EstadoOficio::REGISTRADO,
+            'usuario_registro_id' => auth()->id(),
+            'responsable_inicial_id' => auth()->id(),
+            'coordinacion_origen_id' => 1,
+        ]);
 
-        // Registro bitácora - Crear
         $oficio->registrarEvento(
             'oficio_creado',
             'Oficio creado desde interfaz web'

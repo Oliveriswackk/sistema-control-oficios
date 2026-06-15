@@ -14,13 +14,13 @@ class StoreOficioRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'numero_oficio' => ['nullable', 'string'],
+            'numero_oficio' => ['required', 'string'],
             'consecutivo' => ['nullable', 'integer'],
 
             'tipo_oficio_id' => ['nullable', 'integer'],
             'estado_id' => ['nullable', 'integer'],
 
-            'asunto' => ['nullable', 'string'],
+            'asunto' => ['required', 'string'],
             'descripcion' => ['nullable', 'string'],
 
             'fecha_oficio' => ['nullable', 'date'],
@@ -28,6 +28,11 @@ class StoreOficioRequest extends FormRequest
             'fecha_limite' => ['nullable', 'date'],
 
             'requiere_respuesta' => ['boolean'],
+            'respuesta_a_oficio_id' => [
+                'required_if:requiere_respuesta,1',
+                'nullable',
+                'exists:oficios,id'
+            ],
             'es_sensible' => ['boolean'],
 
             'remitente_nombre' => ['nullable', 'string'],

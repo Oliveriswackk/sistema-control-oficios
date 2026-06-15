@@ -33,6 +33,18 @@
         </div>
     @endforeach
 
+    @if($oficio->oficioPadre)
+
+        <hr>
+
+        <h5>Responde a</h5>
+
+        <span>
+            {{ $oficio->oficioPadre->numero_oficio }}
+        </span>
+
+    @endif
+
 </div>
 
 @endsection

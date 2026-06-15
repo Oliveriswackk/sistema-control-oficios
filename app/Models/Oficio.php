@@ -46,6 +46,7 @@ class Oficio extends Model
         'fecha_limite',
 
         'requiere_respuesta',
+        'respuesta_a_oficio_id',
         'es_sensible',
 
         /*
@@ -148,6 +149,7 @@ class Oficio extends Model
         );
     }
 
+
     public function estado(): BelongsTo
     {
         return $this->belongsTo(
@@ -156,6 +158,7 @@ class Oficio extends Model
         );
     }
 
+    
     public function coordinacionOrigen(): BelongsTo
     {
         return $this->belongsTo(
@@ -163,6 +166,7 @@ class Oficio extends Model
             'coordinacion_origen_id'
         );
     }
+
 
     public function usuarioRegistro(): BelongsTo
     {
@@ -172,6 +176,7 @@ class Oficio extends Model
         );
     }
 
+
     public function responsableInicial(): BelongsTo
     {
         return $this->belongsTo(
@@ -179,6 +184,7 @@ class Oficio extends Model
             'responsable_inicial_id'
         );
     }
+
 
     public function turnados(): HasMany
     {
@@ -188,6 +194,7 @@ class Oficio extends Model
         );
     }
 
+
     public function archivos(): HasMany
     {
         return $this->hasMany(
@@ -195,6 +202,7 @@ class Oficio extends Model
             'oficio_id'
         );
     }
+
 
     public function historial(): HasMany
     {
@@ -204,6 +212,7 @@ class Oficio extends Model
         );
     }
 
+
     public function relacionesOrigen(): HasMany
     {
         return $this->hasMany(
@@ -211,6 +220,7 @@ class Oficio extends Model
             'oficio_origen_id'
         );
     }
+
 
     public function relacionesRelacionadas(): HasMany
     {
@@ -244,4 +254,23 @@ class Oficio extends Model
             'entidad_relacionada_id' => $entidadId,
         ]);
     }
+
+
+    public function oficioPadre()
+    {
+        return $this->belongsTo(
+            Oficio::class,
+            'respuesta_a_oficio_id'
+        );
+    }
+
+    
+    public function respuestas()
+    {
+        return $this->hasMany(
+            Oficio::class,
+            'respuesta_a_oficio_id'
+        );
+    }
+
 }

@@ -84,6 +84,22 @@
 
     </div>
 
+    <div class="form-group col-md-4 mb-2">
+
+        <label>¿Responde a otro oficio?</label>
+
+        <select name="respuesta_a_oficio_id" class="form-control" required>
+            <option value="">-- Selecciona un oficio --</option>
+
+            @foreach($oficiosRelacionables as $oficio)
+                <option value="{{ $oficio->id }}">
+                    {{ $oficio->numero_oficio }} - {{ $oficio->asunto }}
+                </option>
+            @endforeach
+        </select>
+
+    </div>
+
     <div class="col-md-4 mb-2">
 
         <label>Documento sensible</label>
