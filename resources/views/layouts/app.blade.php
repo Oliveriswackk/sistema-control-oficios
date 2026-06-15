@@ -210,6 +210,8 @@
 <script src="{{ asset('vendor/jquery-easing/jquery.easing.min.js') }}"></script>
 <script src="{{ asset('js/sb-admin-2.min.js') }}"></script>
 
+{{-- JS DE OFICIOS (AJAX) --}}
+<script src="{{ asset('js/oficios.js') }}"></script>
 
 {{-- =========================================================
 |  PLUGINS EXTERNOS
@@ -493,35 +495,34 @@ window.Oficios = {
                     }
                 });
 
-                $.ajax({
-                    url: `/oficios/${ModalState.original.id}`,
-                    method: 'POST',
-                    data: {
-                        ...data,
-                        _method: 'PUT',
-                        _token: $('meta[name="csrf-token"]').attr('content')
-                    },
+                OficiosApi.update(
+                    ModalState.original.id,
+                    data
+                )
 
-                    success: () => {
+                .done(() => {
 
-                        Alerts.success('Oficio actualizado');
+                    Alerts.success('Oficio actualizado');
 
-                        ModalState.changed = false;
+                    ModalState.changed = false;
 
-                        $('#btnGuardarOficio').prop('disabled', true);
+                    $('#btnGuardarOficio')
+                        .prop('disabled', true);
 
-                        $('#modalGlobal').modal('hide');
-                    },
+                    $('#modalGlobal')
+                        .modal('hide');
 
-                    error: (xhr) => {
-                        console.log(xhr.responseText);
-                        Alerts.error('Error al guardar');
-                    }
+                })
+
+                .fail((xhr) => {
+
+                    console.log(xhr.responseText);
+
+                    Alerts.error('Error al guardar');
+
                 });
-
             });
     }
-
 };
 
 $(document).on('change', '.turnado-check', function () {

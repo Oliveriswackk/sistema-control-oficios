@@ -213,27 +213,21 @@ function abrirTurnar(oficioId) {
 
     $('#modalGlobal').modal('show');
 
-    $.ajax({
+    OficiosApi.getTurnarModal(oficioId)
 
-        url: `/oficios/${oficioId}/turnar`,
-
-        method: 'GET',
-
-        success: function (html) {
+        .done(function(html) {
 
             $('#modalGlobalBody').html(html);
 
-        },
+        })
 
-        error: function () {
+        .fail(function() {
 
             $('#modalGlobalBody').html(
                 '<div class="text-danger p-3">Error cargando modal</div>'
             );
 
-        }
-
-    });
+        });
 
 }
 
