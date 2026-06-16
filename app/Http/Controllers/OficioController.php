@@ -169,7 +169,9 @@ class OficioController extends Controller
     {
         $this->authorize('create', Oficio::class);
 
-        if ($request->filled('respuesta_a_oficio_id')) {
+        $esRespuesta = $request->respuesta_a_oficio_id != 0;
+
+        if ($esRespuesta) {
 
             $padre = Oficio::find($request->respuesta_a_oficio_id);
 
@@ -196,7 +198,10 @@ class OficioController extends Controller
             'fecha_limite' => $request->fecha_limite,
 
             'requiere_respuesta' => $request->requiere_respuesta ?? 0,
-            'respuesta_a_oficio_id' => $request->respuesta_a_oficio_id,
+            'respuesta_a_oficio_id' =>
+                $request->respuesta_a_oficio_id == 0
+                    ? null
+                    : $request->respuesta_a_oficio_id,
             'es_sensible' => $request->es_sensible ?? 0,
 
             'remitente_nombre' => $request->remitente_nombre,

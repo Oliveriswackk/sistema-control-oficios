@@ -28,11 +28,7 @@ class StoreOficioRequest extends FormRequest
             'fecha_limite' => ['nullable', 'date'],
 
             'requiere_respuesta' => ['boolean'],
-            'respuesta_a_oficio_id' => [
-                'required_if:requiere_respuesta,1',
-                'nullable',
-                'exists:oficios,id'
-            ],
+            'respuesta_a_oficio_id' => ['required'],
             'es_sensible' => ['boolean'],
 
             'remitente_nombre' => ['nullable', 'string'],

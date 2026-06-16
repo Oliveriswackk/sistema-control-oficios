@@ -89,13 +89,21 @@
         <label>¿Responde a otro oficio?</label>
 
         <select name="respuesta_a_oficio_id" class="form-control" required>
-            <option value="">-- Selecciona un oficio --</option>
+
+            <option value="" selected disabled>
+                -- Selecciona una opción --
+            </option>
+
+            <option value="0">
+                Inicia una petición
+            </option>
 
             @foreach($oficiosRelacionables as $oficio)
                 <option value="{{ $oficio->id }}">
                     {{ $oficio->numero_oficio }} - {{ $oficio->asunto }}
                 </option>
             @endforeach
+
         </select>
 
     </div>
