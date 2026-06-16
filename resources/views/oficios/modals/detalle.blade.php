@@ -4,6 +4,18 @@
     ========================= --}}
     <h6 class="text-primary font-weight-bold mb-2">Identificación</h6>
 
+    <div class="mt-2">
+
+        @foreach($oficio->tags as $tag)
+
+            <span class="badge badge-info">
+                {{ $tag->nombre }}
+            </span>
+
+        @endforeach
+
+    </div>
+
     <div class="row">
 
         <div class="col-md-4 mb-2">

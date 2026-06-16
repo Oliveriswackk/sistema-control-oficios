@@ -6,6 +6,7 @@ use App\Http\Requests\StoreOficioRequest;
 use App\Models\Oficio;
 use App\Models\Turnado;
 use App\Models\EstadoOficio;
+use App\Models\Tag;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -85,7 +86,8 @@ class OficioController extends Controller
     {
         $query = Oficio::with([
             'estado',
-            'turnados'
+            'turnados',
+            'tags'
         ]);
 
         $this->aplicarFiltros(
@@ -222,6 +224,28 @@ class OficioController extends Controller
             'responsable_inicial_id' => auth()->id(),
             'coordinacion_origen_id' => 1,
         ]);
+
+        if ($request->filled('tags')) {
+
+            $tagsIds = [];
+
+            foreach (explode(',', $request->tags) as $tag) {
+
+                $tag = trim($tag);
+
+                if (!$tag) {
+                    continue;
+                }
+
+                $tagModel = Tag::firstOrCreate([
+                    'nombre' => mb_strtolower($tag)
+                ]);
+
+                $tagsIds[] = $tagModel->id;
+            }
+
+            $oficio->tags()->sync($tagsIds);
+        }
 
         $oficio->registrarEvento(
             'oficio_creado',

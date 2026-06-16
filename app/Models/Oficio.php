@@ -135,6 +135,19 @@ class Oficio extends Model
         'cancelado_en' => 'datetime',
     ];
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | UBICAR
+    |--------------------------------------------------------------------------
+    */
+
+    public function tags()
+    {
+        return $this->belongsToMany(Tag::class);
+    }
+
+    
     /*
     |--------------------------------------------------------------------------
     | RELACIONES
@@ -264,7 +277,7 @@ class Oficio extends Model
         );
     }
 
-    
+
     public function respuestas()
     {
         return $this->hasMany(

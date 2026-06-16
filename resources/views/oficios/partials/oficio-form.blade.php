@@ -192,6 +192,22 @@
 
     </div>
 
+    <div class="form-group col-md-6 mb-2">
+
+        <label>Palabras clave</label>
+
+        <input
+            type="text"
+            name="tags"
+            class="form-control"
+            placeholder="usuarios, transparencia, accesos">
+
+        <small class="text-muted">
+            Separar con comas.
+        </small>
+
+    </div>
+
 </div>
 
 {{-- =========================
