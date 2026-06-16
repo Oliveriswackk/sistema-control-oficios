@@ -8,6 +8,7 @@
                 <th>ID</th>
                 <th>Número</th>
                 <th>Asunto</th>
+                <th>Tags</th>
                 <th>Estado</th>
                 <th>Acciones</th>
             </tr>
@@ -19,17 +20,17 @@
                         <tr>
                             <td>{{ $oficio->id }}</td>
 
-                            <td>
-                                {{ $oficio->numero_oficio }}
-                            </td>
+                            <td>{{ $oficio->numero_oficio }}</td>
+
+                            <td>{{ $oficio->asunto }}</td>
 
                             <td>
-                                {{ $oficio->asunto }}
+                                @foreach($oficio->tags as $tag)
+                                    {{ $tag->nombre }}
+                                @endforeach
                             </td>
 
-                            <td>
-                                {{ $oficio->estado->nombre }}
-                            </td>
+                            <td>{{ $oficio->estado->nombre }}</td>
 
                             <td>
                                 <button class="btn btn-primary btn-ver-oficio" data-id="{{ $oficio->id }}">

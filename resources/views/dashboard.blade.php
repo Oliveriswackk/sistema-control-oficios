@@ -189,7 +189,14 @@ $(document).ready(function () {
         order: [[0, 'desc']],
         language: {
             url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-MX.json'
-        }
+        },
+        columnDefs: [
+            {
+                targets:[3],
+                visible: false,
+                searcheable: true
+            }
+        ]
     });
 
 });

@@ -60,6 +60,32 @@
 ========================= --}}
 <div class="row">
 
+    <!-- Inicio o Respuesta -->
+    <div class="form-group col-md-4 mb-2">
+
+        <label>¿Responde a otro oficio? <span class="text-danger">*</span></label>
+
+        <select name="respuesta_a_oficio_id" class="form-control" required>
+
+            <option value="" selected disabled>
+                Seleccionar
+            </option>
+
+            <option value="0">
+                Inicia una petición
+            </option>
+
+            @foreach($oficiosRelacionables as $oficio)
+                <option value="{{ $oficio->id }}">
+                    {{ $oficio->numero_oficio }} - {{ $oficio->asunto }}
+                </option>
+            @endforeach
+
+        </select>
+
+    </div>
+
+    <!-- Necesita Respuesta -->
     <div class="col-md-4 mb-2">
 
         <label>Requiere respuesta
@@ -84,52 +110,7 @@
 
     </div>
 
-    <div class="form-group col-md-4 mb-2">
-
-        <label>¿Responde a otro oficio?</label>
-
-        <select name="respuesta_a_oficio_id" class="form-control" required>
-
-            <option value="" selected disabled>
-                -- Selecciona una opción --
-            </option>
-
-            <option value="0">
-                Inicia una petición
-            </option>
-
-            @foreach($oficiosRelacionables as $oficio)
-                <option value="{{ $oficio->id }}">
-                    {{ $oficio->numero_oficio }} - {{ $oficio->asunto }}
-                </option>
-            @endforeach
-
-        </select>
-
-    </div>
-
-    <div class="col-md-4 mb-2">
-
-        <label>Documento sensible</label>
-
-        <div class="d-flex">
-
-            <div class="custom-control custom-radio mr-3">
-                <input type="radio" id="sens_no" name="es_sensible"
-                    value="0" class="custom-control-input" checked>
-                <label class="custom-control-label" for="sens_no">No</label>
-            </div>
-
-            <div class="custom-control custom-radio">
-                <input type="radio" id="sens_si" name="es_sensible"
-                    value="1" class="custom-control-input">
-                <label class="custom-control-label" for="sens_si">Sí</label>
-            </div>
-
-        </div>
-
-    </div>
-
+    <!-- Tipo -->
     <div class="col-md-4 mb-2">
 
         <label>
@@ -192,7 +173,8 @@
 
     </div>
 
-    <div class="form-group col-md-6 mb-2">
+    <!-- Tags -->
+    <div class="form-group col-md-4 mb-2">
 
         <label>Palabras clave</label>
 
@@ -205,6 +187,29 @@
         <small class="text-muted">
             Separar con comas.
         </small>
+
+    </div>
+
+    <!-- Sensible -->
+    <div class="col-md-4 mb-2">
+
+        <label>Documento sensible</label>
+
+        <div class="d-flex">
+
+            <div class="custom-control custom-radio mr-3">
+                <input type="radio" id="sens_no" name="es_sensible"
+                    value="0" class="custom-control-input" checked>
+                <label class="custom-control-label" for="sens_no">No</label>
+            </div>
+
+            <div class="custom-control custom-radio">
+                <input type="radio" id="sens_si" name="es_sensible"
+                    value="1" class="custom-control-input">
+                <label class="custom-control-label" for="sens_si">Sí</label>
+            </div>
+
+        </div>
 
     </div>
 
