@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\OficioController;
 use App\Http\Controllers\TurnadoController;
+use App\Http\Controllers\TagController;
 use App\Http\Controllers\OficioArchivoController;
 use App\Models\Turnado;
 
@@ -38,24 +39,26 @@ Route::middleware('auth')->group(function () {
     | DASHBOARD
     |--------------------------------------------------------------------------
     */
-
     Route::get('/dashboard', [OficioController::class, 'dashboard'])
         ->middleware('verified')
         ->name('dashboard');
 
-    /*
+    
+    
+        /*
     |--------------------------------------------------------------------------
     | HOME (Bandeja)
     |--------------------------------------------------------------------------
     */
     Route::get('/home', [OficioController::class, 'home'])
         ->name('home');
+    
+    
     /*
     |--------------------------------------------------------------------------
     | PERFIL
     |--------------------------------------------------------------------------
     */
-
     Route::get('/profile', [ProfileController::class, 'edit'])
         ->name('profile.edit');
 
@@ -118,6 +121,27 @@ Route::middleware('auth')->group(function () {
         ->middleware('permission:puede_cerrar')
         ->name('oficios.cerrar');
     
+
+    /*
+    |--------------------------------------------------------------------------
+    | TAGS
+    |--------------------------------------------------------------------------
+    */
+    Route::get(
+        '/tags/buscar',
+        [TagController::class, 'buscar']
+    )->name('tags.buscar');
+
+    Route::post(
+        '/oficios/{oficio}/tags',
+        [TagController::class, 'agregarTag']
+    );
+
+    Route::delete(
+        '/oficios/{oficio}/tags/{tag}',
+        [TagController::class, 'eliminarTag']
+    );
+
 
     /*
     |--------------------------------------------------------------------------

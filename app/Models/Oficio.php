@@ -12,6 +12,7 @@ use App\Models\EstadoOficio;
 use App\Models\Coordinacion;
 use App\Models\User;
 use App\Models\Turnado;
+use App\Models\Tag;
 use App\Models\OficioArchivo;
 use App\Models\OficioHistorial;
 use App\Models\OficioRelacion;

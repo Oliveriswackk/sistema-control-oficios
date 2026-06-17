@@ -4,15 +4,42 @@
     ========================= --}}
     <h6 class="text-primary font-weight-bold mb-2">Identificación</h6>
 
-    <div class="mt-2">
+    <div id="contenedor-tags" class="mt-2 mb-3">
 
         @foreach($oficio->tags as $tag)
 
-            <span class="badge badge-info">
+            <span
+                class="badge badge-info mr-1 tag-item"
+                data-tag-id="{{ $tag->id }}">
+
                 {{ $tag->nombre }}
+
+                <span
+                    class="ml-1 text-white btn-eliminar-tag"
+                    data-tag-id="{{ $tag->id }}"
+                    data-oficio-id="{{ $oficio->id }}"
+                    style="cursor:pointer;">
+                    ×
+                </span>
+
             </span>
 
         @endforeach
+
+        <button type="button" class="btn btn-sm btn-outline-primary" id="btn-mostrar-tag">
+            +
+        </button>
+
+    </div>
+
+    <div id="contenedor-nuevo-tag" style="display:none;">
+
+        <input
+            type="text"
+            id="input-tag"
+            data-oficio-id="{{ $oficio->id }}"
+            class="form-control form-control-sm"
+            placeholder="Agregar tag">
 
     </div>
 
