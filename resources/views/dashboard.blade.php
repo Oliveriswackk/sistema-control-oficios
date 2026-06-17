@@ -192,9 +192,9 @@ $(document).ready(function () {
         },
         columnDefs: [
             {
-                targets:[3],
+                targets: [3],
                 visible: false,
-                searcheable: true
+                searchable: true
             }
         ]
     });

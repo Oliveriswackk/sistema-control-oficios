@@ -4882,7 +4882,7 @@ input[type="button"].btn-block {
 
 .badge {
   display: inline-block;
-  padding: 0.25em 0.4em;
+  padding: 0.30em 0.7em;
   font-size: 75%;
   font-weight: 700;
   line-height: 1;
@@ -4965,12 +4965,12 @@ a.badge-success:focus, a.badge-success.focus {
 
 .badge-info {
   color: #fff;
-  background-color: #36b9cc;
+  background-color: #5a67d8;
 }
 
 a.badge-info:hover, a.badge-info:focus {
   color: #fff;
-  background-color: #2a96a5;
+  background-color: #4c51bf;
 }
 
 a.badge-info:focus, a.badge-info.focus {
