@@ -5786,6 +5786,15 @@ a.close.disabled {
   outline: 0;
 }
 
+body.modal-open #content-wrapper {
+    filter: blur(3px);
+    transition: filter .2s ease;
+}
+
+body.modal-open .modal {
+    filter: none;
+}
+
 .modal-backdrop {
   position: fixed;
   top: 0;
@@ -5801,7 +5810,9 @@ a.close.disabled {
 }
 
 .modal-backdrop.show {
-  opacity: 0.5;
+    opacity: .4;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
 }
 
 .modal-header {
