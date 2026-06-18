@@ -148,6 +148,7 @@ class Oficio extends Model
         return $this->belongsToMany(Tag::class);
     }
 
+
     
     /*
     |--------------------------------------------------------------------------
@@ -206,6 +207,17 @@ class Oficio extends Model
             Turnado::class,
             'oficio_id'
         );
+    }
+
+
+    public function responsableActual()
+    {
+        return $this->hasOne(
+            Turnado::class,
+            'oficio_id'
+        )
+        ->where('tipo_participacion_id', 1)
+        ->latest('id');
     }
 
 

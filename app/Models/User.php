@@ -29,6 +29,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'foto_perfil',
     ];
 
     /**
@@ -52,6 +53,19 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+
+    public function getFotoPerfilUrlAttribute()
+    {
+        if ($this->foto_perfil) {
+
+            return asset(
+                'storage/' . $this->foto_perfil
+            );
+        }
+
+        return null;
     }
 
     /*

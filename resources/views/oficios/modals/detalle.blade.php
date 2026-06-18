@@ -4,6 +4,63 @@
     ========================= --}}
     <h6 class="text-primary font-weight-bold mb-2">Identificación</h6>
 
+    @if($oficio->responsableActual)
+
+    <div class="card border-left-primary shadow-sm mb-3">
+
+        <div class="card-body py-3">
+
+            <div class="d-flex align-items-center">
+
+                {{-- Foto --}}
+                <div class="mr-3">
+
+                    <div
+                        class="rounded-circle border bg-light d-flex align-items-center justify-content-center"
+                        style="width:60px;height:60px;">
+
+                        <i class="fas fa-user text-secondary"></i>
+
+                    </div>
+
+                </div>
+
+                {{-- Responsable --}}
+                <div class="flex-grow-1">
+
+                    <div class="font-weight-bold text-dark">
+
+                        {{ $oficio->responsableActual->coordinacion->nombre }}
+
+                    </div>
+
+                    <div class="text-muted">
+
+                        {{ $oficio->responsableActual->usuario->name }}
+
+                    </div>
+
+                </div>
+
+                {{-- Estado --}}
+                <div>
+
+                    <span class="badge badge-primary px-3 py-2">
+
+                        {{ $oficio->estado->nombre }}
+
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    @endif
+
     <div id="contenedor-tags" class="mt-2 mb-3">
 
         @foreach($oficio->tags as $tag)

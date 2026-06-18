@@ -318,7 +318,10 @@ class OficioController extends Controller
         $editable = auth()->user()->hasRole('admin');
 
         $oficio->load([
-            'archivos.versiones'
+            'archivos.versiones',
+            'estado',
+            'responsableActual.usuario',
+            'responsableActual.coordinacion'
         ]);
 
         return view(
