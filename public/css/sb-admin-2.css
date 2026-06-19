@@ -5691,10 +5691,11 @@ a.close.disabled {
   position: fixed;
   top: 0;
   left: 0;
-  z-index: 1050;
+  z-index: 1055;
   display: none;
   width: 100%;
   height: 100%;
+  filter: none !important;
   overflow: hidden;
   outline: 0;
 }
@@ -5786,11 +5787,6 @@ a.close.disabled {
   outline: 0;
 }
 
-body.modal-open #content-wrapper {
-    filter: blur(3px);
-    transition: filter .2s ease;
-}
-
 body.modal-open .modal {
     filter: none;
 }
@@ -5803,6 +5799,7 @@ body.modal-open .modal {
   width: 100vw;
   height: 100vh;
   background-color: #000;
+  filter: none !important;
 }
 
 .modal-backdrop.fade {
@@ -5810,9 +5807,8 @@ body.modal-open .modal {
 }
 
 .modal-backdrop.show {
-    opacity: .4;
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
+    background-color: rgba(0,0,0,0.35);
+    opacity: 1 !important;
 }
 
 .modal-header {

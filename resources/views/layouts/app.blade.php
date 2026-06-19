@@ -224,7 +224,7 @@
 <script>
     window.USER_CAN_EDIT = @json(
         auth()->user()->hasRole('admin') ||
-        auth()->user()->hasPermission('puede_registrar')
+        auth()->user()->hasPermission('puede_registrar_oficios')
     );
 </script>
 

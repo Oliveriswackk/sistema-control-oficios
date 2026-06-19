@@ -47,11 +47,15 @@ class UsersSeeder extends Seeder
 
         $recepcion->roles()->attach($capturaRole->id);
 
-        $recepcion->permisos()->attach($permisoCerrar->id);
+        $permisoCerrar = Permiso::where('clave', 'puede_cerrar')->first();
+        $permisoRegistrar = Permiso::where('clave', 'puede_registrar_oficios')->first();
 
-        $recepcion->coordinaciones()->attach([
-            1
+        $recepcion->permisos()->attach([
+            $permisoCerrar->id,
+            $permisoRegistrar->id,
         ]);
+
+        $recepcion->coordinaciones()->attach([1]);
 
         /*
         |--------------------------------------------------------------------------

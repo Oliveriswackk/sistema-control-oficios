@@ -451,7 +451,7 @@
 
                         @if(
                             auth()->user()->hasRole('admin') ||
-                            auth()->user()->hasPermission('puede_registrar')
+                            auth()->user()->hasPermission('puede_registrar_oficios')
                         )
 
                             <button
@@ -522,7 +522,7 @@
 
         @if(
             auth()->user()->hasRole('admin') ||
-            auth()->user()->hasPermission('puede_registrar')
+            auth()->user()->hasPermission('puede_registrar_oficios')
         )
 
             <form

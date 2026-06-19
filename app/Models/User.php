@@ -109,14 +109,18 @@ class User extends Authenticatable
     
     public function hasPermission(string $permission): bool
     {
-        $porRol = $this->roles
-            ->flatMap(fn ($role) => $role->permisos)
-            ->contains('clave', $permission);
+        $permisos = $this->permisos()->get();
 
-        $directo = $this->permisos
-            ->contains('clave', $permission);
+        $porRol = $this->roles()
+            ->with('permisos')
+            ->get()
+            ->flatMap(fn ($role) => $role->permisos);
 
-        return $porRol || $directo;
+        $directo = $permisos->contains('clave', $permission);
+
+        $desdeRol = $porRol->contains('clave', $permission);
+
+        return $directo || $desdeRol;
     }
 
 

@@ -265,6 +265,10 @@ class OficioController extends Controller
     */
     public function update(Request $request, Oficio $oficio)
     {
+        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermission('puede_registrar_oficios')) {
+            abort(403);
+        }
+
         $oficio->update([
 
             'numero_oficio' => $request->numero_oficio,
@@ -315,7 +319,9 @@ class OficioController extends Controller
     */
     public function detalle(Oficio $oficio)
     {
-        $editable = auth()->user()->hasRole('admin');
+        $editable =
+            auth()->user()->hasRole('admin') ||
+            auth()->user()->hasPermission('puede_registrar_oficios');
 
         $oficio->load([
             'archivos.versiones',
