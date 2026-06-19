@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
+
     <title>SESEA - Sistema de Oficios</title>
-    <style>
+
+<style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Montserrat', sans-serif;}
 
     body {
@@ -191,6 +194,7 @@
         50% { opacity: 0.4; transform: scale(0.9); }
     }
 </style>
+
 </head>
 <body>
 
