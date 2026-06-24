@@ -14,21 +14,21 @@ class StoreOficioRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'numero_oficio' => ['required', 'string'],
-            'consecutivo' => ['nullable', 'integer'],
+            'tipo_oficio_id' => ['required', 'integer'],
 
-            'tipo_oficio_id' => ['nullable', 'integer'],
-            'estado_id' => ['nullable', 'integer'],
+            'coordinacion_origen_id' => ['required', 'exist:coordinaciones.id'],
 
             'asunto' => ['required', 'string'],
             'descripcion' => ['nullable', 'string'],
 
-            'fecha_oficio' => ['nullable', 'date'],
-            'fecha_recepcion' => ['nullable', 'date'],
+            'fecha_oficio' => ['required', 'date'],
+            'fecha_recepcion' => ['required', 'date'],
             'fecha_limite' => ['nullable', 'date'],
 
             'requiere_respuesta' => ['boolean'],
-            'respuesta_a_oficio_id' => ['required'],
+
+            'respuesta_a_oficio_id' => ['nullable', 'integer'],
+
             'es_sensible' => ['boolean'],
 
             'remitente_nombre' => ['nullable', 'string'],
@@ -42,7 +42,6 @@ class StoreOficioRequest extends FormRequest
             'quien_elabora_nombre' => ['nullable', 'string'],
             'quien_elabora_cargo' => ['nullable', 'string'],
 
-            'coordinacion_origen_id' => ['nullable', 'integer'],
             'link_documento' => ['nullable', 'string'],
         ];
     }

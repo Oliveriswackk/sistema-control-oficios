@@ -120,6 +120,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/oficios/{oficio}/cerrar', [OficioController::class, 'cerrar'])
         ->middleware('permission:puede_cerrar')
         ->name('oficios.cerrar');
+
+    // CONSECUTIVO
+    Route::get('/oficios/proximo-consecutivo', [OficioController::class, 'proximoConsecutivo']);
     
 
     /*

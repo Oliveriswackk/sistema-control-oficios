@@ -6,7 +6,9 @@ use App\Http\Requests\StoreOficioRequest;
 use App\Models\Oficio;
 use App\Models\Turnado;
 use App\Models\EstadoOficio;
+use App\Models\Coordinacion;
 use App\Models\Tag;
+use App\Services\OficioService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -107,11 +109,16 @@ class OficioController extends Controller
         ->latest()
         ->get();
 
+        $coordinaciones = Coordinacion::where('activo', true)
+            ->orderBy('nombre')
+            ->get();
+
         return view(
             'dashboard',
             compact(
                 'oficios',
-                'oficiosRelacionables'
+                'oficiosRelacionables',
+                'coordinaciones'
             )
         );
     }
@@ -186,11 +193,27 @@ class OficioController extends Controller
             }
         }
 
+        $coordinacion = Coordinacion::findOrFail($request->coordinacion_origen_id);
+
+        $año = Carbon::parse($request->fecha_oficio)->year;
+
+        $ultimoConsecutivo = Oficio::where('coordinacion_origen_id', $coordinacion->id)
+            ->whereYear('fecha_oficio', $año)
+            ->max('consecutivo');
+
+        $consecutivo = $ultimoConsecutivo ? $ultimoConsecutivo + 1 : 1;
+
+        $numeroOficio = "SESEA-{$coordinacion->clave}-" .
+            str_pad($consecutivo, 3, '0', STR_PAD_LEFT) .
+            "-{$año}";
+
         $oficio = Oficio::create([
             'uuid' => (string) Str::uuid(),
 
-            'numero_oficio' => $request->numero_oficio,
-            'consecutivo' => $request->consecutivo,
+            'numero_oficio' => $numeroOficio,
+            'consecutivo' => $consecutivo,
+
+            'estado_id' => EstadoOficio::REGISTRADO,
             'tipo_oficio_id' => $request->tipo_oficio_id,
             'asunto' => $request->asunto,
             'descripcion' => $request->descripcion,
@@ -200,10 +223,12 @@ class OficioController extends Controller
             'fecha_limite' => $request->fecha_limite,
 
             'requiere_respuesta' => $request->requiere_respuesta ?? 0,
+
             'respuesta_a_oficio_id' =>
                 $request->respuesta_a_oficio_id == 0
                     ? null
                     : $request->respuesta_a_oficio_id,
+
             'es_sensible' => $request->es_sensible ?? 0,
 
             'remitente_nombre' => $request->remitente_nombre,
@@ -219,10 +244,10 @@ class OficioController extends Controller
 
             'link_documento' => $request->link_documento,
 
-            'estado_id' => EstadoOficio::REGISTRADO,
             'usuario_registro_id' => auth()->id(),
             'responsable_inicial_id' => auth()->id(),
-            'coordinacion_origen_id' => 1,
+
+            'coordinacion_origen_id' => $coordinacion->id,
         ]);
 
         if ($request->filled('tags')) {

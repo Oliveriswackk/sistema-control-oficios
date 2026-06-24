@@ -343,4 +343,30 @@ $(document).on('change', '.user-check', function () {
 });
 
 </script>
+
+<script>
+// GENERACIÓN NÚMERO DE OFICIO
+function generarNumeroOficio() {
+
+    let coordinacionSelect = document.querySelector('[name="coordinacion_origen_id"]');
+    let tipo = document.querySelector('[name="tipo_oficio_id"]:checked');
+    let fecha = document.querySelector('[name="fecha_oficio"]').value;
+
+    if (!coordinacionSelect || !fecha) return;
+
+    let coordinacionId = coordinacionSelect.value;
+
+    fetch(`/oficios/proximo-consecutivo?coordinacion_id=${coordinacionId}&fecha=${fecha}`)
+        .then(res => res.json())
+        .then(data => {
+
+            document.getElementById('numero_oficio').value = data.numero_oficio;
+            document.getElementById('consecutivo').value = data.consecutivo;
+
+        });
+}
+
+document.querySelector('[name="coordinacion_origen_id"]').addEventListener('change', generarNumeroOficio);
+document.querySelector('[name="fecha_oficio"]').addEventListener('change', generarNumeroOficio);
+</script>
 @endsection

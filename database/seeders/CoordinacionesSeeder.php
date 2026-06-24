@@ -13,73 +13,65 @@ class CoordinacionesSeeder extends Seeder
 
         /*      == Coordinaciones Internas == */
             [
-                'clave' => 'OP', // 1
-                'nombre' => 'Oficialía de Partes',
+                'clave' => 'CJ', // 1
+                'nombre' => 'Asuntos Jurídicos',
                 'activo' => true,
             ],
 
             [
-                'clave' => 'CS', // 2
-                'nombre' => 'Oficina del C. Secretario',
+                'clave' => 'CC-SEA', // 2
+                'nombre' => 'Comité Coordinador del Sistema Estatal Anticorrupción',
+                'activo' => true,
+            ],
+            
+            [
+                'clave' => 'ETICA', // 3
+                'nombre' => 'Comité de Ética',
+                'activo' => true,
+            ],
+                
+            [
+                'clave' => 'CA', // 4
+                'nombre' => 'Coordinación Administrativa',
                 'activo' => true,
             ],
 
             [
-                'clave' => 'VIN', // 3
-                'nombre' => 'Vinculación',
-                'activo' => true,
-            ],
-
-            [
-                'clave' => 'RIS', // 4
+                'clave' => 'CRyPP', // 5
                 'nombre' => 'Riesgos y Políticas Públicas',
                 'activo' => true,
             ],
 
             [
-                'clave' => 'JUR', // 5
-                'nombre' => 'Asuntos Jurídicos',
-                'activo' => true,
-            ],
-            
-            [
-                'clave' => 'SIS', // 6
-                'nombre' => 'Servicios Tecnológicos',
-                'activo' => true,
-            ],
-            
-            [
-                'clave' => 'CA', // 7
-                'nombre' => 'Coordinación Administrativa',
-                'activo' => true,
-            ],
-
-            /* 
-                    == Envio de oficios ==
-            [
-                'clave' => 'ST',
+                'clave' => 'ST', // 6
                 'nombre' => 'Secretaría Técnica',
                 'activo' => true,
             ],
-
+                
             [
-                'clave' => 'UIG',
+                'clave' => 'CSTyPD', // 7
+                'nombre' => 'Servicios Tecnológicos y Plataforma Digital',
+                'activo' => true,
+            ],
+            
+            [
+                'clave' => 'UIG', // 8
                 'nombre' => 'Unidad de Igualdad de Género',
                 'activo' => true,
             ],
 
             [
-                'clave' => 'CVIYSC',
-                'nombre' => 'Coordinación de Vinculación Interinstitucional y de la Sociedad Civil',
+                'clave' => 'UT', // 9
+                'nombre' => 'Unidad de Transparencia',
                 'activo' => true,
             ],
 
             [
-                'clave' => 'CC-SEA',
-                'nombre' => 'Comité Coordinador del Sistema Estatal Anticorrupción',
+                'clave' => 'CVIySC', // 10
+                'nombre' => 'Vinculación Institucional y con la Sociedad Civil',
                 'activo' => true,
             ],
-            */
+
         ]);
     }
 }
