@@ -110,14 +110,12 @@
         >
 
         <small class="text-muted">
-            Se genera automáticamente, pero puede editarse si es necesario.
+            Generado automáticamente.
         </small>
     </div>
 
-    <div class="col-md-4 mb-2">
-        <label>Consecutivo <span class="text-danger">*</span></label>
-        <input type="hidden" id="consecutivo" name="consecutivo">
-    </div>
+    <!-- Consecutivo-->
+    <input type="hidden" id="consecutivo" name="consecutivo">
 
 </div>
 

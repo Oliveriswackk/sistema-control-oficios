@@ -122,8 +122,7 @@ Route::middleware('auth')->group(function () {
         ->name('oficios.cerrar');
 
     // CONSECUTIVO
-    Route::get('/oficios/proximo-consecutivo', [OficioController::class, 'proximoConsecutivo']);
-    
+    Route::get('/oficios/proximo-consecutivo', [OficioController::class, 'proximoConsecutivo']);    
 
     /*
     |--------------------------------------------------------------------------

@@ -9,6 +9,7 @@ use App\Models\EstadoOficio;
 use App\Models\Coordinacion;
 use App\Models\Tag;
 use App\Services\OficioService;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -168,6 +169,37 @@ class OficioController extends Controller
         return response()->json(['message' => 'ok']);
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | NO. OFICIO CONSECUTIVO
+    |--------------------------------------------------------------------------
+    */
+    public function proximoConsecutivo(Request $request)
+    {
+        if (!$request->coordinacion_id) {
+            return response()->json([
+                'error' => 'Coordinación requerida'
+            ], 422);
+        }
+
+        $coordinacion = Coordinacion::findOrFail($request->coordinacion_id);
+
+        $anio = Carbon::now()->year;
+        
+        $ultimo = Oficio::where('coordinacion_origen_id', $coordinacion->id)
+            ->whereYear('fecha_oficio', $anio)
+            ->max('consecutivo');
+
+        $consecutivo = $ultimo ? $ultimo + 1 : 1;
+
+        return response()->json([
+            'numero_oficio' => "SESEA-{$coordinacion->clave}-" .
+                str_pad($consecutivo, 3, '0', STR_PAD_LEFT) .
+                "-{$anio}",
+            'consecutivo' => $consecutivo,
+        ]);
+    }
 
     /*
     |--------------------------------------------------------------------------
