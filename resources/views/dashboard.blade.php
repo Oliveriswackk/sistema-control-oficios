@@ -259,6 +259,11 @@ $(document).ready(function () {
 
 function generarNumeroOficio() {
 
+    const tipo = $('input[name="tipo_oficio_id"]:checked').val();
+
+    // Solo aplica a ENVIADO
+    if (tipo != 1) return;
+
     const coordSelect = document.querySelector(
         '#modalCrearOficio select[name="coordinacion_origen_id"]'
     );
@@ -275,26 +280,15 @@ function generarNumeroOficio() {
             }
 
             return res.json();
-
         })
         .then(data => {
 
-            document.getElementById('numero_oficio').value =
-                data.numero_oficio;
-
-            document.getElementById('consecutivo').value =
-                data.consecutivo;
-
+            document.getElementById('numero_oficio').value = data.numero_oficio;
+            document.getElementById('consecutivo').value = data.consecutivo;
         })
         .catch(err => {
-
-            console.error(
-                'Error generando número de oficio:',
-                err
-            );
-
+            console.error('Error generando número de oficio:', err);
         });
-
 }
 
 document.addEventListener('change', function (e) {
@@ -438,6 +432,88 @@ $(document).on('change', '.user-check', function () {
 
     }
 
+});
+
+// =========================================================
+// DINÁMICA TIPO DE OFICIO
+// =========================================================
+
+function actualizarFormularioTipoOficio() {
+
+    const DEPENDENCIA_SESEA = 'Secretaría Ejecutiva del Sistema Estatal Anticorrupción';
+    
+    const tipo = $('input[name="tipo_oficio_id"]:checked').val();
+
+    const bloqueCoordinacion = $('#bloqueCoordinacion');
+
+    const selectCoordinacion = $('select[name="coordinacion_origen_id"]');
+
+    const inputNumero = $('#numero_oficio');
+
+    const textoAyuda = $('#textoNumeroAutomatico');
+
+    const consecutivo = $('#consecutivo');
+    
+    const remitenteDependencia = $('#remitente_dependencia');
+
+    const destinatarioDependencia = $('#destinatario_dependencia');
+
+
+    if (tipo == 1) {
+
+        // ==========================
+        // ENVIADO
+        // ==========================
+
+        bloqueCoordinacion.show();
+
+        selectCoordinacion.prop('required', true);
+
+        inputNumero.prop('readonly', true);
+
+        textoAyuda.text('Generado automáticamente por el sistema.');
+
+        remitenteDependencia.val(DEPENDENCIA_SESEA);
+
+        destinatarioDependencia.val('');
+
+        generarNumeroOficio();
+
+    } else {
+
+        // ==========================
+        // RECIBIDO / RECIBIDO CPC
+        // ==========================
+
+        bloqueCoordinacion.hide();
+
+        selectCoordinacion.prop('required', false);
+
+        inputNumero.prop('readonly', false);
+
+        textoAyuda.text('Captura manual del número de oficio.');
+
+        remitenteDependencia.val('');
+
+        destinatarioDependencia.val(DEPENDENCIA_SESEA);
+
+        consecutivo.val(0);
+
+    }
+
+}
+
+// Cambio de radio buttons
+$(document).on('change', 'input[name="tipo_oficio_id"]', function () {
+
+    actualizarFormularioTipoOficio();
+
+});
+
+
+// Inicialización al abrir modal
+$('#modalCrearOficio').on('shown.bs.modal', function () {
+    actualizarFormularioTipoOficio();
 });
 
 </script>

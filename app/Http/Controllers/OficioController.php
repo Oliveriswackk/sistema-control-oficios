@@ -178,37 +178,45 @@ class OficioController extends Controller
     public function proximoConsecutivo(Request $request)
     {
         if (!$request->coordinacion_id) {
+
             return response()->json([
                 'error' => 'Coordinación requerida'
             ], 422);
+
         }
 
-        $coordinacion = Coordinacion::findOrFail($request->coordinacion_id);
+        $coordinacion = Coordinacion::findOrFail(
+            $request->coordinacion_id
+        );
 
         $anio = Carbon::now()->year;
-        
-        $ultimo = Oficio::where('coordinacion_origen_id', $coordinacion->id)
+
+        $ultimoConsecutivo = Oficio::where(
+                'coordinacion_origen_id',
+                $coordinacion->id
+            )
             ->whereYear('fecha_oficio', $anio)
             ->max('consecutivo');
 
-        $consecutivo = $ultimo ? $ultimo + 1 : 1;
+        $consecutivo = $ultimoConsecutivo
+            ? $ultimoConsecutivo + 1
+            : 1;
 
         return response()->json([
-            'numero_oficio' => "SESEA-{$coordinacion->clave}-" .
+
+            'numero_oficio' =>
+                "SESEA-{$coordinacion->clave}-" .
                 str_pad($consecutivo, 3, '0', STR_PAD_LEFT) .
                 "-{$anio}",
+
             'consecutivo' => $consecutivo,
+
         ]);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | GUARDAR / CREAR
-    |--------------------------------------------------------------------------
-    */
+
     public function store(StoreOficioRequest $request)
     {
-
         $this->authorize('create', Oficio::class);
 
         $esRespuesta = $request->respuesta_a_oficio_id != 0;
@@ -226,30 +234,68 @@ class OficioController extends Controller
             }
         }
 
-        $coordinacion = Coordinacion::findOrFail($request->coordinacion_origen_id);
-
-        $año = Carbon::parse($request->fecha_oficio)->year;
-
-        $ultimoConsecutivo = Oficio::where('coordinacion_origen_id', $coordinacion->id)
-            ->whereYear('fecha_oficio', $año)
-            ->max('consecutivo');
-
-        $consecutivo = $ultimoConsecutivo ? $ultimoConsecutivo + 1 : 1;
-
         $respuestaId = $request->input('respuesta_a_oficio_id');
 
-        $numeroOficio = "SESEA-{$coordinacion->clave}-" .
-            str_pad($consecutivo, 3, '0', STR_PAD_LEFT) .
-            "-{$año}";
+        $tipo = (int) $request->tipo_oficio_id;
+
+        // =====================================================
+        // ENVIADO
+        // =====================================================
+
+        if ($tipo === 1) {
+
+            $coordinacion = Coordinacion::findOrFail(
+                $request->coordinacion_origen_id
+            );
+
+            $anio = Carbon::parse(
+                $request->fecha_oficio
+            )->year;
+
+            $ultimoConsecutivo = Oficio::where(
+                    'coordinacion_origen_id',
+                    $coordinacion->id
+                )
+                ->whereYear('fecha_oficio', $anio)
+                ->max('consecutivo');
+
+            $consecutivo = $ultimoConsecutivo
+                ? $ultimoConsecutivo + 1
+                : 1;
+
+            $numeroOficio =
+                "SESEA-{$coordinacion->clave}-" .
+                str_pad($consecutivo, 3, '0', STR_PAD_LEFT) .
+                "-{$anio}";
+
+            $coordinacionId = $coordinacion->id;
+
+        }
+
+        // =====================================================
+        // RECIBIDO / RECIBIDO CPC
+        // =====================================================
+
+        else {
+
+            $numeroOficio = $request->numero_oficio;
+
+            $consecutivo = 0;
+
+            $coordinacionId = null;
+        }
 
         $oficio = Oficio::create([
+
             'uuid' => (string) Str::uuid(),
 
             'numero_oficio' => $numeroOficio,
             'consecutivo' => $consecutivo,
 
             'estado_id' => EstadoOficio::REGISTRADO,
+
             'tipo_oficio_id' => $request->tipo_oficio_id,
+
             'asunto' => $request->asunto,
             'descripcion' => $request->descripcion,
 
@@ -259,9 +305,10 @@ class OficioController extends Controller
 
             'requiere_respuesta' => $request->requiere_respuesta ?? 0,
 
-            'respuesta_a_oficio_id' => $respuestaId && $respuestaId != 0
-                ? $respuestaId
-                : null,
+            'respuesta_a_oficio_id' =>
+                $respuestaId && $respuestaId != 0
+                    ? $respuestaId
+                    : null,
 
             'es_sensible' => $request->es_sensible ?? 0,
 
@@ -281,8 +328,10 @@ class OficioController extends Controller
             'usuario_registro_id' => auth()->id(),
             'responsable_inicial_id' => auth()->id(),
 
-            'coordinacion_origen_id' => $coordinacion->id,
+            'coordinacion_origen_id' => $coordinacionId,
         ]);
+
+        // -------- Tags --------
 
         if ($request->filled('tags')) {
 
@@ -327,7 +376,6 @@ class OficioController extends Controller
             ->route('dashboard')
             ->with('success', 'Oficio creado correctamente');
     }
-
 
     /*
     |--------------------------------------------------------------------------

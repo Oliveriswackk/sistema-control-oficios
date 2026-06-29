@@ -3,10 +3,12 @@
 {{-- =========================
     CREACIÓN
 ========================= --}}
+
 <div class="row">
 
-    <!-- Tipo -->
-    <div class="col-md-6 mb-2">
+    {{-- Tipo --}}
+    <div class="col-md-6 mb-3">
+
         <label>
             Tipo de oficio
             <span class="text-danger">*</span>
@@ -21,13 +23,14 @@
                     name="tipo_oficio_id"
                     value="1"
                     class="custom-control-input"
-                    checked
-                >
+                    checked>
+
                 <label
                     class="custom-control-label"
-                    for="tipo_enviado"
-                >
+                    for="tipo_enviado">
+
                     Enviado
+
                 </label>
             </div>
 
@@ -37,13 +40,14 @@
                     id="tipo_recibido"
                     name="tipo_oficio_id"
                     value="2"
-                    class="custom-control-input"
-                    >
+                    class="custom-control-input">
+
                 <label
                     class="custom-control-label"
-                    for="tipo_recibido"
-                >
+                    for="tipo_recibido">
+
                     Recibido
+
                 </label>
             </div>
 
@@ -53,26 +57,45 @@
                     id="tipo_cpc"
                     name="tipo_oficio_id"
                     value="3"
-                    class="custom-control-input"
-                >
+                    class="custom-control-input">
+
                 <label
                     class="custom-control-label"
-                    for="tipo_cpc"
-                >
+                    for="tipo_cpc">
+
                     Recibido CPC
+
                 </label>
             </div>
 
         </div>
-    </div> 
 
-    <div class="col-md-4 mb-2">
-        <label>Coordinación <span class="text-danger">*</span></label>
+    </div>
 
-        <select name="coordinacion_origen_id" class="form-control" required>
+    {{-- Coordinación --}}
+    <div
+        class="col-md-6 mb-3"
+        id="bloqueCoordinacion">
 
-            <option value="" selected disabled>
+        <label>
+
+            Coordinación
+            <span class="text-danger">*</span>
+
+        </label>
+
+        <select
+            name="coordinacion_origen_id"
+            class="form-control"
+            >
+
+            <option
+                value=""
+                selected
+                disabled>
+
                 Seleccionar
+
             </option>
 
             @foreach($coordinaciones as $coordinacion)
@@ -84,6 +107,7 @@
             @endforeach
 
         </select>
+
     </div>
 
 </div>
@@ -92,40 +116,58 @@
 {{-- =========================
     IDENTIFICACIÓN
 ========================= --}}
+
 <h6 class="text-primary font-weight-bold mb-2">
+
     Información Principal
+
 </h6>
 
 <div class="row">
 
-    <div class="col-md-6 mb-2">
-        <label>Número de oficio <span class="text-danger">*</span></label>
+    <div class="col-md-6 mb-3">
+
+        <label id="labelNumeroOficio">
+            Número de oficio
+            <span class="text-danger">*</span>
+
+        </label>
 
         <input
             type="text"
             id="numero_oficio"
             name="numero_oficio"
             class="form-control form-control-sm"
-            required
-        >
+            required>
 
-        <small class="text-muted">
+        <small
+            id="textoNumeroAutomatico"
+            class="text-muted">
             Generado automáticamente.
         </small>
+
+        <input
+            type="hidden"
+            id="consecutivo"
+            name="consecutivo">
+
     </div>
 
-    <!-- Consecutivo-->
-    <input type="hidden" id="consecutivo" name="consecutivo">
+    <div class="col-md-6 mb-3">
 
-    <div class="col-md-6 mb-2">
-        <label>Asunto <span class="text-danger">*</span></label>
+        <label>
+
+            Asunto
+            <span class="text-danger">*</span>
+
+        </label>
 
         <input
             type="text"
             name="asunto"
             class="form-control form-control-sm"
-            required
-        >
+            required>
+
     </div>
 
 </div>
@@ -181,7 +223,7 @@
 
     <div class="col-md-4 mb-2">
         <label>Dependencia</label>
-        <input type="text" name="remitente_dependencia" class="form-control form-control-sm">
+        <input type="text" id="remitente_dependencia" name="remitente_dependencia" class="form-control form-control-sm">
     </div>
 
 </div>
@@ -208,7 +250,7 @@
 
     <div class="col-md-4 mb-2">
         <label>Dependencia</label>
-        <input type="text" name="destinatario_dependencia" class="form-control form-control-sm">
+        <input type="text" id="destinatario_dependencia" name="destinatario_dependencia" class="form-control form-control-sm">
     </div>
 
 </div>

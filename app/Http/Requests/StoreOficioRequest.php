@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreOficioRequest extends FormRequest
 {
@@ -17,7 +18,13 @@ class StoreOficioRequest extends FormRequest
         return [
             'tipo_oficio_id' => ['required', 'integer'],
 
-            'coordinacion_origen_id' => ['required', 'exists:coordinaciones,id'],
+            'coordinacion_origen_id' => [
+                'nullable',
+                'required_if:tipo_oficio_id,1',
+                'exists:coordinaciones,id',
+            ],
+
+            'numero_oficio' => ['required', 'string'],
 
             'asunto' => ['required', 'string'],
             'descripcion' => ['nullable', 'string'],

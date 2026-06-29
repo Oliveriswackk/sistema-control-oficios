@@ -110,7 +110,9 @@ return new class extends Migration
                 ->constrained('users');
 
             $table->foreignId('coordinacion_origen_id')
-                ->constrained('coordinaciones');
+                ->nullable()
+                ->constrained('coordinaciones')
+                ->nullOnDelete();
 
             $table->foreignId('usuario_registro_id')
                 ->constrained('users');
