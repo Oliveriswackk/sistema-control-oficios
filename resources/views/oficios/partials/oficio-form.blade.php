@@ -117,6 +117,17 @@
     <!-- Consecutivo-->
     <input type="hidden" id="consecutivo" name="consecutivo">
 
+    <div class="col-md-6 mb-2">
+        <label>Asunto <span class="text-danger">*</span></label>
+
+        <input
+            type="text"
+            name="asunto"
+            class="form-control form-control-sm"
+            required
+        >
+    </div>
+
 </div>
 
 

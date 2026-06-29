@@ -13,10 +13,11 @@ class StoreOficioRequest extends FormRequest
 
     public function rules(): array
     {
+
         return [
             'tipo_oficio_id' => ['required', 'integer'],
 
-            'coordinacion_origen_id' => ['required', 'exist:coordinaciones.id'],
+            'coordinacion_origen_id' => ['required', 'exists:coordinaciones,id'],
 
             'asunto' => ['required', 'string'],
             'descripcion' => ['nullable', 'string'],

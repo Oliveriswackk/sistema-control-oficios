@@ -208,6 +208,7 @@ class OficioController extends Controller
     */
     public function store(StoreOficioRequest $request)
     {
+
         $this->authorize('create', Oficio::class);
 
         $esRespuesta = $request->respuesta_a_oficio_id != 0;
@@ -235,6 +236,8 @@ class OficioController extends Controller
 
         $consecutivo = $ultimoConsecutivo ? $ultimoConsecutivo + 1 : 1;
 
+        $respuestaId = $request->input('respuesta_a_oficio_id');
+
         $numeroOficio = "SESEA-{$coordinacion->clave}-" .
             str_pad($consecutivo, 3, '0', STR_PAD_LEFT) .
             "-{$año}";
@@ -256,10 +259,9 @@ class OficioController extends Controller
 
             'requiere_respuesta' => $request->requiere_respuesta ?? 0,
 
-            'respuesta_a_oficio_id' =>
-                $request->respuesta_a_oficio_id == 0
-                    ? null
-                    : $request->respuesta_a_oficio_id,
+            'respuesta_a_oficio_id' => $respuestaId && $respuestaId != 0
+                ? $respuestaId
+                : null,
 
             'es_sensible' => $request->es_sensible ?? 0,
 
@@ -309,9 +311,12 @@ class OficioController extends Controller
             'Oficio creado desde interfaz web'
         );
 
-        return redirect()
-            ->route('dashboard')
-            ->with('success', 'Oficio creado correctamente');
+        return response()->json([
+            'ok' => true,
+            'message' => 'SI LLEGA AL STORE',
+            'user_id' => auth()->id(),
+            'data' => $request->all()
+        ]);
     }
 
 

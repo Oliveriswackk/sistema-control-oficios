@@ -113,7 +113,7 @@
 
         <div class="modal-content">
 
-            <form method="POST" action="{{ route('oficios.store') }}">
+            <form id="formCrearOficio">
                 @csrf
 
                 {{-- HEADER --}}
@@ -200,6 +200,46 @@ $(document).ready(function () {
         ]
     });
 
+});
+
+// =========================================================
+// CREAR OFICIO
+// =========================================================
+$(document).on('submit', '#formCrearOficio', function (e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+
+    $.ajax({
+        url: '/oficios',
+        method: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+            'Accept': 'application/json'
+        }
+    })
+    .done((res) => {
+
+        Alerts.success(res.message ?? 'Oficio creado correctamente');
+
+        $('#modalCrearOficio').modal('hide');
+
+        // mejor que reload cuando ya funcione todo
+        location.reload();
+    })
+    .fail((xhr) => {
+
+        console.log('ERROR BACKEND:', xhr.responseText);
+
+        if (xhr.status === 422) {
+            console.log('VALIDATION:', xhr.responseJSON);
+        }
+
+        Alerts.error('Error al crear oficio');
+    });
 });
 
 // =========================================================
