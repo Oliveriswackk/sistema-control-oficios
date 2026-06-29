@@ -176,7 +176,7 @@
 $(document).ready(function () {
 
     // Ver Detalles del Oficio
-    $('.btn-ver-oficio').on('click', function () {
+    $(document).on('click', '.btn-ver-oficio', function () {
 
         Oficios.open(
             $(this).data('id'),
@@ -208,37 +208,39 @@ $(document).ready(function () {
 $(document).on('submit', '#formCrearOficio', function (e) {
     e.preventDefault();
 
-    const formData = new FormData(this);
+    const $form = $(this);
 
+    const data = $form.serialize();
     $.ajax({
         url: '/oficios',
         method: 'POST',
-        data: formData,
-        processData: false,
-        contentType: false,
+        data: data,
         headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-            'Accept': 'application/json'
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
         }
     })
     .done((res) => {
 
-        Alerts.success(res.message ?? 'Oficio creado correctamente');
+        Alerts.success('Oficio creado correctamente');
 
         $('#modalCrearOficio').modal('hide');
 
-        // mejor que reload cuando ya funcione todo
-        location.reload();
+        const table = $('#tabla-oficios').DataTable();
+
+        table.row
+            .add($(res.row))
+            .draw(false);
+
+        $('#formCrearOficio')[0].reset();
+
     })
     .fail((xhr) => {
 
-        console.log('ERROR BACKEND:', xhr.responseText);
+        console.log(xhr.responseJSON);
 
-        if (xhr.status === 422) {
-            console.log('VALIDATION:', xhr.responseJSON);
-        }
+        const msg = xhr.responseJSON?.message || 'Error al crear oficio';
 
-        Alerts.error('Error al crear oficio');
+        Alerts.error(msg);
     });
 });
 

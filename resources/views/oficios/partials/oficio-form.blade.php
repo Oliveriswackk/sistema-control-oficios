@@ -361,6 +361,3 @@
     </div>
 
 </div>
-
-{{-- hidden sistema --}}
-<input type="hidden" name="usuario_registro_id" value="{{ auth()->id() }}">

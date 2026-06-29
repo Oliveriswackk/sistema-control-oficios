@@ -311,12 +311,21 @@ class OficioController extends Controller
             'Oficio creado desde interfaz web'
         );
 
-        return response()->json([
-            'ok' => true,
-            'message' => 'SI LLEGA AL STORE',
-            'user_id' => auth()->id(),
-            'data' => $request->all()
-        ]);
+        if ($request->ajax()) {
+
+            $oficio->load('estado', 'tags');
+
+            return response()->json([
+                'row' => view(
+                    'oficios.partials.oficio-row',
+                    compact('oficio')
+                )->render()
+            ]);
+        }
+
+        return redirect()
+            ->route('dashboard')
+            ->with('success', 'Oficio creado correctamente');
     }
 
 
