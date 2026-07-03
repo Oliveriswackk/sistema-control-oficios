@@ -175,8 +175,8 @@ class OficioController extends Controller
     | NO. OFICIO CONSECUTIVO
     |--------------------------------------------------------------------------
     */
-    public function proximoConsecutivo(Request $request)
-    {
+    public function proximoConsecutivo(Request $request, OficioService $oficioService) {
+
         if (!$request->coordinacion_id) {
 
             return response()->json([
@@ -185,37 +185,17 @@ class OficioController extends Controller
 
         }
 
-        $coordinacion = Coordinacion::findOrFail(
-            $request->coordinacion_id
+        $datos = $oficioService->generarNumeroOficio(
+            (int) $request->coordinacion_id,
+            Carbon::now()->toDateString()
         );
 
-        $anio = Carbon::now()->year;
+        return response()->json($datos);
 
-        $ultimoConsecutivo = Oficio::where(
-                'coordinacion_origen_id',
-                $coordinacion->id
-            )
-            ->whereYear('fecha_oficio', $anio)
-            ->max('consecutivo');
-
-        $consecutivo = $ultimoConsecutivo
-            ? $ultimoConsecutivo + 1
-            : 1;
-
-        return response()->json([
-
-            'numero_oficio' =>
-                "SESEA-{$coordinacion->clave}-" .
-                str_pad($consecutivo, 3, '0', STR_PAD_LEFT) .
-                "-{$anio}",
-
-            'consecutivo' => $consecutivo,
-
-        ]);
     }
 
 
-    public function store(StoreOficioRequest $request)
+    public function store(StoreOficioRequest $request, OficioService $oficioService)
     {
         $this->authorize('create', Oficio::class);
 
@@ -229,9 +209,12 @@ class OficioController extends Controller
                 return back()->with('error', 'Oficio padre no existe');
             }
 
+            /* Responder Oficios Cerrados - Deshabilitado
+
             if ($padre->estado_id === EstadoOficio::CERRADO) {
                 return back()->with('error', 'No puedes responder un oficio cerrado');
             }
+            */
         }
 
         $respuestaId = $request->input('respuesta_a_oficio_id');
@@ -244,31 +227,15 @@ class OficioController extends Controller
 
         if ($tipo === 1) {
 
-            $coordinacion = Coordinacion::findOrFail(
-                $request->coordinacion_origen_id
+            $datos = $oficioService->generarNumeroOficio(
+                $request->coordinacion_origen_id,
+                $request->fecha_oficio
             );
 
-            $anio = Carbon::parse(
-                $request->fecha_oficio
-            )->year;
+            $numeroOficio = $datos['numero_oficio'];
+            $consecutivo = $datos['consecutivo'];
 
-            $ultimoConsecutivo = Oficio::where(
-                    'coordinacion_origen_id',
-                    $coordinacion->id
-                )
-                ->whereYear('fecha_oficio', $anio)
-                ->max('consecutivo');
-
-            $consecutivo = $ultimoConsecutivo
-                ? $ultimoConsecutivo + 1
-                : 1;
-
-            $numeroOficio =
-                "SESEA-{$coordinacion->clave}-" .
-                str_pad($consecutivo, 3, '0', STR_PAD_LEFT) .
-                "-{$anio}";
-
-            $coordinacionId = $coordinacion->id;
+            $coordinacionId = $request->coordinacion_origen_id;
 
         }
 
