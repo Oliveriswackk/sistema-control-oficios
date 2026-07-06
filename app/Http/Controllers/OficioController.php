@@ -170,12 +170,8 @@ class OficioController extends Controller
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | NO. OFICIO CONSECUTIVO
-    |--------------------------------------------------------------------------
-    */
-    public function proximoConsecutivo(Request $request, OficioService $oficioService) {
+    public function proximoConsecutivo(Request $request, OficioService $oficioService)
+    {
 
         if (!$request->coordinacion_id) {
 
@@ -185,16 +181,22 @@ class OficioController extends Controller
 
         }
 
-        $datos = $oficioService->generarNumeroOficio(
-            (int) $request->coordinacion_id,
-            Carbon::now()->toDateString()
-        );
+        return response()->json(
 
-        return response()->json($datos);
+            $oficioService->obtenerSiguienteNumero(
+                (int) $request->coordinacion_id,
+                now()->toDateString()
+            )
+
+        );
 
     }
 
-
+    /*
+    |--------------------------------------------------------------------------
+    | GUARDAR NUEVO OFICIO
+    |--------------------------------------------------------------------------
+    */
     public function store(StoreOficioRequest $request, OficioService $oficioService)
     {
         $this->authorize('create', Oficio::class);
@@ -227,7 +229,7 @@ class OficioController extends Controller
 
         if ($tipo === 1) {
 
-            $datos = $oficioService->generarNumeroOficio(
+            $datos = $oficioService->consumirSiguienteNumero(
                 $request->coordinacion_origen_id,
                 $request->fecha_oficio
             );

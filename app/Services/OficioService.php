@@ -2,52 +2,33 @@
 
 namespace App\Services;
 
-use App\Models\Oficio;
 use App\Models\Coordinacion;
 use App\Models\ConsecutivoOficio;
 use Illuminate\Support\Facades\DB;
 
 class OficioService
 {
-    public function generarNumeroOficio(int $coordinacionId, string $fecha)
-    : array {
-
-    return DB::transaction(function () use (
-        $coordinacionId,
-        $fecha
-    ) {
+    /**
+     * Solo consulta cuál sería el siguiente número.
+     * NO modifica la base de datos.
+     */
+    public function obtenerSiguienteNumero(
+        int $coordinacionId,
+        string $fecha
+    ): array {
 
         $anio = date('Y', strtotime($fecha));
 
         $coordinacion = Coordinacion::findOrFail($coordinacionId);
 
-        $consecutivo = ConsecutivoOficio::where(
+        $ultimo = ConsecutivoOficio::where(
                 'coordinacion_id',
                 $coordinacionId
             )
             ->where('anio', $anio)
-            ->lockForUpdate()
-            ->first();
+            ->value('ultimo_numero');
 
-        if (!$consecutivo) {
-
-            $consecutivo = ConsecutivoOficio::create([
-                'coordinacion_id' => $coordinacionId,
-                'anio' => $anio,
-                'ultimo_numero' => 1,
-            ]);
-
-            $numero = 1;
-
-        } else {
-
-            $consecutivo->increment('ultimo_numero');
-
-            $consecutivo->refresh();
-
-            $numero = $consecutivo->ultimo_numero;
-
-        }
+        $numero = ($ultimo ?? 0) + 1;
 
         return [
 
@@ -59,8 +40,67 @@ class OficioService
             'consecutivo' => $numero,
 
         ];
+    }
 
-    });
+    /**
+     * Consume definitivamente el consecutivo.
+     * ESTE SÍ escribe en BD.
+     */
+    public function consumirSiguienteNumero(
+        int $coordinacionId,
+        string $fecha
+    ): array {
 
-}
+        return DB::transaction(function () use (
+            $coordinacionId,
+            $fecha
+        ) {
+
+            $anio = date('Y', strtotime($fecha));
+
+            $coordinacion = Coordinacion::findOrFail($coordinacionId);
+
+            $consecutivo = ConsecutivoOficio::where(
+                    'coordinacion_id',
+                    $coordinacionId
+                )
+                ->where('anio', $anio)
+                ->lockForUpdate()
+                ->first();
+
+            if (!$consecutivo) {
+
+                $consecutivo = ConsecutivoOficio::create([
+                    'coordinacion_id' => $coordinacionId,
+                    'anio' => $anio,
+                    'ultimo_numero' => 1,
+                ]);
+
+            } else {
+
+                $consecutivo->increment('ultimo_numero');
+                $consecutivo->refresh();
+
+            }
+
+            return [
+
+                'numero_oficio' =>
+                    "SESEA-{$coordinacion->clave}-" .
+                    str_pad(
+                        $consecutivo->ultimo_numero,
+                        3,
+                        '0',
+                        STR_PAD_LEFT
+                    ) .
+                    "-{$anio}",
+
+                'consecutivo' =>
+                    $consecutivo->ultimo_numero,
+
+            ];
+
+        });
+
+    }
 }
