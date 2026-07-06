@@ -36,7 +36,8 @@ class OficioPolicy
     */
     public function create(User $user): bool
     {
-        return $user->hasPermission('puede_registrar_oficios');
+        return $user->hasRole('admin')
+            || $user->hasPermission('puede_registrar_oficios');
     }
 
     /*

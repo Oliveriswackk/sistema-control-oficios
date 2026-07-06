@@ -166,10 +166,13 @@ class OficioController extends Controller
     {
         $this->authorize('create', Oficio::class);
 
+        $foliosReservados = FolioReservado::where('estado', 'reservado')->get();
+
         return response()->json(['message' => 'ok']);
     }
 
 
+    // CONSECUTIVOS
     public function proximoConsecutivo(Request $request, OficioService $oficioService)
     {
 
@@ -191,6 +194,7 @@ class OficioController extends Controller
         );
 
     }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -229,16 +233,49 @@ class OficioController extends Controller
 
         if ($tipo === 1) {
 
-            $datos = $oficioService->consumirSiguienteNumero(
-                $request->coordinacion_origen_id,
-                $request->fecha_oficio
-            );
+            // ----- CASO 1. Se usa el reservado -----
+            if ($request->filled('folio_reservado_id')) {
 
-            $numeroOficio = $datos['numero_oficio'];
-            $consecutivo = $datos['consecutivo'];
+                $folio = \App\Models\FolioReservado::where('id', $request->folio_reservado_id)
+                    ->where('estado', 'reservado')
+                    ->lockForUpdate()
+                    ->first();
 
-            $coordinacionId = $request->coordinacion_origen_id;
+                if (!$folio) {
+                    return back()->with('error', 'El folio reservado no está disponible');
+                }
 
+                $folio->estado = 'usado';
+
+                $coordinacionId = $folio->coordinacion_id;
+                $numero = $folio->numero;
+                $anio = $folio->anio;
+
+                $coordinacion = \App\Models\Coordinacion::findOrFail($coordinacionId);
+
+                $numeroOficio =
+                    "SESEA-{$coordinacion->clave}-" .
+                    str_pad($numero, 3, '0', STR_PAD_LEFT) .
+                    "-{$anio}";
+
+                $consecutivo = $numero;
+
+                $folio->numero_oficio = $numeroOficio;
+                $folio->save();
+                
+            // ----- CASO 2. Se consume el siguiente número -----
+            } else {
+
+                $datos = $oficioService->consumirSiguienteNumero(
+                    $request->coordinacion_origen_id,
+                    $request->fecha_oficio
+                );
+
+                $numeroOficio = $datos['numero_oficio'];
+                $consecutivo = $datos['consecutivo'];
+
+                $coordinacionId = $request->coordinacion_origen_id;
+            }
         }
 
         // =====================================================
@@ -345,6 +382,32 @@ class OficioController extends Controller
             ->route('dashboard')
             ->with('success', 'Oficio creado correctamente');
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | RESERVAR NO. OFICIOS
+    |--------------------------------------------------------------------------
+    */
+    public function reservarFolios(Request $request, OficioService $service)
+    {
+        $this->authorize('create', Oficio::class);
+
+        $request->validate([
+            'coordinacion_id' => 'required|exists:coordinaciones,id',
+            'fecha' => 'required|date',
+            'cantidad' => 'required|integer|min:1|max:200',
+        ]);
+
+        return response()->json(
+            $service->reservarNumeros(
+                $request->coordinacion_id,
+                $request->fecha,
+                $request->cantidad
+            )
+        );
+    }
+
 
     /*
     |--------------------------------------------------------------------------

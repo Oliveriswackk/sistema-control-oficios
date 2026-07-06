@@ -158,7 +158,7 @@ database/seeders/UsersSeeder.php
 - Laravel 12
 - PHP 8.3
 - MySQL
-- Bootstrap 5
+- Bootstrap 4
 - SB Admin 2
 - Laravel Breeze
 - Vite

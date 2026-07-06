@@ -105,7 +105,6 @@ Route::middleware('auth')->group(function () {
     // MODAL TURNAR (GET)
     Route::get('/oficios/{oficio}/turnar', [OficioController::class, 'turnarModal'])
         ->name('oficios.turnar.modal');
-
         
     // GUARDAR TURNAR (POST SINGLE)
     Route::post('/oficios/{oficio}/turnar', [OficioController::class, 'turnar'])
@@ -123,6 +122,12 @@ Route::middleware('auth')->group(function () {
 
     // CONSECUTIVO
     Route::get('/oficios/proximo-consecutivo', [OficioController::class, 'proximoConsecutivo']);    
+
+    // RESERVAR NO. OFICIO
+    Route::post('/oficios/reservar-folios', [
+        OficioController::class,
+        'reservarFolios'
+    ])->name('oficios.reservar-folios');
 
     /*
     |--------------------------------------------------------------------------

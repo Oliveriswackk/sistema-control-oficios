@@ -4,18 +4,18 @@ namespace App\Services;
 
 use App\Models\Coordinacion;
 use App\Models\ConsecutivoOficio;
+use App\Models\FolioReservado;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 
 class OficioService
 {
-    /**
-     * Solo consulta cuál sería el siguiente número.
-     * NO modifica la base de datos.
-     */
-    public function obtenerSiguienteNumero(
-        int $coordinacionId,
-        string $fecha
-    ): array {
+    /*
+    Solo consulta cuál sería el siguiente número
+    NO modifica la base de datos
+    */
+    public function obtenerSiguienteNumero(int $coordinacionId, string $fecha): array 
+    {
 
         $anio = date('Y', strtotime($fecha));
 
@@ -42,14 +42,13 @@ class OficioService
         ];
     }
 
-    /**
-     * Consume definitivamente el consecutivo.
-     * ESTE SÍ escribe en BD.
-     */
-    public function consumirSiguienteNumero(
-        int $coordinacionId,
-        string $fecha
-    ): array {
+
+    /*
+    Consume definitivamente el consecutivo
+    ESTE SÍ escribe en BD
+    */
+    public function consumirSiguienteNumero(int $coordinacionId, string $fecha): array 
+    {
 
         return DB::transaction(function () use (
             $coordinacionId,
@@ -103,4 +102,63 @@ class OficioService
         });
 
     }
+
+
+    // Reservar No. Oficio
+    public function reservarNumeros(int $coordinacionId, string $fecha, int $cantidad): array 
+    {
+        return DB::transaction(function () use ($coordinacionId, $fecha, $cantidad) {
+
+            $anio = date('Y', strtotime($fecha));
+
+            $coordinacion = Coordinacion::findOrFail($coordinacionId);
+
+            $consecutivo = ConsecutivoOficio::where('coordinacion_id', $coordinacionId)
+                ->where('anio', $anio)
+                ->lockForUpdate()
+                ->first();
+
+            $ultimo = $consecutivo?->ultimo_numero ?? 0;
+
+            if (!$consecutivo) {
+
+                $consecutivo = ConsecutivoOficio::create([
+                    'coordinacion_id' => $coordinacionId,
+                    'anio' => $anio,
+                    'ultimo_numero' => $cantidad,
+                ]);
+
+            } else {
+
+                $consecutivo->increment('ultimo_numero', $cantidad);
+                $consecutivo->refresh();
+            }
+
+            $grupoUuid = (string) Str::uuid();
+
+            $folios = [];
+
+            for ($i = 1; $i <= $cantidad; $i++) {
+
+                $numero = $ultimo + $i;
+
+                $folios[] = FolioReservado::create([
+                    'coordinacion_id' => $coordinacionId,
+                    'anio' => $anio,
+                    'numero' => $numero,
+                    'estado' => 'reservado',
+                    'grupo_uuid' => $grupoUuid,
+                    'usuario_reserva_id' => auth()->id(),
+                ]);
+            }
+
+            return [
+                'grupo_uuid' => $grupoUuid,
+                'cantidad' => $cantidad,
+                'folios' => $folios,
+            ];
+        });
+    }
+
+
 }

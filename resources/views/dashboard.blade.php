@@ -68,9 +68,17 @@
         Oficios
     </h1>
 
-    <button class="btn btn-primary" data-toggle="modal" data-target="#modalCrearOficio">
-        Nuevo Oficio
-    </button>
+    <div class="d-flex justify-content-end align-items-center" >
+        <button class="btn btn-primary mr-2" data-toggle="modal" data-target="#modalCrearOficio">
+            Nuevo Oficio
+        </button>
+
+        <button class="btn btn-indigo" data-toggle="modal" data-target="#modalReservarFolios">
+            Reservar Folios
+        </button>
+    </div>
+    
+
 </div>
 
 
@@ -168,6 +176,94 @@
 
 </div>
 
+{{-- MODAL RESERVAR NÚMERO DE OFICIO --}}
+<div class="modal fade" id="modalReservarFolios" tabindex="-1" role="dialog">
+
+    <div class="modal-dialog modal-md" role="document">
+
+        <div class="modal-content">
+
+            <form id="formReservarFolios">
+
+                @csrf
+
+                <div class="modal-header py-2">
+
+                    <h5 class="modal-title">
+                        Reservar Folios
+                    </h5>
+
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+
+                </div>
+
+                <div class="modal-body">
+
+                    {{-- COORDINACIÓN --}}
+                    <div class="form-group">
+                        <label>Coordinación</label>
+
+                        <select class="form-control" name="coordinacion_id" required>
+                            @foreach(App\Models\Coordinacion::all() as $coord)
+                                <option value="{{ $coord->id }}">
+                                    {{ $coord->nombre }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- FECHA --}}
+                    <div class="form-group">
+                        <label>Fecha base</label>
+
+                        <input type="date"
+                               class="form-control"
+                               name="fecha"
+                               value="{{ now()->toDateString() }}"
+                               required>
+                    </div>
+
+                    {{-- CANTIDAD --}}
+                    <div class="form-group">
+                        <label>Cantidad de folios</label>
+
+                        <input type="number"
+                               class="form-control"
+                               name="cantidad"
+                               min="1"
+                               max="200"
+                               value="10"
+                               required>
+                    </div>
+
+                    <div id="resultadoReserva" class="small text-muted"></div>
+
+                </div>
+
+                <div class="modal-footer">
+
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-dismiss="modal">
+                        Cancelar
+                    </button>
+
+                    <button type="submit"
+                            class="btn btn-primary">
+                        Reservar
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
 @endsection
 
 @section('scripts')
@@ -516,6 +612,36 @@ $('#modalCrearOficio').on('shown.bs.modal', function () {
     actualizarFormularioTipoOficio();
 });
 
+// =========================================================
+// RESERVAR NO. OFICIOS
+// =========================================================
+document.getElementById('formReservarFolios').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const form = e.target;
+    const data = new FormData(form);
+
+    const response = await fetch("{{ route('oficios.reservar-folios') }}", {
+        method: "POST",
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: data
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+        alert('Error al reservar folios');
+        return;
+    }
+
+    document.getElementById('resultadoReserva').innerHTML =
+        `Se reservaron ${result.cantidad} folios.<br>Grupo: ${result.grupo_uuid}`;
+
+    // opcional: reset
+    form.reset();
+});
 </script>
 
 @endsection

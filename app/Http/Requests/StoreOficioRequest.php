@@ -26,6 +26,8 @@ class StoreOficioRequest extends FormRequest
 
             'numero_oficio' => ['required', 'string'],
 
+            'folio_reservado_id' => ['nullable', 'integer', 'exists:folios_reservados,id'],
+            
             'asunto' => ['required', 'string'],
             'descripcion' => ['nullable', 'string'],
 
