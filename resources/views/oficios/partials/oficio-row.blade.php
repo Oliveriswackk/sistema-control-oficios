@@ -24,7 +24,7 @@
         @if($oficio->estado_id != 5)
 
             <button
-                class="btn btn-sm btn-warning"
+                class="btn btn-sm btn-info"
                 onclick="abrirTurnar({{ $oficio->id }})">
 
                 Turnar

@@ -130,6 +130,12 @@ class User extends Authenticatable
     }
 
 
+    public function getRolPrincipalAttribute(): ?Rol
+    {
+        return $this->roles()->first();
+    }
+
+
     public function oficiosRegistrados(): HasMany
     {
         return $this->hasMany(Oficio::class, 'usuario_registro_id');

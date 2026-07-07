@@ -96,6 +96,7 @@ Route::middleware('auth')->group(function () {
 
     // CREAR
     Route::post('/oficios', [OficioController::class, 'store'])
+        ->middleware('permission:puede_registrar_oficios')
         ->name('oficios.store');
 
     // ACTUALIZAR
@@ -127,7 +128,16 @@ Route::middleware('auth')->group(function () {
     Route::post('/oficios/reservar-folios', [
         OficioController::class,
         'reservarFolios'
-    ])->name('oficios.reservar-folios');
+    ])
+    ->middleware('permission:puede_registrar_oficios')
+    ->name('oficios.reservar-folios');
+
+    /*Route::post('/oficios/reservar-folios', [
+        OficioController::class,
+        'reservarFolios'
+    ])->name('oficios.reservar-folios'); */
+
+    
 
     /*
     |--------------------------------------------------------------------------

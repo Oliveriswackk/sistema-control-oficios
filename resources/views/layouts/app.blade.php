@@ -133,7 +133,7 @@
                                     </span>
 
                                     <span class="text-gray-500" style="font-size: 11px; line-height: 1;">
-                                        {{ ucfirst(Auth::user()->role->name ?? 'usuario') }}
+                                        {{ Auth::user()->rolPrincipal?->nombre ?? 'Usuario' }}
                                     </span>
 
                                 </div>

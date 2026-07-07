@@ -17,8 +17,8 @@ class RolesSeeder extends Seeder
                 'activo' => true,
             ],
             [
-                'clave' => 'captura',
-                'nombre' => 'Captura',
+                'clave' => 'colaborador',
+                'nombre' => 'Colaborador',
                 'descripcion' => 'Registro y seguimiento de oficios',
                 'activo' => true,
             ],

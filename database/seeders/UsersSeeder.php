@@ -12,77 +12,224 @@ class UsersSeeder extends Seeder
 {
     public function run(): void
     {
-        $adminRole = Rol::where('clave', 'admin')->first();
-        $capturaRole = Rol::where('clave', 'captura')->first();
+        $admin = Rol::where('clave', 'admin')->firstOrFail();
+        $colaborador = Rol::where('clave', 'colaborador')->firstOrFail();
+        // $consulta = Rol::where('clave', 'consulta')->firstOrFail();
 
-        $permisoCerrar = Permiso::where('clave', 'puede_cerrar')->first();
+        $permisos = Permiso::all()->keyBy('clave');
+
+        // ---------- Función auxiliar ----------
+        $crear = function (
+            string $nombre,
+            string $email,
+            string $password,
+            Rol $rol,
+            array $adscripciones,
+            array $permisosExtra = []
+        ) use ($permisos) {
+
+            $user = User::create([
+                'name' => $nombre,
+                'email' => $email,
+                'password' => Hash::make($password),
+            ]);
+
+            $user->roles()->attach($rol->id);
+
+            $user->coordinaciones()->attach($adscripciones);
+
+            if (!empty($permisosExtra)) {
+
+                $ids = collect($permisosExtra)
+                    ->map(fn ($clave) => $permisos[$clave]->id)
+                    ->toArray();
+
+                $user->permisos()->attach($ids);
+            }
+
+            return $user;
+        };
+
 
         /*
         |--------------------------------------------------------------------------
-        | ADMIN
+        | ADMINISTRADORES
         |--------------------------------------------------------------------------
         */
-        $admin = User::create([
-            'name' => 'Oliver Coronado',
-            'email' => 'admin@sesea.test',
-            'password' => Hash::make('Oliwey777'),
-        ]);
 
-        $admin->roles()->attach($adminRole->id);
+        $crear(
+            'Oliver Coronado',
+            'admin@sesea.test',
+            'Oliwey777',
+            $admin,
+            [7]
+        );
 
-        $admin->coordinaciones()->attach([7]);
+        $crear(
+            'Salvador Jurado',
+            'salvador.jurado@sesea.test',
+            '123456789',
+            $admin,
+            [7]
+        );
+
+        $crear(
+            'Noel Cuevas',
+            'noel.cuevas@sesea.test',
+            '123456789',
+            $admin,
+            [7]
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | RECEPCION Y OFICIALIDAD DE PARTES
+        |--------------------------------------------------------------------------
+        */
+
+        $crear(
+            'Alejandro Salasplata',
+            'felipe@sesea.test',
+            '123456789',
+            $colaborador,
+            [6],
+            [
+                'puede_registrar_oficios',
+                'puede_turnar',
+                'puede_cerrar',
+            ]
+        );
+
+        $crear(
+            'Lizette Cordero',
+            'liz@sesea.test',
+            '123456789',
+            $colaborador,
+            [6],
+            [
+                'puede_registrar_oficios',
+                'puede_turnar',
+                'puede_cerrar',
+            ]
+        );
 
         /*
         |--------------------------------------------------------------------------
         | RECEPCIÓN
         |--------------------------------------------------------------------------
         */
-        $recepcion = User::create([
-            'name' => 'Daniela Ruiz',
-            'email' => 'recepcion@sesea.test',
-            'password' => Hash::make('123456789'),
-        ]);
 
-        $recepcion->roles()->attach($capturaRole->id);
-
-        $permisoCerrar = Permiso::where('clave', 'puede_cerrar')->first();
-        $permisoRegistrar = Permiso::where('clave', 'puede_registrar_oficios')->first();
-
-        $recepcion->permisos()->attach([
-            $permisoCerrar->id,
-            $permisoRegistrar->id,
-        ]);
-
-        $recepcion->coordinaciones()->attach([6]);
+        $crear(
+            'Daniela Ruiz',
+            'recepcion@sesea.test',
+            '123456789',
+            $colaborador,
+            [6],
+            [
+                'puede_registrar_oficios',
+                'puede_turnar',
+                'puede_cerrar',
+            ]
+        );
 
         /*
         |--------------------------------------------------------------------------
-        | JURÍDICO
+        | COORDINADORES
         |--------------------------------------------------------------------------
         */
-        $juridico = User::create([
-            'name' => 'Dania Perez',
-            'email' => 'juridico@sesea.test',
-            'password' => Hash::make('123456789'),
-        ]);
 
-        $juridico->roles()->attach($capturaRole->id);
+        $crear(
+            'Héctor Ponce',
+            'coord.riesgos@sesea.test',
+            '123456789',
+            $colaborador,
+            [5],
+            [
+                'puede_returnar',
+            ]
+        );
 
-        $juridico->coordinaciones()->attach([8]);
+        $crear(
+            'Juan Carlos Estrada',
+            'coord.vinculacion@sesea.test',
+            '123456789',
+            $colaborador,
+            [10],
+            [
+                'puede_returnar',
+            ]
+        );
+
+        $crear(
+            'Leticia Favila',
+            'coord.admin@sesea.test',
+            '123456789',
+            $colaborador,
+            [4],
+            [
+                'puede_returnar',
+            ]
+        );
+
+        $crear(
+            'Dania Pérez',
+            'coord.juridico@sesea.test',
+            '123456789',
+            $colaborador,
+            [
+                1,
+                8,
+            ],
+            [
+                'puede_returnar',
+                'puede_ver_sensibles',
+            ]
+        );
 
         /*
         |--------------------------------------------------------------------------
-        | RIESGOS
+        | COLABORADORES
         |--------------------------------------------------------------------------
         */
-        $riesgos = User::create([
-            'name' => 'Oscar Arroyo',
-            'email' => 'riesgos@sesea.test',
-            'password' => Hash::make('123456789'),
-        ]);
 
-        $riesgos->roles()->attach($capturaRole->id);
+        $crear(
+            'Óscar Arroyo',
+            'oscar@sesea.test',
+            '123456789',
+            $colaborador,
+            [5]
+        );
 
-        $riesgos->coordinaciones()->attach([5]);
+        $crear(
+            'Ximena García',
+            'ximena@sesea.test',
+            '123456789',
+            $colaborador,
+            [5]
+        );
+
+        $crear(
+            'Beatriz Medrano',
+            'beatriz@sesea.test',
+            '123456789',
+            $colaborador,
+            [10]
+        );
+
+        $crear(
+            'Anel Navarro',
+            'anel@sesea.test',
+            '123456789',
+            $colaborador,
+            [10]
+        );
+
+        $crear(
+            'Roberto García',
+            'roberto@sesea.test',
+            '123456789',
+            $colaborador,
+            [4]
+        );
     }
 }

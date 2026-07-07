@@ -3,12 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreOficioRequest;
+use App\Services\OficioService;
 use App\Models\Oficio;
 use App\Models\Turnado;
 use App\Models\EstadoOficio;
 use App\Models\Coordinacion;
+use App\Models\FolioReservado;
 use App\Models\Tag;
-use App\Services\OficioService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
@@ -166,9 +167,13 @@ class OficioController extends Controller
     {
         $this->authorize('create', Oficio::class);
 
-        $foliosReservados = FolioReservado::where('estado', 'reservado')->get();
+        $foliosReservados = \App\Models\FolioReservado::where('estado', 'reservado')
+            ->orderBy('created_at')
+            ->get();
 
-        return response()->json(['message' => 'ok']);
+        return response()->json([
+            'foliosReservados' => $foliosReservados,
+        ]);
     }
 
 
@@ -245,8 +250,6 @@ class OficioController extends Controller
                     return back()->with('error', 'El folio reservado no está disponible');
                 }
 
-                $folio->estado = 'usado';
-
                 $coordinacionId = $folio->coordinacion_id;
                 $numero = $folio->numero;
                 $anio = $folio->anio;
@@ -260,8 +263,10 @@ class OficioController extends Controller
 
                 $consecutivo = $numero;
 
-                $folio->numero_oficio = $numeroOficio;
-                $folio->save();
+                $folio->update([
+                    'estado' => 'usado',
+                    'numero_oficio' => $numeroOficio,
+                ]);
                 
             // ----- CASO 2. Se consume el siguiente número -----
             } else {
@@ -416,9 +421,6 @@ class OficioController extends Controller
     */
     public function update(Request $request, Oficio $oficio)
     {
-        if (!auth()->user()->hasRole('admin') && !auth()->user()->hasPermission('puede_registrar_oficios')) {
-            abort(403);
-        }
 
         $oficio->update([
 
@@ -597,15 +599,20 @@ class OficioController extends Controller
 
     public function turnarModal(Oficio $oficio)
     {
-        $coordinaciones = \App\Models\Coordinacion::with('users')->get();
+        $coordinaciones = Coordinacion::with([
+            'users.roles'
+        ])->get();
 
         $tiposParticipacion = \App\Models\TipoParticipacion::all();
 
-        return view('oficios.modals.turnar', compact(
-            'oficio',
-            'coordinaciones',
-            'tiposParticipacion'
-        ));
+        return view(
+            'oficios.modals.turnar',
+            compact(
+                'oficio',
+                'coordinaciones',
+                'tiposParticipacion'
+            )
+        );
     }
 
     /*

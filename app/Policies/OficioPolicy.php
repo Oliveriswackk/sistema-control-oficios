@@ -7,6 +7,15 @@ use App\Models\User;
 
 class OficioPolicy
 {
+    public function before(User $user, string $ability): ?bool
+    {
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+
+        return null;
+    }
+
     /*
     |--------------------------------------------------------------------------
     | VER OFICIO
@@ -14,19 +23,22 @@ class OficioPolicy
     */
     public function view(User $user, Oficio $oficio): bool
     {
-        // Admin ve todo
-        if ($user->hasRole('admin')) {
-            return true;
-        }
-
-        // Puede ver sensibles solo con permiso
-        if ($oficio->es_sensible && !$user->hasPermission('puede_ver_sensibles')) {
+        if ($oficio->es_sensible &&
+            !$user->hasPermission('puede_ver_sensibles')) {
             return false;
         }
 
-        // Puede ver si pertenece a su coordinación o fue turnado a él
-        return $oficio->usuario_registro_id === $user->id
-            || $oficio->turnados()->where('usuario_id', $user->id)->exists();
+        return
+            $oficio->usuario_registro_id === $user->id
+            || $user->coordinaciones()
+                ->where('coordinaciones.id', $oficio->coordinacion_origen_id)
+                ->exists()
+            || $oficio->turnados()
+                ->whereIn(
+                    'coordinacion_id',
+                    $user->coordinaciones->pluck('id')
+                )
+                ->exists();
     }
 
     /*
@@ -36,8 +48,7 @@ class OficioPolicy
     */
     public function create(User $user): bool
     {
-        return $user->hasRole('admin')
-            || $user->hasPermission('puede_registrar_oficios');
+        return $user->hasPermission('puede_registrar_oficios');
     }
 
     /*
@@ -90,7 +101,10 @@ class OficioPolicy
 
         // Debe estar asignado al usuario
         return $oficio->turnados()
-            ->where('usuario_id', $user->id)
+            ->whereIn(
+                'coordinacion_id',
+                $user->coordinaciones->pluck('id')
+            )
             ->exists();
     }
 
@@ -122,7 +136,6 @@ class OficioPolicy
             return true;
         }
 
-        return $user->hasPermission('puede_ver_sensibles')
-            || $user->hasRole('admin');
+        return $user->hasPermission('puede_ver_sensibles');
     }
 }
