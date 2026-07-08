@@ -21,6 +21,12 @@ class OficioService
 
         $coordinacion = Coordinacion::findOrFail($coordinacionId);
 
+        /*
+        |--------------------------------------------------------------------------
+        | Consecutivo automático
+        |--------------------------------------------------------------------------
+        */
+
         $ultimo = ConsecutivoOficio::where(
                 'coordinacion_id',
                 $coordinacionId
@@ -30,7 +36,7 @@ class OficioService
 
         $numero = ($ultimo ?? 0) + 1;
 
-        return [
+        $consecutivo = [
 
             'numero_oficio' =>
                 "SESEA-{$coordinacion->clave}-" .
@@ -40,6 +46,49 @@ class OficioService
             'consecutivo' => $numero,
 
         ];
+
+        /*
+        |--------------------------------------------------------------------------
+        | Folios reservados disponibles
+        |--------------------------------------------------------------------------
+        */
+
+        $reservados = FolioReservado::where(
+                'coordinacion_id',
+                $coordinacionId
+            )
+            ->where('anio', $anio)
+            ->where('estado', 'reservado')
+            ->orderBy('numero')
+            ->get()
+            ->map(function ($folio) use ($coordinacion, $anio) {
+
+                return [
+
+                    'id' => $folio->id,
+
+                    'numero' => $folio->numero,
+
+                    'numero_oficio' =>
+                        "SESEA-{$coordinacion->clave}-" .
+                        str_pad($folio->numero, 3, '0', STR_PAD_LEFT) .
+                        "-{$anio}",
+
+                ];
+
+            })
+            ->values();
+
+        return [
+
+            'consecutivo' => $consecutivo,
+
+            'reservados' => $reservados,
+
+            'cantidad_reservados' => $reservados->count(),
+
+        ];
+
     }
 
 

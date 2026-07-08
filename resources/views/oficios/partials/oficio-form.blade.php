@@ -130,26 +130,89 @@
         <label id="labelNumeroOficio">
             Número de oficio
             <span class="text-danger">*</span>
-
         </label>
+
+        {{-- ==========================================
+            OPCIONES DE NUMERACIÓN
+        ========================================== --}}
+
+        <div
+            id="opcionesNumeracion"
+            style="display:none;">
+
+            <div class="custom-control custom-radio mb-2">
+
+                <input
+                    type="radio"
+                    id="usar_reservado"
+                    name="modo_numeracion"
+                    value="reservado"
+                    class="custom-control-input">
+
+                <label
+                    class="custom-control-label"
+                    for="usar_reservado">
+
+                    Usar folio reservado
+
+                </label>
+
+            </div>
+
+            <select
+                id="folio_reservado_select"
+                class="form-control form-control-sm mb-2">
+
+            </select>
+
+            <small
+                id="textoReservados"
+                class="text-muted d-block mb-3">
+
+            </small>
+
+            <hr>
+
+            <div class="custom-control custom-radio mb-2">
+
+                <input
+                    type="radio"
+                    id="usar_consecutivo"
+                    name="modo_numeracion"
+                    value="consecutivo"
+                    class="custom-control-input">
+
+                <label
+                    class="custom-control-label"
+                    for="usar_consecutivo">
+
+                    Generar consecutivo automático
+
+                </label>
+
+            </div>
+
+        </div>
 
         <input
             type="text"
             id="numero_oficio"
             name="numero_oficio"
             class="form-control form-control-sm"
+            readonly
             required>
 
         <small
             id="textoNumeroAutomatico"
             class="text-muted">
+
             Generado automáticamente.
+
         </small>
 
-        <input
-            type="hidden"
-            id="consecutivo"
-            name="consecutivo">
+        <input type="hidden" id="consecutivo" name="consecutivo">
+
+        <input type="hidden" id="folio_reservado_id" name="folio_reservado_id">
 
     </div>
 

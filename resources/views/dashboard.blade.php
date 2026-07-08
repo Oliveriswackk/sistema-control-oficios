@@ -360,13 +360,16 @@ function generarNumeroOficio() {
     // Solo aplica a ENVIADO
     if (tipo != 1) return;
 
+
     const coordSelect = document.querySelector(
         '#modalCrearOficio select[name="coordinacion_origen_id"]'
     );
 
     const coord = coordSelect?.value;
 
+
     if (!coord) return;
+
 
     fetch(`/oficios/proximo-consecutivo?coordinacion_id=${coord}`)
         .then(res => {
@@ -376,17 +379,200 @@ function generarNumeroOficio() {
             }
 
             return res.json();
+
         })
         .then(data => {
 
-            document.getElementById('numero_oficio').value = data.numero_oficio;
-            document.getElementById('consecutivo').value = data.consecutivo;
+
+            const bloqueOpciones =
+                document.getElementById('opcionesNumeracion');
+
+
+            const selectReservados =
+                document.getElementById('folio_reservado_select');
+
+
+            const radioReservado =
+                document.getElementById('usar_reservado');
+
+
+            const radioConsecutivo =
+                document.getElementById('usar_consecutivo');
+
+
+            const numeroOficio =
+                document.getElementById('numero_oficio');
+
+
+            const consecutivo =
+                document.getElementById('consecutivo');
+
+
+            const folioReservadoId =
+                document.getElementById('folio_reservado_id');
+
+
+            const textoReservados =
+                document.getElementById('textoReservados');
+
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Limpiar estado anterior
+            |--------------------------------------------------------------------------
+            */
+
+
+            selectReservados.innerHTML = '';
+
+            folioReservadoId.value = '';
+
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Si existen reservados
+            |--------------------------------------------------------------------------
+            */
+
+            if (data.reservados.length > 0) {
+
+
+                bloqueOpciones.style.display = 'block';
+
+
+                radioReservado.checked = true;
+
+
+                selectReservados.disabled = false;
+
+
+
+                data.reservados.forEach((folio, index) => {
+
+
+                    const option =
+                        document.createElement('option');
+
+
+                    option.value = folio.id;
+
+
+                    option.textContent =
+                        folio.numero_oficio;
+
+
+                    selectReservados.appendChild(option);
+
+
+
+                    // Primer folio seleccionado automáticamente
+
+                    if (index === 0) {
+
+                        selectReservados.value = folio.id;
+
+                    }
+
+
+                });
+
+
+
+                const primero =
+                    data.reservados[0];
+
+
+
+                numeroOficio.value =
+                    primero.numero_oficio;
+
+
+                consecutivo.value =
+                    primero.numero;
+
+
+                folioReservadoId.value =
+                    primero.id;
+
+
+
+                const primeroNumero =
+                    data.reservados[0].numero;
+
+
+                const ultimoNumero =
+                    data.reservados[
+                        data.reservados.length - 1
+                    ].numero;
+
+
+
+                textoReservados.innerHTML =
+
+                    `${data.cantidad_reservados} folios reservados disponibles ` +
+                    `(${String(primeroNumero).padStart(3,'0')} - ${String(ultimoNumero).padStart(3,'0')}).`;
+
+
+
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Si NO existen reservados
+            |--------------------------------------------------------------------------
+            */
+
+            else {
+
+
+                bloqueOpciones.style.display = 'none';
+
+
+                numeroOficio.value =
+                    data.consecutivo.numero_oficio;
+
+
+                consecutivo.value =
+                    data.consecutivo.consecutivo;
+
+
+
+            }
+
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Guardamos consecutivo automático
+            |--------------------------------------------------------------------------
+            */
+
+
+            radioConsecutivo.dataset.numero =
+                data.consecutivo.numero_oficio;
+
+
+            radioConsecutivo.dataset.consecutivo =
+                data.consecutivo.consecutivo;
+
+
+
         })
         .catch(err => {
-            console.error('Error generando número de oficio:', err);
+
+            console.error(
+                'Error generando número de oficio:',
+                err
+            );
+
         });
+
 }
 
+
+// ---- Coordinacion -----
 document.addEventListener('change', function (e) {
 
     if (e.target.matches(
@@ -396,6 +582,86 @@ document.addEventListener('change', function (e) {
         generarNumeroOficio();
 
     }
+
+});
+
+
+document.addEventListener('change', function(e){
+
+
+    if (
+        e.target.matches(
+            'input[name="modo_numeracion"]'
+        )
+    ) {
+
+
+        const numeroOficio =
+            document.getElementById('numero_oficio');
+
+
+        const consecutivo =
+            document.getElementById('consecutivo');
+
+
+        const folioReservadoId =
+            document.getElementById('folio_reservado_id');
+
+
+
+        if(e.target.value === 'reservado'){
+
+
+            const select =
+                document.getElementById(
+                    'folio_reservado_select'
+                );
+
+
+            const option =
+                select.options[
+                    select.selectedIndex
+                ];
+
+
+            numeroOficio.value =
+                option.text;
+
+
+            consecutivo.value =
+                option.value;
+
+
+            folioReservadoId.value =
+                option.value;
+
+
+
+        }
+
+
+        if(e.target.value === 'consecutivo'){
+
+
+            numeroOficio.value =
+                document.getElementById(
+                    'usar_consecutivo'
+                ).dataset.numero;
+
+
+            consecutivo.value =
+                document.getElementById(
+                    'usar_consecutivo'
+                ).dataset.consecutivo;
+
+
+            folioReservadoId.value = '';
+
+        }
+
+
+    }
+
 
 });
 
