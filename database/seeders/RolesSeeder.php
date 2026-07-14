@@ -16,6 +16,14 @@ class RolesSeeder extends Seeder
                 'descripcion' => 'Acceso total al sistema',
                 'activo' => true,
             ],
+
+            [
+                'clave' => 'coordinador',
+                'nombre' => 'Coordinador',
+                'descripcion' => 'Responsable de una coordinación',
+                'activo' => true,
+            ],
+
             [
                 'clave' => 'colaborador',
                 'nombre' => 'Colaborador',

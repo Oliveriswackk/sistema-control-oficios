@@ -11,6 +11,7 @@ class RolPermisoSeeder extends Seeder
     public function run(): void
     {
         $admin = Rol::where('clave', 'admin')->firstOrFail();
+        $coordinador = Rol::where('clave', 'coordinador')->firstOrFail();
         $colaborador = Rol::where('clave', 'colaborador')->firstOrFail();
         $consulta = Rol::where('clave', 'consulta')->firstOrFail();
 
@@ -21,10 +22,15 @@ class RolPermisoSeeder extends Seeder
             $permisos->pluck('id')->toArray()
         );
 
-        // COLABORADOR → Permisos pasan a ser individuales
+        // COORDINADOR → permisos individuales
+        $coordinador->permisos()->sync([]);
+
+        // COLABORADOR → permisos individuales
         $colaborador->permisos()->sync([]);
 
         // CONSULTA → sin permisos operativos
         $consulta->permisos()->sync([]);
     }
 }
+
+        

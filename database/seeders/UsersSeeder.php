@@ -13,8 +13,9 @@ class UsersSeeder extends Seeder
     public function run(): void
     {
         $admin = Rol::where('clave', 'admin')->firstOrFail();
+        $coordinador = Rol::where('clave', 'coordinador')->firstOrFail();
         $colaborador = Rol::where('clave', 'colaborador')->firstOrFail();
-        // $consulta = Rol::where('clave', 'consulta')->firstOrFail();
+        $consulta = Rol::where('clave', 'consulta')->firstOrFail();
 
         $permisos = Permiso::all()->keyBy('clave');
 
@@ -23,7 +24,7 @@ class UsersSeeder extends Seeder
             string $nombre,
             string $email,
             string $password,
-            Rol $rol,
+            array $roles,
             array $adscripciones,
             array $permisosExtra = []
         ) use ($permisos) {
@@ -34,7 +35,7 @@ class UsersSeeder extends Seeder
                 'password' => Hash::make($password),
             ]);
 
-            $user->roles()->attach($rol->id);
+            $user->roles()->attach(collect($roles)->pluck('id')->toArray());
 
             $user->coordinaciones()->attach($adscripciones);
 
@@ -61,7 +62,7 @@ class UsersSeeder extends Seeder
             'Oliver Coronado',
             'admin@sesea.test',
             'Oliwey777',
-            $admin,
+            [$admin],
             [7]
         );
 
@@ -69,7 +70,7 @@ class UsersSeeder extends Seeder
             'Salvador Jurado',
             'salvador.jurado@sesea.test',
             '123456789',
-            $admin,
+            [$admin, $coordinador],
             [7]
         );
 
@@ -77,7 +78,7 @@ class UsersSeeder extends Seeder
             'Noel Cuevas',
             'noel.cuevas@sesea.test',
             '123456789',
-            $admin,
+            [$admin],
             [7]
         );
 
@@ -91,7 +92,7 @@ class UsersSeeder extends Seeder
             'Alejandro Salasplata',
             'felipe@sesea.test',
             '123456789',
-            $colaborador,
+            [$colaborador],
             [6],
             [
                 'puede_registrar_oficios',
@@ -104,7 +105,7 @@ class UsersSeeder extends Seeder
             'Lizette Cordero',
             'liz@sesea.test',
             '123456789',
-            $colaborador,
+            [$colaborador],
             [6],
             [
                 'puede_registrar_oficios',
@@ -123,7 +124,7 @@ class UsersSeeder extends Seeder
             'Daniela Ruiz',
             'recepcion@sesea.test',
             '123456789',
-            $colaborador,
+            [$colaborador],
             [6],
             [
                 'puede_registrar_oficios',
@@ -142,7 +143,7 @@ class UsersSeeder extends Seeder
             'Héctor Ponce',
             'coord.riesgos@sesea.test',
             '123456789',
-            $colaborador,
+            [$coordinador],
             [5],
             [
                 'puede_returnar',
@@ -153,7 +154,7 @@ class UsersSeeder extends Seeder
             'Juan Carlos Estrada',
             'coord.vinculacion@sesea.test',
             '123456789',
-            $colaborador,
+            [$coordinador],
             [10],
             [
                 'puede_returnar',
@@ -164,7 +165,7 @@ class UsersSeeder extends Seeder
             'Leticia Favila',
             'coord.admin@sesea.test',
             '123456789',
-            $colaborador,
+            [$coordinador],
             [4],
             [
                 'puede_returnar',
@@ -175,7 +176,7 @@ class UsersSeeder extends Seeder
             'Dania Pérez',
             'coord.juridico@sesea.test',
             '123456789',
-            $colaborador,
+            [$coordinador],
             [
                 1,
                 8,
@@ -196,7 +197,7 @@ class UsersSeeder extends Seeder
             'Óscar Arroyo',
             'oscar@sesea.test',
             '123456789',
-            $colaborador,
+            [$colaborador],
             [5]
         );
 
@@ -204,7 +205,7 @@ class UsersSeeder extends Seeder
             'Ximena García',
             'ximena@sesea.test',
             '123456789',
-            $colaborador,
+            [$colaborador],
             [5]
         );
 
@@ -212,7 +213,7 @@ class UsersSeeder extends Seeder
             'Beatriz Medrano',
             'beatriz@sesea.test',
             '123456789',
-            $colaborador,
+            [$colaborador],
             [10]
         );
 
@@ -220,7 +221,7 @@ class UsersSeeder extends Seeder
             'Anel Navarro',
             'anel@sesea.test',
             '123456789',
-            $colaborador,
+            [$colaborador],
             [10]
         );
 
@@ -228,7 +229,7 @@ class UsersSeeder extends Seeder
             'Roberto García',
             'roberto@sesea.test',
             '123456789',
-            $colaborador,
+            [$colaborador],
             [4]
         );
     }

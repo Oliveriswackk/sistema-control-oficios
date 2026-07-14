@@ -1,3 +1,30 @@
+<style>
+
+    .coord-item{
+
+        cursor:pointer;
+
+        transition:.15s;
+
+    }
+
+    .coord-item:hover{
+
+        background:#f8f9fc;
+
+    }
+
+    .coord-item.selected{
+
+        background:#e8f2ff;
+
+        border:2px solid #4e73df !important;
+
+    }
+
+</style>
+
+
 <form id="formTurnar"  method="POST" action="{{ route('oficios.turnar', $oficio->id) }}">
     @csrf
 
@@ -7,103 +34,51 @@
             Turnar oficio: {{ $oficio->numero_oficio }}
         </h6>
 
-        {{-- COORDINACIONES --}}
-        <div class="mb-3">
+        {{-- LISTADO DE COORDINACIONES --}}
+        <div id="lista-coordinaciones">
 
-            <label>Coordinaciones</label>
+            @foreach($coordinaciones as $coord)
 
-            <div class="d-flex flex-wrap">
+                <div
+                    class="coord-item border rounded px-3 py-2 mb-2 d-flex align-items-center justify-content-between"
+                    data-coord="{{ $coord->id }}">
 
-                @foreach($coordinaciones as $coord)
+                    <div>
 
-                    <div class="custom-control custom-checkbox mr-3 mb-2">
-
-                        <input type="checkbox"
-                            class="custom-control-input coord-toggle"
-                            id="coord-{{ $coord->id }}"
-                            data-id="{{ $coord->id }}">
-
-                        <label class="custom-control-label" for="coord-{{ $coord->id }}">
+                        <strong>
                             {{ $coord->nombre }}
-                        </label>
+                        </strong>
 
                     </div>
 
-                @endforeach
+                    <div style="width:250px;">
 
-            </div>
+                        <select
+                            class="form-control participacion-select"
+                            name="participacion[{{ $coord->id }}]"
+                            disabled>
+
+                            <option value="">
+                                Seleccione participación
+                            </option>
+
+                            @foreach($tiposParticipacion as $tipo)
+
+                                <option value="{{ $tipo->id }}">
+                                    {{ $tipo->nombre }}
+                                </option>
+
+                            @endforeach
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+            @endforeach
+
         </div>
-
-
-        {{-- BLOQUES POR COORDINACIÓN --}}
-        @foreach($coordinaciones as $coord)
-
-            <div class="coord-block border rounded p-2 mb-3"
-                data-coord="{{ $coord->id }}"
-                style="display:none;">
-
-                <h6 class="text-secondary">
-                    {{ $coord->nombre }}
-                </h6>
-
-                <table class="table table-sm">
-
-                    <thead>
-                        <tr>
-                            <th></th>
-                            <th>Persona</th>
-                            <th>Participación</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-
-                        @foreach($coord->users as $user)
-
-                            <tr class="user-row" data-user="{{ $user->id }}">
-
-                                <td>
-                                    <input type="checkbox"
-                                        class="user-check"
-                                        data-coord="{{ $coord->id }}"
-                                        data-user="{{ $user->id }}">
-                                </td>
-
-                                <td>
-                                    {{ $user->name }}
-                                </td>
-
-                                <td>
-                                    <select
-                                        class="form-control form-control-sm participation-select"
-                                        name="participacion[{{ $coord->id }}][{{ $user->id }}]"
-                                        disabled>
-
-                                        <option value="">
-                                            Seleccione
-                                        </option>
-
-                                        @foreach($tiposParticipacion as $tipo)
-                                            <option value="{{ $tipo->id }}">
-                                                {{ $tipo->nombre }}
-                                            </option>
-                                        @endforeach
-
-                                    </select>
-                                </td>
-
-                            </tr>
-
-                        @endforeach
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
-        @endforeach
-
 
         {{-- OBSERVACIÓN --}}
         <div class="mt-3">
@@ -117,3 +92,38 @@
     </div>
 
 </form>
+
+
+<script>
+
+$(function(){
+
+    $('.coord-item').on('click',function(e){
+
+        if($(e.target).is('select') || $(e.target).is('option')){
+            return;
+        }
+
+        let fila=$(this);
+
+        fila.toggleClass('selected');
+
+        let select=fila.find('select');
+
+        if(fila.hasClass('selected')){
+
+            select.prop('disabled',false);
+
+        }else{
+
+            select.prop('disabled',true);
+
+            select.val('');
+
+        }
+
+    });
+
+});
+
+</script>

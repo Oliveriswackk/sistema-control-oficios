@@ -8,6 +8,7 @@ use App\Models\Oficio;
 use App\Models\Turnado;
 use App\Models\EstadoOficio;
 use App\Models\Coordinacion;
+use App\Models\User;
 use App\Models\FolioReservado;
 use App\Models\Tag;
 use Carbon\Carbon;
@@ -527,45 +528,68 @@ class OficioController extends Controller
 
         $responsableEncontrado = false;
 
-        foreach ($participaciones as $coordId => $usuarios) {
+        foreach ($participaciones as $coordId => $tipoId) {
 
-            foreach ($usuarios as $userId => $tipoId) {
 
-                if (empty($tipoId)) {
-                    continue;
-                }
-
-                Turnado::create([
-
-                    'oficio_id' => $oficio->id,
-
-                    'usuario_id' => $userId,
-
-                    'coordinacion_id' => $coordId,
-
-                    'tipo_participacion_id' => $tipoId,
-
-                    'estado_turnado_id' => 1,
-
-                    'turnado_por_id' => auth()->id(),
-
-                    'turnado_en' => now(),
-
-                    'es_principal' => false,
-
-                    'observaciones' => $request->observaciones,
-                ]);
-
-                if ((int)$tipoId === 1) {
-
-                    $responsableEncontrado = true;
-
-                    $oficio->update([
-                        'coordinacion_origen_id' => $coordId
-                    ]);
-                }
+            if (empty($tipoId)) {
+                continue;
             }
-        }
+
+
+            // Buscar coordinador de esa coordinación
+            $coordinador = Coordinacion::find($coordId)
+                ->users()
+                ->whereHas('roles', function ($query) {
+
+                    $query->where('clave','coordinador');
+
+                })
+                ->first();
+
+            if (!$coordinador) {
+                return back()->with(
+                    'error',
+                    'La coordinación seleccionada no tiene un coordinador asignado'
+                );
+            }
+
+            $coordinador = Coordinacion::find($coordId)
+                ->users()
+                ->whereHas('roles', function ($query) {
+                    $query->where('clave', 'coordinador');
+                })
+                ->first();
+
+
+            Turnado::create([
+
+                'oficio_id' => $oficio->id,
+
+                'usuario_id' => $coordinador?->id,
+
+                'coordinacion_id' => $coordId,
+
+                'tipo_participacion_id' => $tipoId,
+
+                'estado_turnado_id' => 1,
+
+                'turnado_por_id' => auth()->id(),
+
+                'turnado_en' => now(),
+
+                'es_principal' => false,
+
+                'observaciones' => $request->observaciones,
+
+            ]);
+
+            if ((int) $tipoId === 1) {
+
+                $responsableEncontrado = true;
+
+            }
+
+        }// Fin foreach
 
         if (!$responsableEncontrado) {
 
@@ -573,6 +597,7 @@ class OficioController extends Controller
                 'error',
                 'Debe existir al menos un Responsable Operativo'
             );
+
         }
 
         //Registro bitácora - Turnado
@@ -583,12 +608,15 @@ class OficioController extends Controller
         ]);
 
         $oficio->historial()->create([
+
             'usuario_id' => auth()->id(),
             'accion' => 'oficio_turnado',
             'descripcion' => 'Se registró un nuevo turnado',
             'estado_anterior_id' => $estadoAnterior,
             'estado_nuevo_id' => EstadoOficio::TURNADO,
+
         ]);
+
 
         return back()->with(
             'success',
@@ -599,11 +627,11 @@ class OficioController extends Controller
 
     public function turnarModal(Oficio $oficio)
     {
-        $coordinaciones = Coordinacion::with([
-            'users.roles'
-        ])->get();
+        $coordinaciones = Coordinacion::where('activo', true)
+            ->get();
 
-        $tiposParticipacion = \App\Models\TipoParticipacion::all();
+        $tiposParticipacion = \App\Models\TipoParticipacion::where('activo', true)
+            ->get();
 
         return view(
             'oficios.modals.turnar',
@@ -614,6 +642,7 @@ class OficioController extends Controller
             )
         );
     }
+
 
     /*
     |--------------------------------------------------------------------------
