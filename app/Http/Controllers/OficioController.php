@@ -157,6 +157,7 @@ class OficioController extends Controller
                 'estado_id',
                 EstadoOficio::EN_SEGUIMIENTO
             )
+            ->where('requiere_respuesta', false)
             ->get()
             ->filter(function ($oficio) {
 
@@ -410,6 +411,33 @@ class OficioController extends Controller
             'oficio_creado',
             'Oficio creado desde interfaz web'
         );
+
+        // ============= CIERRE AUTOMÁTICO DE OFICIO CON RESPUESTA =============
+
+        if ($oficio->respuesta_a_oficio_id) {
+
+            $padre = Oficio::find($oficio->respuesta_a_oficio_id);
+
+            if ($padre && $padre->requiere_respuesta) {
+
+                $estadoAnterior = $padre->estado_id;
+
+                $padre->update([
+                    'estado_id' => EstadoOficio::CERRADO,
+                    'cerrado_en' => now(),
+                ]);
+
+                $padre->historial()->create([
+                    'usuario_id' => auth()->id(),
+                    'accion' => 'oficio_cerrado_automaticamente',
+                    'descripcion' => 'El oficio fue cerrado automáticamente al registrar una respuesta.',
+                    'estado_anterior_id' => $estadoAnterior,
+                    'estado_nuevo_id' => EstadoOficio::CERRADO,
+                ]);
+
+            }
+
+        }
 
         if ($request->ajax()) {
 
@@ -717,12 +745,23 @@ class OficioController extends Controller
 
         $pendientes = $turnado->oficio
             ->turnados()
-            ->where('tipo_participacion_id', 1)
+            ->whereHas('tipoParticipacion', function ($q) {
+                $q->where('implica_responsabilidad', true);
+            })
             ->whereNull('atendido_en')
             ->count();
 
 
         if ($pendientes === 0) {
+
+            if ($turnado->oficio->requiere_respuesta) {
+
+                return back()->with(
+                    'success',
+                    'Todos los responsables atendieron. Este oficio requiere respuesta y se cerrará automáticamente al registrar el oficio correspondiente.'
+                );
+
+            }
 
             return back()->with([
                 'success' => 'Turnado atendido',
@@ -748,8 +787,15 @@ class OficioController extends Controller
     {
         $this->authorize('cerrar', $oficio);
 
+        if ($oficio->requiere_respuesta) {
+            return back()->with(
+                'error',
+                'Este oficio requiere respuesta y será cerrado automáticamente al registrar el oficio relacionado.'
+            );
+        }
+
         $pendientes = $oficio->turnados()
-            ->where('tipo_participacion_id', 1) // Solo responsables
+            ->where('tipo_participacion_id', 1)
             ->whereNull('atendido_en')
             ->exists();
 

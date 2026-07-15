@@ -251,7 +251,39 @@ $(document).ready(function () {
     });
 
     @endif
+    
 });
 
 </script>
+
+@if(session('mostrar_cierre'))
+    <script>
+
+    document.addEventListener('DOMContentLoaded', async () => {
+
+        const result = await Alerts.confirm(
+            'Todos los responsables han atendido el oficio. ¿Desea cerrarlo ahora?'
+        );
+
+        if (result.isConfirmed) {
+
+            const form = document.createElement('form');
+
+            form.method = 'POST';
+            form.action = '/oficios/{{ session('oficio_id') }}/cerrar';
+
+            form.innerHTML = `
+                @csrf
+            `;
+
+            document.body.appendChild(form);
+
+            form.submit();
+        }
+
+    });
+
+    </script>
+@endif
+
 @endsection
