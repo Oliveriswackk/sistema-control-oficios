@@ -21,7 +21,23 @@
             Ver
         </button>
 
-        @if($oficio->estado_id != 5)
+
+        @if($oficio->estado_id == \App\Models\EstadoOficio::CERRADO)
+
+            <span class="badge badge-secondary">
+                Cerrado
+            </span>
+
+
+        @elseif($oficio->estado_id == \App\Models\EstadoOficio::CANCELADO)
+
+            <span class="badge" style="background-color: {{ $oficio->estado->color }}; color:white;"
+>
+                {{ $oficio->estado->nombre }}
+            </span>
+
+
+        @else
 
             <button
                 class="btn btn-sm btn-info"
@@ -30,12 +46,6 @@
                 Turnar
 
             </button>
-
-        @else
-
-            <span class="badge badge-secondary">
-                Cerrado
-            </span>
 
         @endif
 

@@ -141,6 +141,26 @@ class OficioPolicy
         ]);
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | CANCELAR
+    |--------------------------------------------------------------------------
+    */
+    public function cancelar(User $user, Oficio $oficio): bool
+    {
+        if (
+            !$user->hasPermission('puede_cancelar_oficios')
+        ) {
+            return false;
+        }
+
+        return in_array($oficio->estado->clave, [
+            'registrado',
+            'en_seguimiento',
+            'turnado',
+            'vencido'
+        ]);
+    }
 
     /*
     |--------------------------------------------------------------------------

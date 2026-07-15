@@ -456,21 +456,37 @@ window.Oficios = {
 
         $('#modalGlobalBody').html('<div class="text-center">Cargando...</div>');
         
+        console.log('CREANDO FOOTER CANCELAR');
         $('#modalGlobalFooter').html(`
+
         <div class="modal-footer">
-            <button type="button" class="btn btn-secondary btn-cerrar-modal">
+
+            <button type="button" 
+                    class="btn btn-secondary btn-cerrar-modal">
                 Cerrar
             </button>
 
-            <button type="button" class="btn btn-success" id="btnGuardarOficio" disabled>
+            <button type="button"
+                    class="btn btn-danger"
+                    id="btnCancelarOficio">
+                Cancelar oficio
+            </button>
+
+            <button type="button"
+                    class="btn btn-success"
+                    id="btnGuardarOficio"
+                    disabled>
                 Guardar cambios
             </button>
+
         </div>
         `);
 
         ModalState.reset();
 
         const canEdit = Oficios.canEdit();
+
+        $('#btnCancelarOficio').addClass('d-none');
 
         $('#btnGuardarOficio')
             .toggle(canEdit)
@@ -482,12 +498,25 @@ window.Oficios = {
 
             $('#modalGlobalBody').html(html);
 
-            ModalState.original = { id };
+            ModalState.original = { id: id };
 
             Oficios.enableChangeDetection();
 
             if (canEdit) {
                 Oficios.bindSave();
+            }
+
+        });
+
+        $.get('/oficios/' + id + '/detalle-json', (oficio) => {
+
+            if (
+                oficio.estado.clave !== 'cerrado' &&
+                oficio.estado.clave !== 'cancelado'
+            ) {
+                $('#btnCancelarOficio')
+                    .removeClass('d-none')
+                    .show();
             }
 
         });
@@ -502,6 +531,13 @@ window.Oficios = {
     */
     canEdit() {
         return window.USER_CAN_EDIT === true;
+    },
+
+    canCancel(oficio) {
+
+        return oficio.estado.clave !== 'cerrado'
+            && oficio.estado.clave !== 'cancelado';
+
     },
 
 
@@ -645,6 +681,46 @@ window.ModalState = {
     }
 
 };
+
+$(document).on('click', '#btnCancelarOficio', function(){
+
+    Alerts.confirm(
+        '¿Está seguro de cancelar este oficio?'
+    )
+    .then(result => {
+
+        if(result.isConfirmed){
+
+            $.post(
+                '/oficios/' + ModalState.original.id + '/cancelar',
+                {
+                    _token: $('meta[name="csrf-token"]').attr('content')
+                }
+            )
+            .done(() => {
+
+                Alerts.success(
+                    'Oficio cancelado correctamente'
+                );
+
+                $('#modalGlobal').modal('hide');
+
+                location.reload();
+
+            })
+            .fail(() => {
+
+                Alerts.error(
+                    'No se pudo cancelar el oficio'
+                );
+
+            });
+
+        }
+
+    });
+
+});
 
 window.Oficios.bindClose();
 </script>

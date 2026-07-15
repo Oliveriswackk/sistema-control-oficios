@@ -874,6 +874,47 @@ class OficioController extends Controller
         );
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | CANCELAR
+    |--------------------------------------------------------------------------
+    */
+    public function cancelar(Oficio $oficio)
+    {
+        $this->authorize('cancelar', $oficio);
+
+        $estadoAnterior = $oficio->estado_id;
+
+        $oficio->update([
+            'estado_id' => EstadoOficio::CANCELADO,
+            'cerrado_en' => now(),
+        ]);
+
+        $oficio->historial()->create([
+            'usuario_id' => auth()->id(),
+            'accion' => 'oficio_cancelado',
+            'descripcion' => 'Oficio cancelado manualmente.',
+            'estado_anterior_id' => $estadoAnterior,
+            'estado_nuevo_id' => EstadoOficio::CANCELADO,
+        ]);
+
+        return back()->with(
+            'success',
+            'Oficio cancelado correctamente'
+        );
+    }
+
+
+    public function detalleJson(Oficio $oficio)
+    {
+        return response()->json([
+            'id' => $oficio->id,
+            'estado' => [
+                'clave' => $oficio->estado->clave
+            ]
+        ]);
+    }
+
 
     /*
     |--------------------------------------------------------------------------

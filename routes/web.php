@@ -90,9 +90,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/oficios', [OficioController::class, 'index'])
         ->name('oficios.index');
 
-    // DETALLE (HTML modal o vista)
+    // DETALLE HTML
     Route::get('/oficios/{oficio}/detalle', [OficioController::class, 'detalle'])
         ->name('oficios.detalle');
+
+    // DETALLE JSON
+    Route::get('/oficios/{oficio}/detalle-json', [OficioController::class, 'detalleJson'])
+        ->name('oficios.detalle.json');
 
     // CREAR
     Route::post('/oficios', [OficioController::class, 'store'])
@@ -119,6 +123,13 @@ Route::middleware('auth')->group(function () {
     // CERRAR
     Route::post('/oficios/{oficio}/cerrar', [OficioController::class, 'cerrar'])
         ->name('oficios.cerrar');
+
+    // CANCELAR
+    Route::post('/oficios/{oficio}/cancelar', 
+        [OficioController::class, 'cancelar']
+    )
+    ->name('oficios.cancelar');
+
 
     // CONSECUTIVO
     Route::get('/oficios/proximo-consecutivo', [OficioController::class, 'proximoConsecutivo']);    
