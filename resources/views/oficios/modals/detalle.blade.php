@@ -449,10 +449,7 @@
                             Ver PDF
                         </a>
 
-                        @if(
-                            auth()->user()->hasRole('admin') ||
-                            auth()->user()->hasPermission('puede_registrar_oficios')
-                        )
+                        @if($editable)
 
                             <button
                                 type="button"
@@ -520,10 +517,7 @@
             Este oficio no tiene documentos cargados.
         </div>
 
-        @if(
-            auth()->user()->hasRole('admin') ||
-            auth()->user()->hasPermission('puede_registrar_oficios')
-        )
+        @if($editable)
 
             <form
                 method="POST"

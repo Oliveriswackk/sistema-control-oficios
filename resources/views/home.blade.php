@@ -20,7 +20,7 @@
                 </a>
             </li>
 
-            @if(auth()->user()->hasPermission('puede_cerrar'))
+            @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('coordinador'))
 
                 <li class="nav-item" role="presentation">
                     <a class="nav-link" data-toggle="tab" href="#cerrar" role="tab">
@@ -119,7 +119,7 @@
 
         {{-- LISTOS PARA CERRAR --}}
 
-        @if(auth()->user()->hasPermission('puede_cerrar'))
+        @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('coordinador'))
             <div class="tab-pane fade" id="cerrar" role="tabpanel" aria-labelledby="cerrar-tab">
 
                 <div class="card shadow mb-4">
@@ -239,7 +239,7 @@ $(document).ready(function () {
         }
     });
 
-    @if(auth()->user()->hasPermission('puede_cerrar'))
+    @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('coordinador'))
 
     // Tabla cerrar
     $('#tabla-cerrar').DataTable({

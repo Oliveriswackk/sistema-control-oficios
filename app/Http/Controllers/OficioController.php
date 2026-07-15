@@ -13,6 +13,7 @@ use App\Models\FolioReservado;
 use App\Models\Tag;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -140,22 +141,60 @@ class OficioController extends Controller
             ->latest()
             ->get();
 
+
         $listosCerrar = collect();
 
-        if (auth()->user()->hasPermission('puede_cerrar')) {
 
-            $listosCerrar = Oficio::with('turnados')
-                ->where('estado_id', 3) // Solo activos en estado "en proceso / listo"
-                ->get()
-                ->filter(function ($oficio) {
+        if (
+            auth()->user()->hasRole('admin') ||
+            auth()->user()->hasRole('coordinador')
+        ) {
 
-                    return $oficio->turnados->isNotEmpty()
-                        && $oficio->turnados->every(fn ($t) => $t->estado_turnado_id === 3);
-                })
-                ->values();
+            $listosCerrar = Oficio::with([
+                'turnados.tipoParticipacion'
+            ])
+            ->where(
+                'estado_id',
+                EstadoOficio::EN_SEGUIMIENTO
+            )
+            ->get()
+            ->filter(function ($oficio) {
+
+
+                // Solo responsables operativos cuentan
+                $responsables = $oficio->turnados
+                    ->filter(function ($turnado) {
+
+                        return $turnado->tipoParticipacion
+                            && $turnado->tipoParticipacion->implica_responsabilidad;
+
+                    });
+
+
+                // Debe existir al menos un responsable
+                if ($responsables->isEmpty()) {
+                    return false;
+                }
+
+
+                // Todos los responsables deben haber atendido
+                return $responsables->every(function ($turnado) {
+
+                    return !is_null($turnado->atendido_en);
+
+                });
+
+
+            })
+            ->values();
+
         }
 
-        return view('home', compact('turnados', 'listosCerrar'));
+
+        return view('home', compact(
+            'turnados',
+            'listosCerrar'
+        ));
     }
 
 
@@ -422,6 +461,7 @@ class OficioController extends Controller
     */
     public function update(Request $request, Oficio $oficio)
     {
+        $this->authorize('update', $oficio);
 
         $oficio->update([
 
@@ -473,9 +513,7 @@ class OficioController extends Controller
     */
     public function detalle(Oficio $oficio)
     {
-        $editable =
-            auth()->user()->hasRole('admin') ||
-            auth()->user()->hasPermission('puede_registrar_oficios');
+        $editable = Gate::allows('update', $oficio);
 
         $oficio->load([
             'archivos.versiones',
@@ -665,11 +703,34 @@ class OficioController extends Controller
             'atendido_en' => now(),
         ]);
 
+        $oficio = $turnado->oficio;
+
+        $oficio->update([
+            'estado_id' => EstadoOficio::EN_SEGUIMIENTO,
+        ]);
+
         $turnado->oficio->historial()->create([
             'usuario_id' => auth()->id(),
             'accion' => 'turnado_atendido',
             'descripcion' => 'El responsable marcó el turnado como atendido',
         ]);
+
+        $pendientes = $turnado->oficio
+            ->turnados()
+            ->where('tipo_participacion_id', 1)
+            ->whereNull('atendido_en')
+            ->count();
+
+
+        if ($pendientes === 0) {
+
+            return back()->with([
+                'success' => 'Turnado atendido',
+                'mostrar_cierre' => true,
+                'oficio_id' => $turnado->oficio_id,
+            ]);
+
+        }
 
         return back()->with(
             'success',
@@ -680,21 +741,26 @@ class OficioController extends Controller
 
     /*
     |--------------------------------------------------------------------------
-    | CERRAR
+    | CERRAR OFICIO
     |--------------------------------------------------------------------------
     */
     public function cerrar(Oficio $oficio)
     {
         $this->authorize('cerrar', $oficio);
 
-        // validar que todos los turnados estén atendidos o cerrados
         $pendientes = $oficio->turnados()
-            ->whereIn('estado_turnado_id', [1, 2])
+            ->where('tipo_participacion_id', 1) // Solo responsables
+            ->whereNull('atendido_en')
             ->exists();
 
         if ($pendientes) {
-            return back()->with('error', 'No se puede cerrar: hay turnados pendientes');
+            return back()->with(
+                'error',
+                'Aún existen responsables pendientes por atender.'
+            );
         }
+
+        $estadoAnterior = $oficio->estado_id;
 
         $oficio->update([
             'estado_id' => EstadoOficio::CERRADO,
@@ -704,10 +770,15 @@ class OficioController extends Controller
         $oficio->historial()->create([
             'usuario_id' => auth()->id(),
             'accion' => 'oficio_cerrado',
-            'descripcion' => 'Oficio cerrado desde recepción',
+            'descripcion' => 'El coordinador cerró el oficio',
+            'estado_anterior_id' => $estadoAnterior,
+            'estado_nuevo_id' => EstadoOficio::CERRADO,
         ]);
 
-        return back()->with('success', 'Oficio cerrado');
+        return back()->with(
+            'success',
+            'Oficio cerrado correctamente.'
+        );
     }
 
 
@@ -729,4 +800,19 @@ class OficioController extends Controller
             $query->latest()->get()
         );
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | RESPONSABLES OFICIO
+    |--------------------------------------------------------------------------
+    */
+    private function tieneResponsablesPendientes(Oficio $oficio): bool
+    {
+        return $oficio->turnados()
+            ->where('tipo_participacion_id', 1)
+            ->whereNull('atendido_en')
+            ->exists();
+    }
+
 }

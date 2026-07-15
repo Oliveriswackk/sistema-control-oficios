@@ -16,6 +16,7 @@ class OficioPolicy
         return null;
     }
 
+
     /*
     |--------------------------------------------------------------------------
     | VER OFICIO
@@ -41,6 +42,7 @@ class OficioPolicy
                 ->exists();
     }
 
+
     /*
     |--------------------------------------------------------------------------
     | CREAR OFICIO
@@ -50,6 +52,7 @@ class OficioPolicy
     {
         return $user->hasPermission('puede_registrar_oficios');
     }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -62,13 +65,22 @@ class OficioPolicy
             return true;
         }
 
-        // Solo creador puede editar si aún no está turnado
+        if ($user->hasRole('coordinador')) {
+            return $oficio->turnados()
+                ->whereIn(
+                    'coordinacion_id',
+                    $user->coordinaciones->pluck('id')
+                )
+                ->exists();
+        }
+
         if ($oficio->estado->clave === 'registrado') {
             return $oficio->usuario_registro_id === $user->id;
         }
 
         return false;
     }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -87,6 +99,7 @@ class OficioPolicy
             'en_seguimiento'
         ]);
     }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -108,6 +121,7 @@ class OficioPolicy
             ->exists();
     }
 
+
     /*
     |--------------------------------------------------------------------------
     | CERRAR OFICIO
@@ -115,15 +129,18 @@ class OficioPolicy
     */
     public function cerrar(User $user, Oficio $oficio): bool
     {
-        if (!$user->hasPermission('puede_cerrar')) {
+        if (
+            !$user->hasRole('admin') &&
+            !$user->hasRole('coordinador')
+        ) {
             return false;
         }
 
         return in_array($oficio->estado->clave, [
             'en_seguimiento',
-            'turnado'
         ]);
     }
+
 
     /*
     |--------------------------------------------------------------------------

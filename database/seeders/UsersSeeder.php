@@ -84,7 +84,7 @@ class UsersSeeder extends Seeder
 
         /*
         |--------------------------------------------------------------------------
-        | RECEPCION Y OFICIALIDAD DE PARTES
+        | OFICIALIDAD DE PARTES
         |--------------------------------------------------------------------------
         */
 
@@ -97,7 +97,6 @@ class UsersSeeder extends Seeder
             [
                 'puede_registrar_oficios',
                 'puede_turnar',
-                'puede_cerrar',
             ]
         );
 
@@ -110,7 +109,6 @@ class UsersSeeder extends Seeder
             [
                 'puede_registrar_oficios',
                 'puede_turnar',
-                'puede_cerrar',
             ]
         );
 
@@ -129,7 +127,6 @@ class UsersSeeder extends Seeder
             [
                 'puede_registrar_oficios',
                 'puede_turnar',
-                'puede_cerrar',
             ]
         );
 

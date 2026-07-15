@@ -21,11 +21,6 @@ class PermisosSeeder extends Seeder
                 'descripcion' => 'Permite asignar oficios a coordinaciones o usuarios',
             ],
             [
-                'clave' => 'puede_cerrar',
-                'nombre' => 'Cerrar oficios',
-                'descripcion' => 'Permite cerrar oficios',
-            ],
-            [
                 'clave' => 'puede_returnar',
                 'nombre' => 'Re-turnar oficios',
                 'descripcion' => 'Permite reasignar turnados',

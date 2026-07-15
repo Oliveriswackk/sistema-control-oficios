@@ -45,7 +45,7 @@ Route::middleware('auth')->group(function () {
 
     
     
-        /*
+    /*
     |--------------------------------------------------------------------------
     | HOME (Bandeja)
     |--------------------------------------------------------------------------
@@ -118,7 +118,6 @@ Route::middleware('auth')->group(function () {
 
     // CERRAR
     Route::post('/oficios/{oficio}/cerrar', [OficioController::class, 'cerrar'])
-        ->middleware('permission:puede_cerrar')
         ->name('oficios.cerrar');
 
     // CONSECUTIVO

@@ -64,7 +64,10 @@ class Turnado extends Model
 
     public function tipoParticipacion()
     {
-        return $this->belongsTo(TipoParticipacion::class);
+        return $this->belongsTo(
+            TipoParticipacion::class,
+            'tipo_participacion_id'
+        );
     }
 
 
