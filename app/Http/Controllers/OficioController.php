@@ -909,9 +909,13 @@ class OficioController extends Controller
     {
         return response()->json([
             'id' => $oficio->id,
+
             'estado' => [
                 'clave' => $oficio->estado->clave
-            ]
+            ],
+
+            'puede_cancelar' => auth()->user()
+                ->can('cancelar', $oficio)
         ]);
     }
 

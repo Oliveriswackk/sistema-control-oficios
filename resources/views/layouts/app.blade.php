@@ -456,7 +456,6 @@ window.Oficios = {
 
         $('#modalGlobalBody').html('<div class="text-center">Cargando...</div>');
         
-        console.log('CREANDO FOOTER CANCELAR');
         $('#modalGlobalFooter').html(`
 
         <div class="modal-footer">
@@ -510,13 +509,27 @@ window.Oficios = {
 
         $.get('/oficios/' + id + '/detalle-json', (oficio) => {
 
+
             if (
+                oficio.puede_cancelar &&
                 oficio.estado.clave !== 'cerrado' &&
                 oficio.estado.clave !== 'cancelado'
             ) {
+
                 $('#btnCancelarOficio')
                     .removeClass('d-none')
-                    .show();
+                    .show()
+
+            }
+
+
+            if (
+                oficio.estado.clave === 'en_seguimiento'
+            ) {
+
+                $('#btnCerrarOficio')
+                    .removeClass('d-none');
+
             }
 
         });

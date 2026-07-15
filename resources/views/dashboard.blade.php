@@ -69,13 +69,18 @@
     </h1>
 
     <div class="d-flex justify-content-end align-items-center" >
-        <button class="btn btn-primary mr-2" data-toggle="modal" data-target="#modalCrearOficio">
-            Nuevo Oficio
-        </button>
 
-        <button class="btn btn-indigo" data-toggle="modal" data-target="#modalReservarFolios">
-            Reservar Folios
-        </button>
+        @can('create', App\Models\Oficio::class)
+            <button class="btn btn-primary mr-2" data-toggle="modal" data-target="#modalCrearOficio">
+                Nuevo Oficio
+            </button>
+        @endcan
+
+        @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('recepcion'))
+            <button class="btn btn-indigo" data-toggle="modal" data-target="#modalReservarFolios">
+                Reservar Folios
+            </button>
+        @endif
     </div>
     
 
