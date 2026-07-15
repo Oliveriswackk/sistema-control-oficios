@@ -412,6 +412,52 @@ class OficioController extends Controller
             'Oficio creado desde interfaz web'
         );
 
+        
+
+        // ============= CIERRE AUTOMÁTICO OFICIOS ENVIADOS SIN RESPUESTA =============
+
+        if (
+            (int) $oficio->tipo_oficio_id === 1 &&
+            !$oficio->requiere_respuesta
+        ) {
+
+            $oficio->update([
+                'estado_id' => EstadoOficio::CERRADO,
+                'cerrado_en' => now(),
+            ]);
+
+            $oficio->historial()->create([
+                'usuario_id' => auth()->id(),
+                'accion' => 'oficio_cerrado_automaticamente',
+                'descripcion' => 'Oficio enviado cerrado automáticamente porque no requiere respuesta.',
+                'estado_anterior_id' => EstadoOficio::REGISTRADO,
+                'estado_nuevo_id' => EstadoOficio::CERRADO,
+            ]);
+
+        }
+
+        // ============= ENVIADOS QUE REQUIEREN RESPUESTA =============
+
+        if (
+            (int) $oficio->tipo_oficio_id === 1 &&
+            $oficio->requiere_respuesta
+        ) {
+
+            $oficio->update([
+                'estado_id' => EstadoOficio::EN_SEGUIMIENTO,
+            ]);
+
+            $oficio->historial()->create([
+                'usuario_id' => auth()->id(),
+                'accion' => 'oficio_en_seguimiento',
+                'descripcion' => 'El oficio enviado requiere respuesta y queda en seguimiento.',
+                'estado_anterior_id' => EstadoOficio::REGISTRADO,
+                'estado_nuevo_id' => EstadoOficio::EN_SEGUIMIENTO,
+            ]);
+
+        }
+
+
         // ============= CIERRE AUTOMÁTICO DE OFICIO CON RESPUESTA =============
 
         if ($oficio->respuesta_a_oficio_id) {
@@ -426,6 +472,8 @@ class OficioController extends Controller
                     'estado_id' => EstadoOficio::CERRADO,
                     'cerrado_en' => now(),
                 ]);
+               
+                $padre->refresh();
 
                 $padre->historial()->create([
                     'usuario_id' => auth()->id(),
@@ -600,7 +648,6 @@ class OficioController extends Controller
             if (empty($tipoId)) {
                 continue;
             }
-
 
             // Buscar coordinador de esa coordinación
             $coordinador = Coordinacion::find($coordId)
