@@ -7,6 +7,7 @@ use App\Services\OficioService;
 use App\Models\Oficio;
 use App\Models\Turnado;
 use App\Models\EstadoOficio;
+use App\Models\TipoOficio;
 use App\Models\Coordinacion;
 use App\Models\User;
 use App\Models\FolioReservado;
@@ -61,6 +62,15 @@ class OficioController extends Controller
             );
         }
 
+        if ($request->filled('tipo_oficio_id')) {
+
+            $query->where(
+                'tipo_oficio_id',
+                $request->tipo_oficio_id
+            );
+
+        }
+
         if ($request->filled('remitente_dependencia')) {
             $query->where(
                 'remitente_dependencia',
@@ -69,12 +79,13 @@ class OficioController extends Controller
             );
         }
 
-        if ($request->filled('destinatario_dependencia')) {
+        if ($request->filled('estado_id')) {
+
             $query->where(
-                'destinatario_dependencia',
-                'like',
-                '%' . $request->destinatario_dependencia . '%'
+                'estado_id',
+                $request->estado_id
             );
+
         }
 
         if ($request->filled('coordinacion_origen_id')) {
@@ -117,12 +128,18 @@ class OficioController extends Controller
             ->orderBy('nombre')
             ->get();
 
+        $estados = EstadoOficio::all();
+
+        $tiposOficio = TipoOficio::all();
+
         return view(
             'dashboard',
             compact(
                 'oficios',
                 'oficiosRelacionables',
-                'coordinaciones'
+                'coordinaciones',
+                'estados',
+                'tiposOficio'
             )
         );
     }

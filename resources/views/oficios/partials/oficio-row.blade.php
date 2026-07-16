@@ -39,9 +39,17 @@
 
         @else
 
-            @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('puede_turnar'))
+            @if(
+                $oficio->tipo_oficio_id == 2 &&
+                (
+                    auth()->user()->hasRole('admin') ||
+                    auth()->user()->hasPermission('puede_turnar')
+                )
+            )
 
-                <button class="btn btn-sm btn-info" onclick="abrirTurnar({{ $oficio->id }})">
+                <button 
+                    class="btn btn-sm btn-info"
+                    onclick="abrirTurnar({{ $oficio->id }})">
                     Turnar
                 </button>
 

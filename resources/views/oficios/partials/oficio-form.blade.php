@@ -242,19 +242,31 @@
 <div class="row">
 
     <div class="col-md-4 mb-2">
-        <label>Fecha creación oficio  <span class="text-danger">*</span></label>
-        <input type="date" name="fecha_oficio"
+        <label>
+            Fecha creación del oficio <span class="text-danger">*</span>
+        </label>
+
+        <input
+            type="date"
+            name="fecha_oficio"
             class="form-control form-control-sm"
             value="{{ now()->toDateString() }}"
-            required>
+            required
+        >
     </div>
 
     <div class="col-md-4 mb-2">
-        <label>Fecha de enviado <span class="text-danger">*</span></label>
-        <input type="date" name="fecha_recepcion"
+        <label id="labelFechaCrear">
+            Fecha de envío <span class="text-danger">*</span>
+        </label>
+
+        <input
+            type="date"
+            name="fecha_recepcion"
             class="form-control form-control-sm"
             value="{{ now()->toDateString() }}"
-            required>
+            required
+        >
     </div>
 
     <div class="col-md-4 mb-2">

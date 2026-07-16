@@ -7,7 +7,7 @@
         <div class="row">
 
             <div class="col-md-6">
-                <label>No. Oficio</label>
+                <label>Número de Oficio</label>
                 <input
                     type="text"
                     name="numero_oficio"
@@ -30,6 +30,66 @@
 
         <div class="row mt-2">
 
+            <div class="col-md-6">
+
+                <label>Tipo de oficio</label>
+
+                <select
+                    name="tipo_oficio_id"
+                    class="form-control">
+
+                    <option value="">
+                        Todos
+                    </option>
+
+                    @foreach($tiposOficio as $tipo)
+
+                        <option
+                            value="{{ $tipo->id }}"
+                            {{ request('tipo_oficio_id') == $tipo->id ? 'selected' : '' }}>
+
+                            {{ $tipo->nombre }}
+
+                        </option>
+
+                    @endforeach
+
+                </select>
+
+            </div>
+
+            <div class="col-md-6">
+
+            <label>Estado</label>
+
+            <select
+                name="estado_id"
+                class="form-control">
+
+                <option value="">
+                    Todos
+                </option>
+
+                @foreach($estados as $estado)
+
+                    <option
+                        value="{{ $estado->id }}"
+                        {{ request('estado_id') == $estado->id ? 'selected' : '' }}>
+
+                        {{ $estado->nombre }}
+
+                    </option>
+
+                @endforeach
+
+            </select>
+
+        </div>
+
+        </div>
+
+        <div class="row mt-2">
+
             <div class="col-md-4">
                 <label>Remitente</label>
                 <input
@@ -41,23 +101,28 @@
             </div>
 
             <div class="col-md-4">
-                <label>Destinatario</label>
-                <input
-                    type="text"
-                    name="destinatario_dependencia"
-                    class="form-control"
-                    value="{{ request('destinatario_dependencia') }}"
-                >
-            </div>
-
-            <div class="col-md-4">
                 <label>Coordinación origen</label>
-                <input
-                    type="text"
+                <select
                     name="coordinacion_origen_id"
-                    class="form-control"
-                    value="{{ request('coordinacion_origen_id') }}"
-                >
+                    class="form-control">
+
+                    <option value="">
+                        Todas
+                    </option>
+
+                    @foreach($coordinaciones as $coordinacion)
+
+                        <option
+                            value="{{ $coordinacion->id }}"
+                            {{ request('coordinacion_origen_id') == $coordinacion->id ? 'selected' : '' }}>
+
+                            {{ $coordinacion->nombre }}
+
+                        </option>
+
+                    @endforeach
+
+                </select>
             </div>
 
         </div>
@@ -69,7 +134,7 @@
             </button>
 
             <a href="{{ url()->current() }}" class="btn btn-secondary">
-                Limpiar
+                Limpiar filtros
             </a>
 
         </div>

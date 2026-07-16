@@ -301,6 +301,27 @@ $(document).ready(function () {
         ]
     });
 
+    // Cambiar etiqueta fecha según tipo de oficio
+    $('input[name="tipo_oficio_id"]').on('change', function () {
+
+        const tipo = $('input[name="tipo_oficio_id"]:checked').val();
+
+        if (tipo == 1) {
+
+            $('#labelFechaCrear').html(
+                'Fecha de envío <span class="text-danger">*</span>'
+            );
+
+        } else {
+
+            $('#labelFechaCrear').html(
+                'Fecha de recepción <span class="text-danger">*</span>'
+            );
+
+        }
+
+    });
+
 });
 
 // =========================================================
@@ -344,6 +365,30 @@ $(document).on('submit', '#formCrearOficio', function (e) {
         Alerts.error(msg);
     });
 });
+
+// =========================================================
+// CAMBIAR LABEL DE FECHA
+// =========================================================
+$(document).on('change', '#tipo_oficio_id', function () {
+
+    const tipo = $(this).val();
+
+    if (tipo == 1) {
+
+        $('#labelFechaCrear').html(
+            'Fecha de envío <span class="text-danger">*</span>'
+        );
+
+    } else {
+
+        $('#labelFechaCrear').html(
+            'Fecha de recepción <span class="text-danger">*</span>'
+        );
+
+    }
+
+});
+
 
 // =========================================================
 // DATATABLES

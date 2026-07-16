@@ -138,6 +138,7 @@
 
         <div class="col-md-4 mb-2">
             <label>Fecha oficio</label>
+
             <input type="date"
                    name="fecha_oficio"
                    class="form-control form-control-sm"
@@ -146,7 +147,13 @@
         </div>
 
         <div class="col-md-4 mb-2">
-            <label>Fecha recepción</label>
+            <label>
+                {{ $oficio->tipo_oficio_id == 1
+                    ? 'Fecha de envío'
+                    : 'Fecha de recepción'
+                }}
+            </label>
+
             <input type="date"
                    name="fecha_recepcion"
                    class="form-control form-control-sm"
@@ -156,6 +163,7 @@
 
         <div class="col-md-4 mb-2">
             <label>Fecha límite</label>
+            
             <input type="date"
                    name="fecha_limite"
                    class="form-control form-control-sm"
