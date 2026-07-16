@@ -390,7 +390,7 @@
     <!-- Inicio o Respuesta -->
     <div class="form-group col-md-6 mb-2">
 
-        <label>¿Responde a otro oficio? <span class="text-danger">*</span></label>
+        <label>¿Está relacionado con otro oficio? <span class="text-danger">*</span></label>
 
         <select name="respuesta_a_oficio_id" class="form-control" required>
 

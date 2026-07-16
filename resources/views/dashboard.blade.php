@@ -221,13 +221,11 @@
 
                     {{-- FECHA --}}
                     <div class="form-group">
-                        <label>Fecha base</label>
-
-                        <input type="date"
-                               class="form-control"
-                               name="fecha"
-                               value="{{ now()->toDateString() }}"
-                               required>
+                        <input
+                            type="hidden"
+                            name="fecha"
+                            value="{{ now()->toDateString() }}"
+                        >
                     </div>
 
                     {{-- CANTIDAD --}}
