@@ -419,7 +419,7 @@ function generarNumeroOficio() {
     if (!coord) return;
 
 
-    fetch(`/oficios/proximo-consecutivo?coordinacion_id=${coord}`)
+    fetch(`{{ url('proximo-consecutivo') }}?coordinacion_id=${coord}`)
         .then(res => {
 
             if (!res.ok) {
