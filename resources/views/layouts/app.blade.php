@@ -213,7 +213,7 @@
 <script src="{{ asset('js/sb-admin-2.min.js') }}"></script>
 
 {{-- JS DE OFICIOS (AJAX) --}}
-<script src="{{ asset('js/oficios.js') }}"></script>
+<script src="{{ asset('js/oficios.js') }}?v=1.0.1"></script>
 
 {{-- =========================================================
 |  PLUGINS EXTERNOS

@@ -499,30 +499,20 @@ function generarNumeroOficio() {
 
                 data.reservados.forEach((folio, index) => {
 
-
-                    const option =
-                        document.createElement('option');
-
+                    const option = document.createElement('option');
 
                     option.value = folio.id;
 
+                    option.textContent = folio.numero_oficio;
 
-                    option.textContent =
-                        folio.numero_oficio;
-
+                    option.dataset.numeroClean = folio.numero; 
 
                     selectReservados.appendChild(option);
 
-
-
                     // Primer folio seleccionado automáticamente
-
                     if (index === 0) {
-
                         selectReservados.value = folio.id;
-
                     }
-
 
                 });
 
@@ -675,15 +665,11 @@ document.addEventListener('change', function(e){
             numeroOficio.value =
                 option.text;
 
-
             consecutivo.value =
-                option.value;
-
+                option.dataset.numeroClean;
 
             folioReservadoId.value =
                 option.value;
-
-
 
         }
 
@@ -956,6 +942,23 @@ document.getElementById('formReservarFolios').addEventListener('submit', async f
     // opcional: reset
     form.reset();
 });
+
+
+// =========================================================
+// CAMBIO MANUAL DE FOLIO RESERVADO
+// =========================================================
+document.addEventListener('change', function (e) {
+    if (e.target.id === 'folio_reservado_select') {
+        const select = e.target;
+        const option = select.options[select.selectedIndex];
+        if (!option) return;
+
+        document.getElementById('numero_oficio').value = option.text;
+        document.getElementById('consecutivo').value = option.dataset.numeroClean;
+        document.getElementById('folio_reservado_id').value = option.value;
+    }
+});
+
 </script>
 
 @endsection

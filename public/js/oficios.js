@@ -1,18 +1,15 @@
 window.OficiosApi = {
 
     getTurnarModal(oficioId) {
-
         return $.ajax({
-            url: `{{ url('oficios') }}/${oficioId}/turnar`,
+            url: `/oficios/${oficioId}/turnar`,
             method: 'GET'
         });
-
     },
 
     update(oficioId, data) {
         return $.ajax({
-
-            url: `{{ url('oficios') }}/${oficioId}`,
+            url: `/oficios/${oficioId}`,
             method: 'POST',
             data: {
                 ...data,
@@ -23,16 +20,11 @@ window.OficiosApi = {
     },
 
     datatable(filters = {}) {
-
         return $.ajax({
-            url: "{{ url('oficios/datatable') }}",
-
+            url: "/oficios/datatable",
             method: 'GET',
-
             data: filters
-
         });
-
     }
 
 };
