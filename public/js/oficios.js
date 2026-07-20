@@ -31,7 +31,7 @@ window.OficiosApi = {
 
         return $.ajax({
 
-            url: '/oficios/datatable',
+            url: "{{ url('oficios/datatable') }}",
 
             method: 'GET',
 
