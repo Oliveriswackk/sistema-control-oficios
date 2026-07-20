@@ -385,7 +385,7 @@ $(document).on('keypress', '#input-tag', function (e) {
     const oficioId = $(this).data('oficio-id');
 
     $.post(
-        `/oficios/${oficioId}/tags`,
+        `{{ url('oficios') }}/${oficioId}/tags`,
         {
             _token: $('meta[name="csrf-token"]').attr('content'),
             nombre: nombre
@@ -426,7 +426,7 @@ $(document).on('click', '.btn-eliminar-tag', function () {
 
     $.ajax({
 
-        url: `/oficios/${oficioId}/tags/${tagId}`,
+        url: `{{ url('oficios') }}/${oficioId}/tags/${tagId}`,
         method: 'DELETE',
 
         data: {
@@ -493,7 +493,7 @@ window.Oficios = {
 
         $('#modalGlobal').modal('show');
 
-        $.get('/oficios/' + id + '/detalle', (html) => {
+        $.get(`{{ url('oficios') }}/${id}/detalle`, (html) => {
 
             $('#modalGlobalBody').html(html);
 
@@ -507,7 +507,7 @@ window.Oficios = {
 
         });
 
-        $.get('/oficios/' + id + '/detalle-json', (oficio) => {
+        $.get(`{{ url('oficios') }}/${id}/detalle-json`, (oficio) => {
 
 
             if (
