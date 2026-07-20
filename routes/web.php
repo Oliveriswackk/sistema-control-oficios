@@ -132,7 +132,7 @@ Route::middleware('auth')->group(function () {
 
 
     // CONSECUTIVO
-    Route::get('/oficios/proximo-consecutivo', [OficioController::class, 'proximoConsecutivo']);    
+    Route::get('/proximo-consecutivo', [OficioController::class, 'proximoConsecutivo']);    
 
     // RESERVAR NO. OFICIO
     Route::post('/oficios/reservar-folios', [
