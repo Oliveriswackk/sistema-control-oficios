@@ -187,7 +187,7 @@
                 <div class="copyright text-center my-auto">
 
                     <span>
-                        Sistema de Control de Oficios &copy; {{ date('Y') }} - Desarrollado por SESEA
+                        Sistema de Control de Oficios &copy; {{ date('Y') }} - Desarrollado por SESEA <span class="badge badge-secondary ml-1">v1.0.0</span>
                     </span>
 
                 </div>
@@ -212,8 +212,13 @@
 <script src="{{ asset('vendor/jquery-easing/jquery.easing.min.js') }}"></script>
 <script src="{{ asset('js/sb-admin-2.min.js') }}"></script>
 
+{{-- DEFINICIÓN DE URL BASE DE LARAVEL PARA JS --}}
+<script>
+    window.LaravelBaseUrl = "{{ url('/') }}";
+</script>
+
 {{-- JS DE OFICIOS (AJAX) --}}
-<script src="{{ asset('js/oficios.js') }}?v=1.0.1"></script>
+<script src="{{ asset('js/oficios.js') }}?v=1.0.2"></script>
 
 {{-- =========================================================
 |  PLUGINS EXTERNOS

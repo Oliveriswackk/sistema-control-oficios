@@ -2,14 +2,14 @@ window.OficiosApi = {
 
     getTurnarModal(oficioId) {
         return $.ajax({
-            url: `/oficios/${oficioId}/turnar`,
+            url: `${window.LaravelBaseUrl}/oficios/${oficioId}/turnar`,
             method: 'GET'
         });
     },
 
     update(oficioId, data) {
         return $.ajax({
-            url: `/oficios/${oficioId}`,
+            url: `${window.LaravelBaseUrl}/oficios/${oficioId}`,
             method: 'POST',
             data: {
                 ...data,
@@ -21,7 +21,7 @@ window.OficiosApi = {
 
     datatable(filters = {}) {
         return $.ajax({
-            url: "/oficios/datatable",
+            url: `${window.LaravelBaseUrl}/oficios/datatable`,
             method: 'GET',
             data: filters
         });
