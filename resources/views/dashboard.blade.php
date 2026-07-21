@@ -332,7 +332,7 @@ $(document).on('submit', '#formCrearOficio', function (e) {
 
     const data = $form.serialize();
     $.ajax({
-        url: "{{ url('oficios') }}",
+        url: `${window.LaravelBaseUrl}/oficios`,
         method: 'POST',
         data: data,
         headers: {

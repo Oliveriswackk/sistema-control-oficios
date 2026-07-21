@@ -2,7 +2,7 @@
 
     <div class="modal-dialog">
 
-        <form method="POST" action="/oficios/{{ $oficio->id }}/turnar">
+        <form method="POST" action="{{ url('oficios/' . $oficio->id . '/turnar') }}">
 
             @csrf
 

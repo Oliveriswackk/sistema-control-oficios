@@ -710,7 +710,7 @@ $(document).on('click', '#btnCancelarOficio', function(){
         if(result.isConfirmed){
 
             $.post(
-                '/oficios/' + ModalState.original.id + '/cancelar',
+                `${window.LaravelBaseUrl}/oficios/${ModalState.original.id}/cancelar`,
                 {
                     _token: $('meta[name="csrf-token"]').attr('content')
                 }
