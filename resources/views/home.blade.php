@@ -258,7 +258,6 @@ $(document).ready(function () {
 
 @if(session('mostrar_cierre'))
     <script>
-
     document.addEventListener('DOMContentLoaded', async () => {
 
         const result = await Alerts.confirm(
@@ -270,19 +269,15 @@ $(document).ready(function () {
             const form = document.createElement('form');
 
             form.method = 'POST';
-            form.action = '/oficios/{{ session('oficio_id') }}/cerrar';
 
-            form.innerHTML = `
-                @csrf
-            `;
+            form.action = "{{ url('oficios/' . session('oficio_id') . '/cerrar') }}";
+
+            form.innerHTML = `@csrf`;
 
             document.body.appendChild(form);
-
             form.submit();
         }
-
     });
-
     </script>
 @endif
 
