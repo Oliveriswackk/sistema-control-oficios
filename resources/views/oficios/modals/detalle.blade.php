@@ -302,74 +302,35 @@
     ========================= --}}
     <h6 class="text-primary font-weight-bold mb-2">Configuración</h6>
 
+    {{-- FILA 1 --}}
     <div class="row">
 
-        {{-- REQUIERE RESPUESTA --}}
-        <div class="col-md-4 mb-2">
+        {{-- RELACION CON OTRO OFICIO --}}
+        <div class="col-md-6 mb-2">
 
-            <label>Requiere respuesta</label>
+            <label>¿Está relacionado con otro oficio?</label>
 
-            <div class="d-flex">
+            <select
+                name="respuesta_a_oficio_id"
+                class="form-control"
+                {{ $editable ? '' : 'disabled' }}
+            >
+                <option value="0">Inicia una petición</option>
 
-                <div class="custom-control custom-radio mr-3">
-                    <input type="radio"
-                        id="req_0"
-                        name="requiere_respuesta"
-                        value="0"
-                        class="custom-control-input"
-                        {{ $oficio->requiere_respuesta == 0 ? 'checked' : '' }}
-                        {{ $editable ? '' : 'disabled' }}>
-                    <label class="custom-control-label" for="req_0">No</label>
-                </div>
+                @foreach($oficiosRelacionables as $item)
+                    <option
+                        value="{{ $item->id }}"
+                        {{ $oficio->respuesta_a_oficio_id == $item->id ? 'selected' : '' }}
+                    >
+                        {{ $item->numero_oficio }} - {{ $item->asunto }}
+                    </option>
+                @endforeach
+            </select>
 
-                <div class="custom-control custom-radio">
-                    <input type="radio"
-                        id="req_1"
-                        name="requiere_respuesta"
-                        value="1"
-                        class="custom-control-input"
-                        {{ $oficio->requiere_respuesta == 1 ? 'checked' : '' }}
-                        {{ $editable ? '' : 'disabled' }}>
-                    <label class="custom-control-label" for="req_1">Sí</label>
-                </div>
-
-            </div>
-        </div>
-
-        {{-- SENSIBLE --}}
-        <div class="col-md-4 mb-2">
-
-            <label>Documento sensible</label>
-
-            <div class="d-flex">
-
-                <div class="custom-control custom-radio mr-3">
-                    <input type="radio"
-                        id="sens_0"
-                        name="es_sensible"
-                        value="0"
-                        class="custom-control-input"
-                        {{ $oficio->es_sensible == 0 ? 'checked' : '' }}
-                        {{ $editable ? '' : 'disabled' }}>
-                    <label class="custom-control-label" for="sens_0">No</label>
-                </div>
-
-                <div class="custom-control custom-radio">
-                    <input type="radio"
-                        id="sens_1"
-                        name="es_sensible"
-                        value="1"
-                        class="custom-control-input"
-                        {{ $oficio->es_sensible == 1 ? 'checked' : '' }}
-                        {{ $editable ? '' : 'disabled' }}>
-                    <label class="custom-control-label" for="sens_1">Sí</label>
-                </div>
-
-            </div>
         </div>
 
         {{-- TIPO OFICIO --}}
-        <div class="col-md-4 mb-2">
+        <div class="col-md-6 mb-2">
 
             <label>Tipo de oficio</label>
 
@@ -406,6 +367,77 @@
                         {{ $oficio->tipo_oficio_id == 3 ? 'checked' : '' }}
                         {{ $editable ? '' : 'disabled' }}>
                     <label class="custom-control-label" for="tipo_3">Recibido CPC</label>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    {{-- FILA 2 --}}
+    <div class="row">
+
+        {{-- REQUIERE RESPUESTA --}}
+        <div class="col-md-6 mb-2">
+
+            <label>Requiere respuesta</label>
+
+            <div class="d-flex">
+
+                <div class="custom-control custom-radio mr-3">
+                    <input type="radio"
+                        id="req_321"
+                        name="requiere_respuesta"
+                        value="0"
+                        class="custom-control-input"
+                        {{ $oficio->requiere_respuesta == 0 ? 'checked' : '' }}
+                        {{ $editable ? '' : 'disabled' }}>
+                    <label class="custom-control-label" for="req_0">No</label>
+                </div>
+
+                <div class="custom-control custom-radio">
+                    <input type="radio"
+                        id="req_1"
+                        name="requiere_respuesta"
+                        value="1"
+                        class="custom-control-input"
+                        {{ $oficio->requiere_respuesta == 1 ? 'checked' : '' }}
+                        {{ $editable ? '' : 'disabled' }}>
+                    <label class="custom-control-label" for="req_1">Sí</label>
+                </div>
+
+            </div>
+
+        </div>
+
+        {{-- SENSIBLE --}}
+        <div class="col-md-6 mb-2">
+
+            <label>Documento sensible</label>
+
+            <div class="d-flex">
+
+                <div class="custom-control custom-radio mr-3">
+                    <input type="radio"
+                        id="sens_0"
+                        name="es_sensible"
+                        value="0"
+                        class="custom-control-input"
+                        {{ $oficio->es_sensible == 0 ? 'checked' : '' }}
+                        {{ $editable ? '' : 'disabled' }}>
+                    <label class="custom-control-label" for="sens_0">No</label>
+                </div>
+
+                <div class="custom-control custom-radio">
+                    <input type="radio"
+                        id="sens_1"
+                        name="es_sensible"
+                        value="1"
+                        class="custom-control-input"
+                        {{ $oficio->es_sensible == 1 ? 'checked' : '' }}
+                        {{ $editable ? '' : 'disabled' }}>
+                    <label class="custom-control-label" for="sens_1">Sí</label>
                 </div>
 
             </div>

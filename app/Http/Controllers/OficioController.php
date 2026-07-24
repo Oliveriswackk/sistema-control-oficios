@@ -554,7 +554,17 @@ class OficioController extends Controller
     */
     public function update(Request $request, Oficio $oficio)
     {
+        
         $this->authorize('update', $oficio);
+
+        if (
+            $request->respuesta_a_oficio_id == $oficio->id
+        ) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Un oficio no puede responderse a sí mismo.'
+            ], 422);
+        }
 
         $oficio->update([
 
@@ -569,6 +579,12 @@ class OficioController extends Controller
             'fecha_limite' => $request->fecha_limite,
 
             'requiere_respuesta' => $request->boolean('requiere_respuesta'),
+
+            'respuesta_a_oficio_id' =>
+                    $request->respuesta_a_oficio_id != 0
+                        ? $request->respuesta_a_oficio_id
+                        : null,
+
             'es_sensible' => $request->boolean('es_sensible'),
             'tipo_oficio_id' => $request->tipo_oficio_id,
 
@@ -615,9 +631,17 @@ class OficioController extends Controller
             'responsableActual.coordinacion'
         ]);
 
+        $oficiosRelacionables = Oficio::where('id', '!=', $oficio->id)
+            ->orderBy('numero_oficio')
+            ->get();
+
         return view(
             'oficios.modals.detalle',
-            compact('oficio', 'editable')
+            compact(
+                'oficio',
+                'editable',
+                'oficiosRelacionables'
+            )
         );
     }
 
