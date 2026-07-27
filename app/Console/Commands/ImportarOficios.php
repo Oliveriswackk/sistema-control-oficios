@@ -32,8 +32,22 @@ class ImportarOficios extends Command
 
         $handle = fopen($path, 'r');
 
+        if ($handle === false) {
+            $this->error('No fue posible abrir el archivo CSV.');
+
+            return Command::FAILURE;
+        }
+
         // Encabezados
         $headers = fgetcsv($handle);
+
+        if ($headers === false) {
+            $this->error('El archivo CSV está vacío.');
+
+            fclose($handle);
+
+            return Command::FAILURE;
+        }
 
         $contador = 0;
 
@@ -47,6 +61,11 @@ class ImportarOficios extends Command
                     $headers,
                     $row
                 );
+
+                // Omitir filas vacías
+                if (empty(trim($data['numero_oficio'] ?? ''))) {
+                    continue;
+                }
 
                 Oficio::create([
 
