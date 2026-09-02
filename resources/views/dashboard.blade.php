@@ -70,12 +70,6 @@
 
     <div class="d-flex justify-content-end align-items-center" >
 
-        @can('create', App\Models\Oficio::class)
-            <button class="btn btn-primary mr-2" data-toggle="modal" data-target="#modalCrearOficio">
-                Nuevo Oficio
-            </button>
-        @endcan
-
         @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('recepcion'))
             <button class="btn btn-indigo" data-toggle="modal" data-target="#modalReservarFolios">
                 Reservar Folios
@@ -119,67 +113,9 @@
 
 </div>
 
-{{-- MODAL CREAR OFICIO --}}
-<div class="modal fade" id="modalCrearOficio" tabindex="-1" role="dialog">
+<!-- Llamar Modales -->
+@include('oficios.modals')
 
-    <div class="modal-dialog modal-xl modal-oficio" role="document">
-
-        <div class="modal-content">
-
-            <form id="formCrearOficio">
-                @csrf
-
-                {{-- HEADER --}}
-                <div class="modal-header py-2">
-
-                    <div>
-                        <h5 class="modal-title mb-0">
-                            Crear Oficio
-                        </h5>
-
-                        <small class="text-muted">
-                            Campos con <span class="text-danger">*</span> son obligatorios
-                        </small>
-                    </div>
-
-                    <button type="button" class="close" data-dismiss="modal">
-                        <span>&times;</span>
-                    </button>
-
-                </div>
-
-                {{-- BODY --}}
-                <div class="modal-body py-2">
-
-                    @include('oficios.partials.oficio-form')
-
-                </div>
-
-                {{-- FOOTER --}}
-                <div class="modal-footer">
-
-                    <button
-                        type="button"
-                        class="btn btn-secondary"
-                        data-dismiss="modal">
-                        Cancelar
-                    </button>
-
-                    <button
-                        type="submit"
-                        class="btn btn-primary">
-                        Guardar Oficio
-                    </button>
-
-                </div>
-
-            </form>
-
-        </div>
-
-    </div>
-
-</div>
 
 {{-- MODAL RESERVAR NÚMERO DE OFICIO --}}
 <div class="modal fade" id="modalReservarFolios" tabindex="-1" role="dialog">
@@ -267,6 +203,7 @@
     </div>
 
 </div>
+
 @endsection
 
 @section('scripts')
@@ -836,68 +773,172 @@ $(document).on('change', '.user-check', function () {
 
 function actualizarFormularioTipoOficio() {
 
-    const DEPENDENCIA_SESEA = 'Secretaría Ejecutiva del Sistema Estatal Anticorrupción';
-    
+    const DEPENDENCIA_SESEA =
+        'Secretaría Ejecutiva del Sistema Estatal Anticorrupción';
+
     const tipo = $('input[name="tipo_oficio_id"]:checked').val();
 
     const bloqueCoordinacion = $('#bloqueCoordinacion');
-
-    const selectCoordinacion = $('select[name="coordinacion_origen_id"]');
+    const selectCoordinacion =
+        $('select[name="coordinacion_origen_id"]');
 
     const inputNumero = $('#numero_oficio');
-
-    const textoAyuda = $('#textoNumeroAutomatico');
-
     const consecutivo = $('#consecutivo');
-    
-    const remitenteDependencia = $('#remitente_dependencia');
 
+    const remitenteDependencia = $('#remitente_dependencia');
     const destinatarioDependencia = $('#destinatario_dependencia');
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | ENVIADO
+    |--------------------------------------------------------------------------
+    */
+
     if (tipo == 1) {
 
-        // ==========================
-        // ENVIADO
-        // ==========================
-
+        // La coordinación de origen sí aplica
         bloqueCoordinacion.show();
 
         selectCoordinacion.prop('required', true);
 
+
+        // El número lo genera el sistema
         inputNumero.prop('readonly', true);
 
-        textoAyuda.text('Generado automáticamente por el sistema.');
 
+        // SESEA es el remitente
         remitenteDependencia.val(DEPENDENCIA_SESEA);
 
+        // El destinatario se captura manualmente
         destinatarioDependencia.val('');
 
+
+        // Elaborador sí aplica
+        $('#bloqueElaborador').show();
+
+
+        // Generar número/consecutivo
         generarNumeroOficio();
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | RECIBIDO / RECIBIDO CPC
+    |--------------------------------------------------------------------------
+    */
+
+    else {
+
+        // No hay coordinación de origen de SESEA
+        bloqueCoordinacion.hide();
+
+        selectCoordinacion
+            .prop('required', false)
+            .val('');
+
+
+        // El número se captura manualmente
+        inputNumero.prop('readonly', false);
+
+        inputNumero.val('');
+
+
+        // No utiliza consecutivo de SESEA
+        consecutivo.val(0);
+
+
+        // El remitente es externo
+        remitenteDependencia.val('');
+
+
+        // SESEA es el destinatario
+        destinatarioDependencia.val(DEPENDENCIA_SESEA);
+
+
+        // Elaborador no aplica
+        $('#bloqueElaborador').hide();
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | FECHA
+    |--------------------------------------------------------------------------
+    */
+
+    if (tipo == 1) {
+
+        $('#labelFechaCrear').html(
+            'Fecha de envío <span class="text-danger">*</span>'
+        );
 
     } else {
 
-        // ==========================
-        // RECIBIDO / RECIBIDO CPC
-        // ==========================
-
-        bloqueCoordinacion.hide();
-
-        selectCoordinacion.prop('required', false);
-
-        inputNumero.prop('readonly', false);
-
-        textoAyuda.text('Captura manual del número de oficio.');
-
-        remitenteDependencia.val('');
-
-        destinatarioDependencia.val(DEPENDENCIA_SESEA);
-
-        consecutivo.val(0);
+        $('#labelFechaCrear').html(
+            'Fecha de recepción <span class="text-danger">*</span>'
+        );
 
     }
 
 }
+
+function setTipoOficio(tipo, vista) {
+
+    /*
+     * Cambiar el radio real que se enviará al backend
+     */
+    $('input[name="tipo_oficio_id"][value="' + tipo + '"]')
+        .prop('checked', true)
+        .trigger('change');
+
+
+    /*
+     * Cambiar únicamente el estado visual
+     * de las tarjetas.
+     */
+    $('.tipo-oficio-card').removeClass('active');
+
+
+    if (vista === 'enviado') {
+
+        $('#btnTipoEnviado').addClass('active');
+
+    }
+
+
+    if (vista === 'recibido') {
+
+        $('#btnTipoRecibido').addClass('active');
+
+    }
+
+
+    if (vista === 'recibido_cpc') {
+
+        $('#btnTipoRecibidoCPC').addClass('active');
+
+    }
+
+}
+
+
+$(document).on('change', 'input[name="tipo_oficio_id"]', function () {
+
+    actualizarFormularioTipoOficio();
+
+});
+
+
+$('#modalCrearOficio').on('shown.bs.modal', function () {
+
+    actualizarFormularioTipoOficio();
+
+});
+
 
 // Cambio de radio buttons
 $(document).on('change', 'input[name="tipo_oficio_id"]', function () {

@@ -137,6 +137,12 @@
                 Limpiar filtros
             </a>
 
+            @can('create', App\Models\Oficio::class)
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalCrearOficio">
+                    Registrar Oficio
+                </button>
+            @endcan
+
         </div>
 
     </div>

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Coordinacion;
 use App\Models\ConsecutivoOficio;
 use App\Models\FolioReservado;
+use App\Models\Oficio;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 
@@ -14,7 +15,7 @@ class OficioService
     Solo consulta cuál sería el siguiente número
     NO modifica la base de datos
     */
-    public function obtenerSiguienteNumero(int $coordinacionId, string $fecha): array 
+    public function obtenerSiguienteNumero(int $coordinacionId, string $fecha): array
     {
 
         $anio = date('Y', strtotime($fecha));
@@ -23,20 +24,61 @@ class OficioService
 
         /*
         |--------------------------------------------------------------------------
-        | Consecutivo automático
+        | Último consecutivo registrado en el control
         |--------------------------------------------------------------------------
         */
 
-        $ultimo = ConsecutivoOficio::where(
+        $consecutivo = ConsecutivoOficio::where(
                 'coordinacion_id',
                 $coordinacionId
             )
             ->where('anio', $anio)
-            ->value('ultimo_numero');
+            ->first();
 
-        $numero = ($ultimo ?? 0) + 1;
+        $ultimoControl =
+            $consecutivo?->ultimo_numero ?? 0;
 
-        $consecutivo = [
+
+        /*
+        |--------------------------------------------------------------------------
+        | Último consecutivo realmente existente en OFICIOS
+        |--------------------------------------------------------------------------
+        |
+        | Esto permite reconocer registros importados/manualmente
+        | que todavía no estén reflejados en ConsecutivoOficio.
+        |
+        */
+
+        $ultimoOficio = Oficio::where(
+                'coordinacion_origen_id',
+                $coordinacionId
+            )
+            ->where('tipo_oficio_id', 1)
+            ->whereYear('fecha_oficio', $anio)
+            ->max('consecutivo');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Tomamos el mayor de ambas fuentes
+        |--------------------------------------------------------------------------
+        */
+
+        $ultimo = max(
+            $ultimoControl,
+            $ultimoOficio ?? 0
+        );
+
+        $numero = $ultimo + 1;
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Consecutivo automático
+        |--------------------------------------------------------------------------
+        */
+
+        $consecutivoAutomatico = [
 
             'numero_oficio' =>
                 "SESEA-{$coordinacion->clave}-" .
@@ -46,6 +88,7 @@ class OficioService
             'consecutivo' => $numero,
 
         ];
+
 
         /*
         |--------------------------------------------------------------------------
@@ -79,9 +122,10 @@ class OficioService
             })
             ->values();
 
+
         return [
 
-            'consecutivo' => $consecutivo,
+            'consecutivo' => $consecutivoAutomatico,
 
             'reservados' => $reservados,
 
@@ -96,7 +140,7 @@ class OficioService
     Consume definitivamente el consecutivo
     ESTE SÍ escribe en BD
     */
-    public function consumirSiguienteNumero(int $coordinacionId, string $fecha): array 
+    public function consumirSiguienteNumero(int $coordinacionId, string $fecha): array
     {
 
         return DB::transaction(function () use (
@@ -108,6 +152,13 @@ class OficioService
 
             $coordinacion = Coordinacion::findOrFail($coordinacionId);
 
+
+            /*
+            |--------------------------------------------------------------------------
+            | Bloqueamos el control de consecutivos
+            |--------------------------------------------------------------------------
+            */
+
             $consecutivo = ConsecutivoOficio::where(
                     'coordinacion_id',
                     $coordinacionId
@@ -116,35 +167,76 @@ class OficioService
                 ->lockForUpdate()
                 ->first();
 
+
+            $ultimoControl =
+                $consecutivo?->ultimo_numero ?? 0;
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Revisamos también los oficios existentes
+            |--------------------------------------------------------------------------
+            */
+
+            $ultimoOficio = Oficio::where(
+                    'coordinacion_origen_id',
+                    $coordinacionId
+                )
+                ->where('tipo_oficio_id', 1)
+                ->whereYear('fecha_oficio', $anio)
+                ->max('consecutivo');
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | El siguiente debe partir del mayor existente
+            |--------------------------------------------------------------------------
+            */
+
+            $ultimo = max(
+                $ultimoControl,
+                $ultimoOficio ?? 0
+            );
+
+            $numero = $ultimo + 1;
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Actualizamos el control
+            |--------------------------------------------------------------------------
+            */
+
             if (!$consecutivo) {
 
                 $consecutivo = ConsecutivoOficio::create([
                     'coordinacion_id' => $coordinacionId,
                     'anio' => $anio,
-                    'ultimo_numero' => 1,
+                    'ultimo_numero' => $numero,
                 ]);
 
             } else {
 
-                $consecutivo->increment('ultimo_numero');
-                $consecutivo->refresh();
+                $consecutivo->update([
+                    'ultimo_numero' => $numero,
+                ]);
 
             }
+
 
             return [
 
                 'numero_oficio' =>
                     "SESEA-{$coordinacion->clave}-" .
                     str_pad(
-                        $consecutivo->ultimo_numero,
+                        $numero,
                         3,
                         '0',
                         STR_PAD_LEFT
                     ) .
                     "-{$anio}",
 
-                'consecutivo' =>
-                    $consecutivo->ultimo_numero,
+                'consecutivo' => $numero,
 
             ];
 
