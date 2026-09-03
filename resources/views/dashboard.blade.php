@@ -1,4 +1,3 @@
-{{-- Vista Oficios --}}
 <!DOCTYPE html>
 
 @extends('layouts.app')
@@ -546,6 +545,45 @@ function generarNumeroOficio() {
 
 }
 
+// ---- Relacion con oficio ----
+document.addEventListener('change', function (e) {
+
+    if (!e.target.matches('input[name="tipo_relacion"]')) {
+        return;
+    }
+
+    const bloque =
+        document.getElementById('bloqueOficioRelacionado');
+
+    const oficioRelacionado =
+        document.getElementById('oficio_relacionado');
+
+    const respuestaId =
+        document.getElementById('respuesta_a_oficio_id');
+
+    const resultados =
+        document.getElementById('oficiosRelacionadosResultados');
+
+    if (e.target.value === 'relacionado') {
+
+        bloque.style.display = 'block';
+
+        oficioRelacionado.required = true;
+
+    } else {
+
+        bloque.style.display = 'none';
+
+        oficioRelacionado.required = false;
+
+        oficioRelacionado.value = '';
+        respuestaId.value = '';
+        resultados.innerHTML = '';
+        resultados.style.display = 'none';
+
+    }
+
+});
 
 // ---- Coordinacion -----
 document.addEventListener('change', function (e) {
@@ -776,41 +814,59 @@ function actualizarFormularioTipoOficio() {
     const DEPENDENCIA_SESEA =
         'Secretaría Ejecutiva del Sistema Estatal Anticorrupción';
 
-    const tipo = $('input[name="tipo_oficio_id"]:checked').val();
+    const tipo =
+        $('input[name="tipo_oficio_id"]:checked').val();
 
-    const bloqueCoordinacion = $('#bloqueCoordinacion');
+    // IMPORTANTE:
+    // El ID REAL del modal es #contenedorCoordinacion
+    const bloqueCoordinacion =
+        $('#contenedorCoordinacion');
+
     const selectCoordinacion =
-        $('select[name="coordinacion_origen_id"]');
+        $('#selectCoordinacion');
 
-    const inputNumero = $('#numero_oficio');
-    const consecutivo = $('#consecutivo');
+    const inputNumero =
+        $('#numero_oficio');
 
-    const remitenteDependencia = $('#remitente_dependencia');
-    const destinatarioDependencia = $('#destinatario_dependencia');
+    const consecutivo =
+        $('#consecutivo');
+
+    const opcionesNumeracion =
+        $('#opcionesNumeracion');
+
+    const remitenteDependencia =
+        $('#remitente_dependencia');
+
+    const destinatarioDependencia =
+        $('#destinatario_dependencia');
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | ENVIADO
-    |--------------------------------------------------------------------------
-    */
+    // =====================================================
+    // ENVIADO
+    // =====================================================
 
     if (tipo == 1) {
 
-        // La coordinación de origen sí aplica
+        // MOSTRAR coordinación
         bloqueCoordinacion.show();
 
-        selectCoordinacion.prop('required', true);
+        // Coordinación obligatoria
+        selectCoordinacion
+            .prop('required', true);
 
 
-        // El número lo genera el sistema
-        inputNumero.prop('readonly', true);
+        // Número generado por sistema
+        inputNumero
+            .prop('readonly', true);
 
 
         // SESEA es el remitente
-        remitenteDependencia.val(DEPENDENCIA_SESEA);
+        remitenteDependencia.val(
+            DEPENDENCIA_SESEA
+        );
 
-        // El destinatario se captura manualmente
+
+        // Destinatario se captura manualmente
         destinatarioDependencia.val('');
 
 
@@ -818,73 +874,140 @@ function actualizarFormularioTipoOficio() {
         $('#bloqueElaborador').show();
 
 
-        // Generar número/consecutivo
+        // Cambiar etiqueta
+        $('#labelFechaCrear').html(
+            'Fecha de envío <span class="text-danger">*</span>'
+        );
+
+
+        // Generar número
         generarNumeroOficio();
 
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | RECIBIDO / RECIBIDO CPC
-    |--------------------------------------------------------------------------
-    */
+    // =====================================================
+    // RECIBIDO / CPC
+    // =====================================================
 
     else {
 
-        // No hay coordinación de origen de SESEA
+        // OCULTAR COMPLETAMENTE coordinación
         bloqueCoordinacion.hide();
 
+        // No es obligatoria
         selectCoordinacion
             .prop('required', false)
             .val('');
 
 
-        // El número se captura manualmente
-        inputNumero.prop('readonly', false);
-
-        inputNumero.val('');
+        // Número capturado manualmente
+        inputNumero
+            .prop('readonly', false)
+            .val('');
 
 
         // No utiliza consecutivo de SESEA
         consecutivo.val(0);
 
 
-        // El remitente es externo
+        // Ocultar opciones de numeración
+        opcionesNumeracion.hide();
+
+
+        // Remitente externo
         remitenteDependencia.val('');
 
 
         // SESEA es el destinatario
-        destinatarioDependencia.val(DEPENDENCIA_SESEA);
+        destinatarioDependencia.val(
+            DEPENDENCIA_SESEA
+        );
 
 
         // Elaborador no aplica
         $('#bloqueElaborador').hide();
 
-    }
 
-
-    /*
-    |--------------------------------------------------------------------------
-    | FECHA
-    |--------------------------------------------------------------------------
-    */
-
-    if (tipo == 1) {
-
-        $('#labelFechaCrear').html(
-            'Fecha de envío <span class="text-danger">*</span>'
-        );
-
-    } else {
-
+        // Cambiar etiqueta
         $('#labelFechaCrear').html(
             'Fecha de recepción <span class="text-danger">*</span>'
         );
 
     }
-
 }
+
+
+// =========================================================
+// CAMBIAR TIPO DE OFICIO
+// =========================================================
+
+function setTipoOficio(tipo, vista) {
+
+    // Seleccionar radio real
+    $('input[name="tipo_oficio_id"][value="' + tipo + '"]')
+        .prop('checked', true);
+
+
+    // Cambiar tarjetas visuales
+    $('.tipo-oficio-card')
+        .removeClass('active');
+
+
+    if (vista === 'enviado') {
+
+        $('#btnTipoEnviado')
+            .addClass('active');
+
+    }
+
+    if (vista === 'recibido') {
+
+        $('#btnTipoRecibido')
+            .addClass('active');
+
+    }
+
+    if (vista === 'recibido_cpc') {
+
+        $('#btnTipoRecibidoCPC')
+            .addClass('active');
+
+    }
+
+
+    // Aplicar inmediatamente la lógica
+    actualizarFormularioTipoOficio();
+}
+
+
+// =========================================================
+// CAMBIO DE RADIO DE TIPO
+// =========================================================
+
+$(document).on(
+    'change',
+    'input[name="tipo_oficio_id"]',
+    function () {
+
+        actualizarFormularioTipoOficio();
+
+    }
+);
+
+
+// =========================================================
+// AL ABRIR EL MODAL
+// =========================================================
+
+$('#modalCrearOficio').on(
+    'shown.bs.modal',
+    function () {
+
+        actualizarFormularioTipoOficio();
+
+    }
+);
 
 function setTipoOficio(tipo, vista) {
 

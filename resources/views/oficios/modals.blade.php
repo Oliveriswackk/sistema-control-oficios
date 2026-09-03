@@ -1,7 +1,6 @@
 {{-- ============================================================
-    MODAL CREAR OFICIO
+    1. MODAL CREAR OFICIO
 ============================================================ --}}
-
 <div class="modal fade"
      id="modalCrearOficio"
      tabindex="-1"
@@ -9,113 +8,92 @@
      aria-labelledby="modalCrearOficioLabel"
      aria-hidden="true">
 
-    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+    <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
 
-        <div class="modal-content">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: .4rem; overflow: hidden;">
 
             <form id="formCrearOficio">
 
                 {{-- HEADER --}}
-                <div class="modal-header py-2">
-
-                    <h5 class="modal-title text-primary font-weight-bold"
-                        id="modalCrearOficioLabel">
-
-                        <i class="fas fa-file-alt mr-1"></i>
-                        Registrar oficio
-
+                <div class="modal-header bg-light px-4 py-3 border-bottom">
+                    <h5 class="modal-title text-primary font-weight-bold" id="modalCrearOficioLabel">
+                        <i class="fas fa-file-alt mr-2"></i> Registrar oficio
                     </h5>
-
-                    <button type="button"
-                            class="close"
-                            data-dismiss="modal"
-                            aria-label="Cerrar">
-
+                    <button type="button" class="close text-gray-500" data-dismiss="modal" aria-label="Cerrar">
                         <span aria-hidden="true">&times;</span>
-
                     </button>
-
                 </div>
 
-
                 {{-- BODY --}}
-                <div class="modal-body px-4 py-3">
+                <div class="modal-body px-4 py-3 bg-white">
 
-                    {{-- =================================================
-                        TIPO (INTOCABLE - ARRIBA)
-                    ================================================== --}}
-                    <div class="tipo-oficio-selector mb-4">
+                    {{-- 1. TIPO DE OFICIO --}}
+                    <div class="form-block mb-3">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <label class="mb-1">
+                                    Tipo de oficio <span class="text-danger">*</span>
+                                </label>
 
-                        <button type="button"
-                                class="tipo-oficio-card active"
-                                id="btnTipoEnviado"
-                                onclick="setTipoOficio('1', 'enviado')">
+                                <div class="tipo-oficio-selector">
+                                    <button type="button"
+                                            class="tipo-oficio-card active"
+                                            id="btnTipoEnviado"
+                                            onclick="setTipoOficio('1', 'enviado')">
+                                        <i class="fas fa-paper-plane mr-1"></i>
+                                        Enviado
+                                    </button>
 
-                            <i class="fas fa-paper-plane"></i>
-                            <span>Enviado</span>
+                                    <button type="button"
+                                            class="tipo-oficio-card"
+                                            id="btnTipoRecibido"
+                                            onclick="setTipoOficio('2', 'recibido')">
+                                        <i class="fas fa-inbox mr-1"></i>
+                                        Recibido
+                                    </button>
 
-                        </button>
+                                    <button type="button"
+                                            class="tipo-oficio-card"
+                                            id="btnTipoRecibidoCPC"
+                                            onclick="setTipoOficio('3', 'recibido_cpc')">
+                                        <i class="fas fa-shield-alt mr-1"></i>
+                                        CPC
+                                    </button>
 
+                                    <input type="radio"
+                                           id="tipo_enviado"
+                                           name="tipo_oficio_id"
+                                           value="1"
+                                           class="d-none"
+                                           checked>
 
-                        <button type="button"
-                                class="tipo-oficio-card"
-                                id="btnTipoRecibido"
-                                onclick="setTipoOficio('2', 'recibido')">
+                                    <input type="radio"
+                                           id="tipo_recibido"
+                                           name="tipo_oficio_id"
+                                           value="2"
+                                           class="d-none">
 
-                            <i class="fas fa-inbox"></i>
-                            <span>Recibido</span>
-
-                        </button>
-
-
-                        <button type="button"
-                                class="tipo-oficio-card"
-                                id="btnTipoRecibidoCPC"
-                                onclick="setTipoOficio('3', 'recibido_cpc')">
-
-                            <i class="fas fa-shield-alt"></i>
-                            <span>Recibido CPC</span>
-
-                        </button>
-
-
-                        <input type="radio"
-                               id="tipo_enviado"
-                               name="tipo_oficio_id"
-                               value="1"
-                               class="d-none"
-                               checked>
-
-                        <input type="radio"
-                               id="tipo_recibido"
-                               name="tipo_oficio_id"
-                               value="2"
-                               class="d-none">
-
-                        <input type="radio"
-                               id="tipo_cpc"
-                               name="tipo_oficio_id"
-                               value="3"
-                               class="d-none">
-
+                                    <input type="radio"
+                                           id="tipo_cpc"
+                                           name="tipo_oficio_id"
+                                           value="3"
+                                           class="d-none">
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-
-                    {{-- =================================================
-                        INFORMACIÓN PRINCIPAL
-                    ================================================== --}}
+                    {{-- 2. INFORMACIÓN PRINCIPAL --}}
                     <div class="form-block mb-3">
-
                         <div class="row">
-
-                            <div class="col-md-4" id="bloqueCoordinacion">
-
-                                <label>Coordinación <span class="text-danger">*</span></label>
+                            <div class="col-md-4" id="contenedorCoordinacion">
+                                <label class="mb-1">
+                                    Coordinación emisora <span class="text-danger">*</span>
+                                </label>
 
                                 <select name="coordinacion_origen_id"
                                         id="selectCoordinacion"
                                         class="form-control form-control-sm">
-
                                     <option value="" selected disabled>
                                         Seleccionar
                                     </option>
@@ -125,16 +103,12 @@
                                             {{ $coordinacion->clave }} - {{ $coordinacion->nombre }}
                                         </option>
                                     @endforeach
-
                                 </select>
-
                             </div>
 
-
                             <div class="col-md-4">
-
-                                <label id="labelNumeroOficio">
-                                    Número <span class="text-danger">*</span>
+                                <label class="mb-1" id="labelNumeroOficio">
+                                    Número de oficio <span class="text-danger">*</span>
                                 </label>
 
                                 <input type="text"
@@ -151,13 +125,10 @@
                                 <input type="hidden"
                                        id="folio_reservado_id"
                                        name="folio_reservado_id">
-
                             </div>
 
-
                             <div class="col-md-4">
-
-                                <label>
+                                <label class="mb-1">
                                     Fecha del oficio <span class="text-danger">*</span>
                                 </label>
 
@@ -166,83 +137,79 @@
                                        class="form-control form-control-sm"
                                        value="{{ now()->toDateString() }}"
                                        required>
-
                             </div>
-
                         </div>
 
                         <div id="opcionesNumeracion"
-                             class="numeracion-box mt-2"
+                             class="mt-3 p-3 bg-white border rounded"
                              style="display:none;">
 
                             <div class="row align-items-center">
-
                                 <div class="col-md-4">
-
-                                    <div class="custom-control custom-radio">
-
-                                        <input type="radio"
-                                               id="usar_reservado"
-                                               name="modo_numeracion"
-                                               value="reservado"
-                                               class="custom-control-input">
-
-                                        <label class="custom-control-label"
-                                               for="usar_reservado">
-
-                                            Usar folio reservado
-
-                                        </label>
-
+                                    <div class="font-weight-bold text-dark small mb-2">
+                                        Origen del número:
                                     </div>
 
+                                    <div class="d-flex flex-column">
+                                        <div class="custom-control custom-radio mb-1">
+                                            <input type="radio"
+                                                   id="usar_reservado"
+                                                   name="modo_numeracion"
+                                                   value="reservado"
+                                                   class="custom-control-input"
+                                                   checked>
+
+                                            <label class="custom-control-label small font-weight-bold"
+                                                   for="usar_reservado">
+                                                Usar folio reservado
+                                            </label>
+                                        </div>
+
+                                        <div class="custom-control custom-radio">
+                                            <input type="radio"
+                                                   id="usar_consecutivo"
+                                                   name="modo_numeracion"
+                                                   value="consecutivo"
+                                                   class="custom-control-input">
+
+                                            <label class="custom-control-label small font-weight-bold"
+                                                   for="usar_consecutivo">
+                                                Consecutivo automático
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
 
-
-                                <div class="col-md-4">
+                                <div class="col-md-8 pl-md-4"
+                                     id="contenedorSelectReservado">
+                                    <label class="small mb-1">
+                                        Seleccionar folio reservado disponible
+                                    </label>
 
                                     <select id="folio_reservado_select"
                                             class="form-control form-control-sm">
-
                                     </select>
 
+                                    <small id="textoReservados"
+                                           class="text-muted d-block mt-1">
+                                    </small>
                                 </div>
 
-
-                                <div class="col-md-4">
-
-                                    <div class="custom-control custom-radio">
-
-                                        <input type="radio"
-                                               id="usar_consecutivo"
-                                               name="modo_numeracion"
-                                               value="consecutivo"
-                                               class="custom-control-input">
-
-                                        <label class="custom-control-label"
-                                               for="usar_consecutivo">
-
-                                            Consecutivo automático
-
-                                        </label>
-
-                                    </div>
-
+                                <div class="col-md-8 pl-md-4"
+                                     id="contenedorMensajeConsecutivo"
+                                     style="display:none;">
+                                    <span class="small text-muted">
+                                        <i class="fas fa-info-circle text-primary mr-1"></i>
+                                        Se asignará de forma automática el siguiente número
+                                        consecutivo disponible para esta coordinación.
+                                    </span>
                                 </div>
-
                             </div>
-
-                            <small id="textoReservados"
-                                   class="text-muted">
-                            </small>
-
                         </div>
 
-                        <div class="row mt-2">
-
+                        <div class="row mt-3">
                             <div class="col-md-12">
-
-                                <label>
+                                <label class="mb-1">
                                     Asunto <span class="text-danger">*</span>
                                 </label>
 
@@ -250,25 +217,16 @@
                                        name="asunto"
                                        class="form-control form-control-sm"
                                        required>
-
                             </div>
-
                         </div>
-
                     </div>
 
-
-                    {{-- =================================================
-                        FECHAS Y CONTROL
-                    ================================================== --}}
+                    {{-- 3. CRONOLOGÍA Y FECHAS --}}
                     <div class="form-block mb-3">
-
                         <div class="row">
-
-                            <div class="col-md-4">
-
-                                <label id="labelFechaCrear">
-                                    Fecha de envío <span class="text-danger">*</span>
+                            <div class="col-md-3">
+                                <label class="mb-1" id="labelFechaCrear">
+                                    Fecha de recepción <span class="text-danger">*</span>
                                 </label>
 
                                 <input type="date"
@@ -276,308 +234,131 @@
                                        class="form-control form-control-sm"
                                        value="{{ now()->toDateString() }}"
                                        required>
-
                             </div>
 
-
-                            <div class="col-md-4">
-
-                                <label>
-                                    Fecha límite
+                            <div class="col-md-3">
+                                <label class="mb-1">
+                                    Fecha límite de atención
                                 </label>
 
                                 <input type="date"
                                        name="fecha_limite"
                                        class="form-control form-control-sm">
-
                             </div>
 
-
-                            <div class="col-md-4">
-
-                                <label>
-                                    Requiere respuesta <span class="text-danger">*</span>
+                            <div class="col-md-3">
+                                <label class="mb-1">
+                                    ¿Requiere respuesta? <span class="text-danger">*</span>
                                 </label>
 
                                 <div class="d-flex pt-1">
-
                                     <div class="custom-control custom-radio mr-4">
-
                                         <input type="radio"
                                                id="req_no"
                                                name="requiere_respuesta"
                                                value="0"
                                                class="custom-control-input"
+                                               checked
                                                required>
 
-                                        <label class="custom-control-label"
+                                        <label class="custom-control-label small"
                                                for="req_no">
-
                                             No
-
                                         </label>
-
                                     </div>
 
-
                                     <div class="custom-control custom-radio">
-
                                         <input type="radio"
                                                id="req_si"
                                                name="requiere_respuesta"
                                                value="1"
                                                class="custom-control-input">
 
-                                        <label class="custom-control-label"
+                                        <label class="custom-control-label small"
                                                for="req_si">
-
                                             Sí
-
                                         </label>
-
                                     </div>
-
                                 </div>
-
                             </div>
-
                         </div>
-
                     </div>
 
-
-                    {{-- =================================================
-                        ACTORES (REMITENTE / DESTINATARIO)
-                    ================================================== --}}
+                    {{-- 4. RELACIÓN Y CONTENIDO --}}
                     <div class="form-block mb-3">
-
                         <div class="row">
-
-                            {{-- REMITENTE --}}
-                            <div class="col-md-6 pr-md-3">
-
-                                <div class="actor-title">
-                                    Remitente
-                                </div>
-
-
-                                <div class="row">
-
-                                    <div class="col-md-6">
-
-                                        <label>Nombre</label>
-
-                                        <input type="text"
-                                               name="remitente_nombre"
-                                               class="form-control form-control-sm">
-
-                                    </div>
-
-
-                                    <div class="col-md-6">
-
-                                        <label>Cargo</label>
-
-                                        <input type="text"
-                                               name="remitente_cargo"
-                                               class="form-control form-control-sm">
-
-                                    </div>
-
-
-                                    <div class="col-md-12 mt-2">
-
-                                        <label>Dependencia</label>
-
-                                        <input type="text"
-                                               id="remitente_dependencia"
-                                               name="remitente_dependencia"
-                                               class="form-control form-control-sm">
-
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-
-                            {{-- DESTINATARIO --}}
-                            <div class="col-md-6 pl-md-3 mt-3 mt-md-0 border-left-subtle">
-
-                                <div class="actor-title">
-                                    Destinatario
-                                </div>
-
-
-                                <div class="row">
-
-                                    <div class="col-md-6">
-
-                                        <label>Nombre</label>
-
-                                        <input type="text"
-                                               name="destinatario_nombre"
-                                               class="form-control form-control-sm">
-
-                                    </div>
-
-
-                                    <div class="col-md-6">
-
-                                        <label>Cargo</label>
-
-                                        <input type="text"
-                                               name="destinatario_cargo"
-                                               class="form-control form-control-sm">
-
-                                    </div>
-
-
-                                    <div class="col-md-12 mt-2">
-
-                                        <label>Dependencia</label>
-
-                                        <input type="text"
-                                               id="destinatario_dependencia"
-                                               name="destinatario_dependencia"
-                                               class="form-control form-control-sm">
-
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    {{-- =================================================
-                        ELABORADOR + DOCUMENTO DIGITAL
-                    ================================================== --}}
-                    <div class="form-block mb-3">
-
-                        <div class="row">
-
-                            <div class="col-md-6 pr-md-3" id="bloqueElaborador">
-
-                                <div class="actor-title">
-                                    Elaborador
-                                </div>
-
-
-                                <div class="row">
-
-                                    <div class="col-md-7">
-
-                                        <label>Nombre</label>
-
-                                        <input type="text"
-                                               name="quien_elabora_nombre"
-                                               class="form-control form-control-sm">
-
-                                    </div>
-
-
-                                    <div class="col-md-5">
-
-                                        <label>Cargo</label>
-
-                                        <input type="text"
-                                               name="quien_elabora_cargo"
-                                               class="form-control form-control-sm">
-
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-
-                            <div class="col-md-6 pl-md-3 mt-3 mt-md-0 border-left-subtle">
-
-                                <div class="actor-title">
-                                    Documento digital
-                                </div>
-
-                                <label>Link</label>
-
-                                <input type="text"
-                                       name="link_documento"
-                                       class="form-control form-control-sm font-mono"
-                                       placeholder="https://...">
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-
-                    {{-- =================================================
-                        CONTENIDO + RELACIÓN + SENSIBLE
-                    ================================================== --}}
-                    <div class="form-block mb-0">
-
-                        <div class="row">
-
                             <div class="col-md-7">
-
-                                <label>Descripción del contenido</label>
-
-                                <textarea name="descripcion"
-                                          class="form-control form-control-sm"
-                                          rows="2"></textarea>
-
-                            </div>
-
-
-                            <div class="col-md-5 mt-3 mtCreo-md-0">
-
-                                <label>
-                                    Oficio relacionado
+                                <label class="small font-weight-bold text-dark mb-1">
+                                    ¿Inicia nueva petición o responde a otro oficio?
+                                    <span class="text-danger">*</span>
                                 </label>
 
-                                <div class="position-relative">
+                                <div class="d-flex pt-1 mb-2">
+                                    <div class="custom-control custom-radio mr-4">
+                                        <input type="radio"
+                                               id="relacion_nueva"
+                                               name="tipo_relacion"
+                                               value="nueva"
+                                               class="custom-control-input"
+                                               required>
 
-                                    <input type="text"
-                                           id="oficio_relacionado"
-                                           class="form-control form-control-sm font-mono"
-                                           autocomplete="off"
-                                           placeholder="Número de oficio">
-
-                                    <input type="hidden"
-                                           id="respuesta_a_oficio_id"
-                                           name="respuesta_a_oficio_id">
-
-                                    <div id="oficiosRelacionadosResultados"
-                                         class="oficio-autocomplete">
+                                        <label class="custom-control-label small"
+                                               for="relacion_nueva">
+                                            Inicia nueva petición
+                                        </label>
                                     </div>
 
+                                    <div class="custom-control custom-radio">
+                                        <input type="radio"
+                                               id="relacion_existente"
+                                               name="tipo_relacion"
+                                               value="relacionado"
+                                               class="custom-control-input">
+
+                                        <label class="custom-control-label small"
+                                               for="relacion_existente">
+                                            Es respuesta a otro
+                                        </label>
+                                    </div>
                                 </div>
 
-                                <small class="text-muted d-block mt-1">
-                                    Si existe en el sistema, te lo sugerirá automáticamente.
-                                </small>
+                                <div id="bloqueOficioRelacionado"
+                                     class="mt-2"
+                                     style="display:none;">
 
+                                    <label>
+                                        Oficio relacionado <span class="text-danger">*</span>
+                                    </label>
+
+                                    <div class="position-relative">
+                                        <input type="text"
+                                               id="oficio_relacionado"
+                                               class="form-control form-control-sm font-mono"
+                                               autocomplete="off"
+                                               placeholder="Buscar oficio anterior...">
+
+                                        <input type="hidden"
+                                               id="respuesta_a_oficio_id"
+                                               name="respuesta_a_oficio_id">
+
+                                        <div id="oficiosRelacionadosResultados"
+                                             class="oficio-autocomplete">
+                                        </div>
+                                    </div>
+
+                                    <small class="text-muted d-block mt-1">
+                                        Si existe en el sistema, te lo sugerirá automáticamente.
+                                    </small>
+                                </div>
                             </div>
 
-                        </div>
-
-
-                        <div class="row mt-3 pt-2 border-top">
-
-                            <div class="col-md-6">
-
+                            <div class="col-md-5 pl-md-4">
                                 <label class="mb-1">
-                                    Documento sensible
+                                    Clasificación
                                 </label>
 
                                 <div class="d-flex pt-1">
-
                                     <div class="custom-control custom-radio mr-4">
-
                                         <input type="radio"
                                                id="sens_no"
                                                name="es_sensible"
@@ -585,72 +366,167 @@
                                                class="custom-control-input"
                                                checked>
 
-                                        <label class="custom-control-label"
+                                        <label class="custom-control-label small"
                                                for="sens_no">
-
-                                            No
-
+                                            Público
                                         </label>
-
                                     </div>
 
-
                                     <div class="custom-control custom-radio">
-
                                         <input type="radio"
                                                id="sens_si"
                                                name="es_sensible"
                                                value="1"
                                                class="custom-control-input">
 
-                                        <label class="custom-control-label"
+                                        <label class="custom-control-label small"
                                                for="sens_si">
-
-                                            Sí
-
+                                            Sensible / Reservado
                                         </label>
-
                                     </div>
-
                                 </div>
-
                             </div>
-
                         </div>
 
+                        <div class="row mt-2 pt-2 border-top">
+                            <div class="col-md-12">
+                                <label class="mb-1">
+                                    Descripcion
+                                </label>
+
+                                <textarea name="descripcion"
+                                          class="form-control form-control-sm"
+                                          rows="2"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- 5. ACTORES --}}
+                    <div class="form-block mb-0">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="actor-title mb-2">
+                                    Remitente
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-2">
+                                        <label class="mb-1">Nombre</label>
+                                        <input type="text"
+                                               name="remitente_nombre"
+                                               class="form-control form-control-sm">
+                                    </div>
+
+                                    <div class="col-md-6 mb-2">
+                                        <label class="mb-1">Cargo</label>
+                                        <input type="text"
+                                               name="remitente_cargo"
+                                               class="form-control form-control-sm">
+                                    </div>
+
+                                    <div class="col-md-12">
+                                        <label class="mb-1">Dependencia</label>
+                                        <input type="text"
+                                               id="remitente_dependencia"
+                                               name="remitente_dependencia"
+                                               class="form-control form-control-sm">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 pl-md-4 mt-3 mt-md-0">
+                                <div class="actor-title mb-2">
+                                    Destinatario
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-2">
+                                        <label class="mb-1">Nombre</label>
+                                        <input type="text"
+                                               name="destinatario_nombre"
+                                               class="form-control form-control-sm">
+                                    </div>
+
+                                    <div class="col-md-6 mb-2">
+                                        <label class="mb-1">Cargo</label>
+                                        <input type="text"
+                                               name="destinatario_cargo"
+                                               class="form-control form-control-sm">
+                                    </div>
+
+                                    <div class="col-md-12">
+                                        <label class="mb-1">Dependencia</label>
+                                        <input type="text"
+                                               id="destinatario_dependencia"
+                                               name="destinatario_dependencia"
+                                               class="form-control form-control-sm">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-3 pt-3 border-top">
+                            <div class="col-md-6" id="bloqueElaborador">
+                                <div class="actor-title mb-2">
+                                    Elaborador interno
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-7">
+                                        <label class="mb-1">Nombre</label>
+                                        <input type="text"
+                                               name="quien_elabora_nombre"
+                                               class="form-control form-control-sm">
+                                    </div>
+
+                                    <div class="col-md-5">
+                                        <label class="mb-1">Cargo</label>
+                                        <input type="text"
+                                               name="quien_elabora_cargo"
+                                               class="form-control form-control-sm">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 pl-md-4 mt-3 mt-md-0">
+                                <div class="actor-title mb-2">
+                                    Transparencia
+                                </div>
+
+                                <label class="mb-1">
+                                    Link de referencia
+                                </label>
+
+                                <input type="text"
+                                       name="link_documento"
+                                       class="form-control form-control-sm font-mono"
+                                       placeholder="https://...">
+                            </div>
+                        </div>
                     </div>
 
                 </div>
 
-
                 {{-- FOOTER --}}
-                <div class="modal-footer py-2 justify-content-between">
-
+                <div class="modal-footer bg-light py-2 px-4 justify-content-between">
                     <small class="text-muted">
-                        <i class="fas fa-info-circle mr-1"></i>
-                        La información puede completarse posteriormente.
+                        Los campos marcados con
+                        <span class="text-danger">*</span>
+                        son obligatorios.
                     </small>
 
                     <div>
-
                         <button type="button"
-                                class="btn btn-secondary btn-sm"
+                                class="btn btn-secondary btn-sm px-3"
                                 data-dismiss="modal">
-
                             Cancelar
-
                         </button>
 
                         <button type="submit"
-                                class="btn btn-primary btn-sm">
-
-                            <i class="fas fa-save mr-1"></i>
+                                class="btn btn-primary btn-sm px-3 font-weight-bold">
                             Registrar oficio
-
                         </button>
-
                     </div>
-
                 </div>
 
             </form>
@@ -661,53 +537,35 @@
 
 </div>
 
-
 <style>
-
-    #modalCrearOficio .modal-dialog {
-        max-width: 880px;
-    }
-
-    #modalCrearOficio .modal-content {
-        border: 0;
-        border-radius: .4rem;
-        box-shadow: 0 .5rem 1.5rem rgba(0, 0, 0, .12);
-    }
-
-    #modalCrearOficio .modal-header {
+    .form-block {
+        padding: .75rem 1rem;
         background: #f8f9fc;
-        border-bottom: 1px solid #e3e6f0;
+        border-radius: .35rem;
+        border: 1px solid #eaecf4;
     }
 
-    #modalCrearOficio .modal-body {
-        background: #fff;
-        max-height: 75vh;
-        overflow-y: auto;
+    .actor-title {
+        color: #4e73df;
+        font-size: .75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .03em;
     }
-
-    #modalCrearOficio .modal-footer {
-        background: #f8f9fc;
-        border-top: 1px solid #e3e6f0;
-    }
-
-
-    /* ============================================================
-        SELECTOR DE TIPO
-    ============================================================ */
 
     .tipo-oficio-selector {
         display: flex;
-        gap: .5rem;
+        gap: .4rem;
     }
 
     .tipo-oficio-card {
         flex: 1;
-        height: 48px;
+        height: 34px;
         border: 1px solid #d1d3e2;
-        border-radius: .35rem;
+        border-radius: .3rem;
         background: #fff;
         color: #5a5c69;
-        font-size: .9rem;
+        font-size: .8rem;
         font-weight: 700;
         cursor: pointer;
         transition: all .15s ease;
@@ -722,79 +580,8 @@
         background: #4e73df;
         border-color: #4e73df;
         color: #fff;
-        box-shadow: 0 .1rem .3rem rgba(78, 115, 223, .25);
     }
 
-
-    /* ============================================================
-        BLOQUES LIMPIOS 
-    ============================================================ */
-
-    .form-block {
-        padding: .8rem 1rem;
-        background: #f8f9fc;
-        border-radius: .35rem;
-        border: 1px solid #eaecf4;
-    }
-
-    .actor-title {
-        margin-bottom: .5rem;
-        color: #4e73df;
-        font-size: .78rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: .03em;
-    }
-
-    .border-left-subtle {
-        border-left: 1px solid #e3e6f0;
-    }
-
-    @media (max-width: 767.98px) {
-        .border-left-subtle {
-            border-left: 0;
-            border-top: 1px solid #e3e6f0;
-            padding-top: .8rem;
-            margin-top: .8rem;
-        }
-    }
-
-
-    /* ============================================================
-        CAMPOS
-    ============================================================ */
-
-    #modalCrearOficio label {
-        margin-bottom: .2rem;
-        color: #8f8f8f;
-        font-size: .85rem;
-        font-weight: 600;
-    }
-
-    #modalCrearOficio .form-control {
-        min-height: 34px;
-        font-size: .85rem;
-        border-color: #d1d3e2;
-    }
-
-    #modalCrearOficio .form-control:focus {
-        border-color: #4e73df;
-        box-shadow: 0 0 0 0.1rem rgba(78, 115, 223, .25);
-    }
-
-
-    /* ============================================================
-        NUMERACIÓN Y AUTOCOMPLETE
-    ============================================================ */
-
-    .numeracion-box {
-        padding: .5rem .75rem;
-        border: 1px solid #d1d3e2;
-        border-radius: .25rem;
-        background: #fff;
-    }
-
-    .folio-dropdown-box,
     .oficio-autocomplete {
         position: absolute;
         top: 100%;
@@ -809,20 +596,170 @@
         background: #fff;
         box-shadow: 0 .15rem .5rem rgba(58, 59, 69, .15);
     }
+</style>
 
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const radioReservado = document.getElementById('usar_reservado');
+        const radioConsecutivo = document.getElementById('usar_consecutivo');
+        const boxReservado = document.getElementById('contenedorSelectReservado');
+        const boxConsecutivo = document.getElementById('contenedorMensajeConsecutivo');
 
-    @media (max-width: 767.98px) {
-        #modalCrearOficio .modal-dialog {
-            max-width: 95%;
+        if (radioReservado && radioConsecutivo) {
+            radioReservado.addEventListener('change', function () {
+                if (this.checked) {
+                    boxReservado.style.display = 'block';
+                    boxConsecutivo.style.display = 'none';
+                }
+            });
+
+            radioConsecutivo.addEventListener('change', function () {
+                if (this.checked) {
+                    boxConsecutivo.style.display = 'block';
+                    boxReservado.style.display = 'none';
+                }
+            });
+        }
+    });
+
+    function setTipoOficio(valorId, tipoStr) {
+        const radioTipo = document.querySelector(
+            'input[name="tipo_oficio_id"][value="' + valorId + '"]'
+        );
+
+        if (radioTipo) {
+            radioTipo.checked = true;
         }
 
-        .tipo-oficio-selector {
-            flex-direction: column;
+        document
+            .querySelectorAll('.tipo-oficio-card')
+            .forEach(function (card) {
+                card.classList.remove('active');
+            });
+
+        if (valorId === '1') {
+            document.getElementById('btnTipoEnviado').classList.add('active');
+        } else if (valorId === '2') {
+            document.getElementById('btnTipoRecibido').classList.add('active');
+        } else if (valorId === '3') {
+            document.getElementById('btnTipoRecibidoCPC').classList.add('active');
         }
 
-        .tipo-oficio-card {
-            height: 42px;
+        const contenedorCoordinacion =
+            document.getElementById('contenedorCoordinacion');
+
+        const selectCoordinacion =
+            document.getElementById('selectCoordinacion');
+
+        const inputNumeroOficio =
+            document.getElementById('numero_oficio');
+
+        const opcionesNumeracion =
+            document.getElementById('opcionesNumeracion');
+
+        const bloqueElaborador =
+            document.getElementById('bloqueElaborador');
+
+        const remitenteDependencia =
+            document.getElementById('remitente_dependencia');
+
+        const destinatarioDependencia =
+            document.getElementById('destinatario_dependencia');
+
+        if (valorId === '1') {
+            contenedorCoordinacion.style.display = 'block';
+
+            selectCoordinacion.setAttribute(
+                'required',
+                'required'
+            );
+
+            inputNumeroOficio.setAttribute(
+                'readonly',
+                'readonly'
+            );
+
+            bloqueElaborador.style.display = 'block';
+
+            if (remitenteDependencia) {
+                remitenteDependencia.value =
+                    'Secretaría Ejecutiva del Sistema Estatal Anticorrupción';
+            }
+
+            if (destinatarioDependencia) {
+                destinatarioDependencia.value = '';
+            }
+
+            document.getElementById('labelFechaCrear').innerHTML =
+                'Fecha de envío <span class="text-danger">*</span>';
+
+            if (typeof generarNumeroOficio === 'function') {
+                generarNumeroOficio();
+            }
+        } else {
+            contenedorCoordinacion.style.display = 'none';
+
+            selectCoordinacion.removeAttribute(
+                'required'
+            );
+
+            selectCoordinacion.value = '';
+
+            inputNumeroOficio.removeAttribute(
+                'readonly'
+            );
+
+            inputNumeroOficio.value = '';
+
+            opcionesNumeracion.style.display = 'none';
+
+            bloqueElaborador.style.display = 'none';
+
+            if (remitenteDependencia) {
+                remitenteDependencia.value = '';
+            }
+
+            if (destinatarioDependencia) {
+                destinatarioDependencia.value =
+                    'Secretaría Ejecutiva del Sistema Estatal Anticorrupción';
+            }
+
+            document.getElementById('labelFechaCrear').innerHTML =
+                'Fecha de recepción <span class="text-danger">*</span>';
         }
     }
 
-</style>
+    document.addEventListener('change', function (e) {
+        if (!e.target.matches('input[name="tipo_relacion"]')) {
+            return;
+        }
+
+        const bloque =
+            document.getElementById('bloqueOficioRelacionado');
+
+        const oficioRelacionado =
+            document.getElementById('oficio_relacionado');
+
+        const respuestaId =
+            document.getElementById('respuesta_a_oficio_id');
+
+        const resultados =
+            document.getElementById('oficiosRelacionadosResultados');
+
+        if (e.target.value === 'relacionado') {
+            bloque.style.display = 'block';
+            oficioRelacionado.required = true;
+        } else {
+            bloque.style.display = 'none';
+            oficioRelacionado.required = false;
+            oficioRelacionado.value = '';
+            respuestaId.value = '';
+            resultados.innerHTML = '';
+            resultados.style.display = 'none';
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        setTipoOficio('1', 'enviado');
+    });
+</script>
