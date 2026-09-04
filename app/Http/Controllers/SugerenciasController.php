@@ -63,4 +63,39 @@ class SugerenciasController extends Controller
             $resultados->take(10)->values()
         );
     }
+
+    
+    public function oficios(Request $request)
+    {
+        $q = trim($request->get('q', ''));
+
+        if (mb_strlen($q) < 2) {
+            return response()->json([]);
+        }
+
+        $oficios = \App\Models\Oficio::query()
+            ->where(function ($query) use ($q) {
+                $query->where('numero_oficio', 'like', "%{$q}%")
+                    ->orWhere('asunto', 'like', "%{$q}%");
+            })
+            ->orderByDesc('fecha_oficio')
+            ->limit(10)
+            ->get([
+                'id',
+                'numero_oficio',
+                'asunto',
+                'fecha_oficio',
+            ]);
+
+        return response()->json(
+            $oficios->map(function ($oficio) {
+                return [
+                    'id' => $oficio->id,
+                    'numero_oficio' => $oficio->numero_oficio,
+                    'asunto' => $oficio->asunto,
+                    'fecha_oficio' => $oficio->fecha_oficio,
+                ];
+            })->values()
+        );
+    }
 }

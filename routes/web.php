@@ -91,6 +91,9 @@ Route::middleware('auth')->group(function () {
     */
     Route::get('/api/sugerencias/personas', [SugerenciasController::class, 'personas'])
         ->name('api.sugerencias.personas');
+    
+    Route::get('/api/sugerencias/oficios', [SugerenciasController::class, 'oficios'])
+        ->name('api.sugerencias.oficios');
         
         
     /*

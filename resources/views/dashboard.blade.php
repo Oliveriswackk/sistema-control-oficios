@@ -166,6 +166,38 @@
         font-size: .7rem;
         color: #858796;
     }
+
+    .sugerencia-oficio {
+        display: block;
+        width: 100%;
+        padding: .5rem .75rem;
+        border: 0;
+        border-bottom: 1px solid #eaecf4;
+        background: #fff;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .sugerencia-oficio:last-child {
+        border-bottom: 0;
+    }
+
+    .sugerencia-oficio:hover,
+    .sugerencia-oficio.active {
+        background: #f8f9fc;
+    }
+
+    .sugerencia-oficio-numero {
+        font-size: .8rem;
+        font-weight: 700;
+        color: #3a3b45;
+    }
+
+    .sugerencia-oficio-detalle {
+        margin-top: .1rem;
+        font-size: .7rem;
+        color: #858796;
+    }
 </style>
 @section('content')
 
