@@ -7,6 +7,7 @@ use App\Http\Controllers\OficioController;
 use App\Http\Controllers\TurnadoController;
 use App\Http\Controllers\TagController;
 use App\Http\Controllers\OficioArchivoController;
+use App\Http\Controllers\SugerenciasController;
 use App\Models\Turnado;
 
 /*
@@ -83,6 +84,15 @@ Route::middleware('auth')->group(function () {
         ->name('oficios.datatable');
 
     
+    /*
+    |--------------------------------------------------------------------------
+    | SUGERENCIAS
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/api/sugerencias/personas', [SugerenciasController::class, 'personas'])
+        ->name('api.sugerencias.personas');
+        
+        
     /*
     |--------------------------------------------------------------------------
     | OFICIOS

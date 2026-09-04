@@ -217,8 +217,9 @@
     window.LaravelBaseUrl = "{{ url('/') }}";
 </script>
 
-{{-- JS DE OFICIOS (AJAX) --}}
+{{-- JS DE OFICIOS --}}
 <script src="{{ asset('js/oficios.js') }}?v=1.0.2"></script>
+<script src="{{ asset('js/sugerencias.js') }}?v=1.0.0"></script>
 
 {{-- =========================================================
 |  PLUGINS EXTERNOS

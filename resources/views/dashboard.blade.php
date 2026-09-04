@@ -103,6 +103,8 @@
         color: #fff;
     }
 
+/* Autocomplete / Sugerencias */
+
     .oficio-autocomplete {
         position: absolute;
         top: 100%;
@@ -118,6 +120,52 @@
         box-shadow: 0 .15rem .5rem rgba(58, 59, 69, .15);
     }
 
+    .sugerencias-personas {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        left: 0;
+        z-index: 1055;
+        display: none;
+        max-height: 220px;
+        overflow-y: auto;
+        border: 1px solid #d1d3e2;
+        border-radius: .25rem;
+        background: #fff;
+        box-shadow: 0 .15rem .5rem rgba(58, 59, 69, .15);
+    }
+
+    .sugerencia-persona {
+        display: block;
+        width: 100%;
+        padding: .5rem .75rem;
+        border: 0;
+        border-bottom: 1px solid #eaecf4;
+        background: #fff;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .sugerencia-persona:last-child {
+        border-bottom: 0;
+    }
+
+    .sugerencia-persona:hover,
+    .sugerencia-persona.active {
+        background: #f8f9fc;
+    }
+
+    .sugerencia-persona-nombre {
+        font-size: .8rem;
+        font-weight: 700;
+        color: #3a3b45;
+    }
+
+    .sugerencia-persona-detalle {
+        margin-top: .1rem;
+        font-size: .7rem;
+        color: #858796;
+    }
 </style>
 @section('content')
 
