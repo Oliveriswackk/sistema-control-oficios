@@ -19,7 +19,7 @@ class CoordinacionesSeeder extends Seeder
             ],
 
             [
-                'clave' => 'CC-SEA', // 2
+                'clave' => 'CC-SEA',
                 'nombre' => 'Comité Coordinador del Sistema Estatal Anticorrupción',
                 'activo' => true,
             ],

@@ -138,8 +138,8 @@
             </a>
 
             @can('create', App\Models\Oficio::class)
-                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalCrearOficio">
-                    Registrar Oficio
+                <button type="button" class="btn btn-primary btn-sm px-3 font-weight-bold" data-toggle="modal" data-target="#modalCrearOficio">
+                    <i class="fas fa-plus mr-1"></i> Registrar oficio
                 </button>
             @endcan
 

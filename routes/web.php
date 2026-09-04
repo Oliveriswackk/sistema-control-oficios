@@ -137,6 +137,8 @@ Route::middleware('auth')->group(function () {
     // CONSECUTIVO
     Route::get('/proximo-consecutivo', [OficioController::class, 'proximoConsecutivo']);    
 
+    Route::get('/coordinaciones/{coordinacion}/coordinador', [OficioController::class, 'coordinadorDeCoordinacion'])->name('coordinaciones.coordinador');
+
     // RESERVAR NO. OFICIO
     Route::post('/oficios/reservar-folios', [
         OficioController::class,

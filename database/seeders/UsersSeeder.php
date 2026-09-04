@@ -13,7 +13,7 @@ class UsersSeeder extends Seeder
 {
     public function run(): void
     {
-        // PROTECCIÓN DE PRODUCCIÓN: Nunca ejecutar en producción por comando masivo
+        // PROTECCIÓN DE PRODUCCIÓN
         if (App::environment('production')) {
             $this->command->warn('[SEGURIDAD] UsersSeeder fue omitido. No se pueden sembrar usuarios de prueba en Producción :( ');
             return;
@@ -26,29 +26,32 @@ class UsersSeeder extends Seeder
 
         $permisos = Permiso::all()->keyBy('clave');
 
-        // ---------- Contraseña base por defecto ----------
         $defaultPassword = env('SEEDER_DEFAULT_PASSWORD', 'SESEA_OFICIOS2026');
 
-        // ---------- Función auxiliar ----------
         $crear = function (
             string $nombre,
             string $email,
             ?string $password,
             array $roles,
             array $adscripciones,
-            array $permisosExtra = []
+            array $permisosExtra = [],
+            ?string $cargo = null
         ) use ($permisos, $defaultPassword) {
 
-            // Evitar duplicar si el usuario ya existe por email
             $user = User::firstOrCreate(
                 ['email' => $email],
                 [
                     'name' => $nombre,
+                    'cargo' => $cargo,
                     'password' => Hash::make($password ?? $defaultPassword),
                 ]
             );
 
-            // Sincronizar relaciones sin duplicar registros pivot
+            $user->update([
+                'name' => $nombre,
+                'cargo' => $cargo,
+            ]);
+
             $user->roles()->sync(collect($roles)->pluck('id')->toArray());
             $user->coordinaciones()->sync($adscripciones);
 
@@ -74,7 +77,9 @@ class UsersSeeder extends Seeder
             'admin@sesea.test',
             'Oliwey777',
             [$admin],
-            [7]
+            [7],
+            [],
+            'Auxiliar Servicios Tecnológicos y Plataforma Digital'
         );
 
         $crear(
@@ -82,7 +87,9 @@ class UsersSeeder extends Seeder
             'salvador.jurado@sesea.test',
             null,
             [$admin, $coordinador],
-            [7]
+            [7],
+            [],
+            'Coordinador de Servicios Tecnológicos y Plataforma Digital Estatal'
         );
 
         $crear(
@@ -90,7 +97,9 @@ class UsersSeeder extends Seeder
             'noel.cuevas@sesea.test',
             null,
             [$admin],
-            [7]
+            [7],
+            [],
+            'Asesor de Servicios Tecnológicos y Plataforma Digital'
         );
 
         /*
@@ -103,9 +112,10 @@ class UsersSeeder extends Seeder
             'Alejandro Salasplata',
             'felipe@sesea.test',
             null,
-            [$colaborador],
+            [$coordinador],
             [6],
-            ['puede_registrar_oficios', 'puede_turnar']
+            ['puede_registrar_oficios', 'puede_turnar'],
+            'Secretario Técnico'
         );
 
         $crear(
@@ -114,7 +124,8 @@ class UsersSeeder extends Seeder
             null,
             [$colaborador],
             [6],
-            ['puede_registrar_oficios', 'puede_turnar']
+            ['puede_registrar_oficios', 'puede_turnar'],
+            'Secretaria del titular'
         );
 
         /*
@@ -129,7 +140,8 @@ class UsersSeeder extends Seeder
             null,
             [$colaborador],
             [6],
-            ['puede_registrar_oficios', 'puede_turnar']
+            ['puede_registrar_oficios', 'puede_turnar'],
+            'Oficialía de partes'
         );
 
         /*
@@ -144,7 +156,8 @@ class UsersSeeder extends Seeder
             null,
             [$coordinador],
             [5],
-            ['puede_returnar']
+            ['puede_returnar'],
+            'Coordinador de Riesgos y Políticas Públicas'
         );
 
         $crear(
@@ -153,7 +166,8 @@ class UsersSeeder extends Seeder
             null,
             [$coordinador],
             [10],
-            ['puede_returnar']
+            ['puede_returnar'],
+            'Coordinador de Vinculación Interinstitucional y con la Sociedad Civil'
         );
 
         $crear(
@@ -162,7 +176,8 @@ class UsersSeeder extends Seeder
             null,
             [$coordinador],
             [4],
-            ['puede_returnar']
+            ['puede_returnar'],
+            'Coordinadora Administrativa'
         );
 
         $crear(
@@ -171,7 +186,8 @@ class UsersSeeder extends Seeder
             null,
             [$coordinador],
             [1, 8],
-            ['puede_returnar', 'puede_ver_sensibles']
+            ['puede_returnar', 'puede_ver_sensibles'],
+            'Coordinadora de Asuntos Jurídicos y Unidad de Igualdad de Género'
         );
 
         /*
@@ -180,10 +196,48 @@ class UsersSeeder extends Seeder
         |--------------------------------------------------------------------------
         */
 
-        $crear('Óscar Arroyo', 'oscar@sesea.test', null, [$colaborador], [5]);
-        $crear('Ximena García', 'ximena@sesea.test', null, [$colaborador], [5]);
-        $crear('Beatriz Medrano', 'beatriz@sesea.test', null, [$colaborador], [10]);
-        $crear('Anel Navarro', 'anel@sesea.test', null, [$colaborador], [10]);
-        $crear('Roberto García', 'roberto@sesea.test', null, [$colaborador], [4]);
+        $crear(
+            'Óscar Arroyo',
+            'oscar@sesea.test',
+            null,
+            [$colaborador],
+            [5]
+        );
+
+        $crear(
+            'Ximena García',
+            'ximena@sesea.test',
+            null,
+            [$coordinador],
+            [9],
+            ['puede_returnar'],
+            'Coordinadora de la Unidad de Transparencia'
+        );
+
+        $crear(
+            'Beatriz Medrano',
+            'beatriz@sesea.test',
+            null,
+            [$coordinador],
+            [3],
+            ['puede_returnar'],
+            'Coordinadora del Comité de Ética'
+        );
+
+        $crear(
+            'Anel Navarro',
+            'anel@sesea.test',
+            null,
+            [$colaborador],
+            [10]
+        );
+
+        $crear(
+            'Roberto García',
+            'roberto@sesea.test',
+            null,
+            [$colaborador],
+            [4]
+        );
     }
 }

@@ -537,67 +537,6 @@
 
 </div>
 
-<style>
-    .form-block {
-        padding: .75rem 1rem;
-        background: #f8f9fc;
-        border-radius: .35rem;
-        border: 1px solid #eaecf4;
-    }
-
-    .actor-title {
-        color: #4e73df;
-        font-size: .75rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: .03em;
-    }
-
-    .tipo-oficio-selector {
-        display: flex;
-        gap: .4rem;
-    }
-
-    .tipo-oficio-card {
-        flex: 1;
-        height: 34px;
-        border: 1px solid #d1d3e2;
-        border-radius: .3rem;
-        background: #fff;
-        color: #5a5c69;
-        font-size: .8rem;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all .15s ease;
-    }
-
-    .tipo-oficio-card:hover {
-        border-color: #4e73df;
-        color: #4e73df;
-    }
-
-    .tipo-oficio-card.active {
-        background: #4e73df;
-        border-color: #4e73df;
-        color: #fff;
-    }
-
-    .oficio-autocomplete {
-        position: absolute;
-        top: 100%;
-        right: 0;
-        left: 0;
-        z-index: 1055;
-        display: none;
-        max-height: 180px;
-        overflow-y: auto;
-        border: 1px solid #d1d3e2;
-        border-radius: .25rem;
-        background: #fff;
-        box-shadow: 0 .15rem .5rem rgba(58, 59, 69, .15);
-    }
-</style>
-
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const radioReservado = document.getElementById('usar_reservado');

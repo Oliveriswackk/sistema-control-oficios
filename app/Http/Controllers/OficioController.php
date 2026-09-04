@@ -259,6 +259,29 @@ class OficioController extends Controller
     }
 
 
+    public function coordinadorDeCoordinacion(Coordinacion $coordinacion)
+    {
+        $coordinador = $coordinacion->users()
+            ->whereHas('roles', function ($query) {
+                $query->where('clave', 'coordinador');
+            })
+            ->first();
+
+        if (!$coordinador) {
+            return response()->json([
+                'coordinador' => null,
+            ]);
+        }
+
+        return response()->json([
+            'coordinador' => [
+                'nombre' => $coordinador->name,
+                'cargo' => $coordinador->cargo,
+            ],
+        ]);
+    }
+
+
     /*
     |--------------------------------------------------------------------------
     | GUARDAR NUEVO OFICIO

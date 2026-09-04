@@ -3,61 +3,120 @@
 @extends('layouts.app')
 <style>
 
-.modal-oficio {
-    max-width: 1400px;
-}
+    .modal-oficio {
+        max-width: 1400px;
+    }
 
-.modal-oficio .modal-body {
-    max-height: 80vh;
-    overflow-y: auto;
-    padding: 1.25rem 1.5rem;
-}
+    .modal-oficio .modal-body {
+        max-height: 80vh;
+        overflow-y: auto;
+        padding: 1.25rem 1.5rem;
+    }
 
-/* Secciones */
-.modal-oficio h6 {
-    font-size: 1rem;
-    font-weight: 700;
-    margin-bottom: .75rem;
-    margin-top: .5rem;
-}
+    /* Secciones */
+    .modal-oficio h6 {
+        font-size: 1rem;
+        font-weight: 700;
+        margin-bottom: .75rem;
+        margin-top: .5rem;
+    }
 
-/* Labels */
-.modal-oficio label {
-    font-size: .9rem;
-    font-weight: 600;
-    margin-bottom: .35rem;
-}
+    /* Labels */
+    .modal-oficio label {
+        font-size: .9rem;
+        font-weight: 600;
+        margin-bottom: .35rem;
+    }
 
-/* Inputs */
-.modal-oficio .form-control,
-.modal-oficio .custom-select {
-    font-size: .9rem;
-    height: calc(1.5em + .75rem + 2px);
-    padding: .375rem .75rem;
-}
+    /* Inputs */
+    .modal-oficio .form-control,
+    .modal-oficio .custom-select {
+        font-size: .9rem;
+        height: calc(1.5em + .75rem + 2px);
+        padding: .375rem .75rem;
+    }
 
-/* Textareas */
-.modal-oficio textarea.form-control {
-    min-height: 70px;
-    resize: vertical;
-}
+    /* Textareas */
+    .modal-oficio textarea.form-control {
+        min-height: 70px;
+        resize: vertical;
+    }
 
-/* Espaciado entre filas */
-.modal-oficio .row {
-    margin-bottom: .5rem;
-}
+    /* Espaciado entre filas */
+    .modal-oficio .row {
+        margin-bottom: .5rem;
+    }
 
-/* Footer */
-.modal-oficio .modal-footer {
-    padding: .75rem 1.5rem;
-}
+    /* Footer */
+    .modal-oficio .modal-footer {
+        padding: .75rem 1.5rem;
+    }
 
-/* Botones */
-.modal-oficio .btn {
-    font-size: .9rem;
-    font-weight: 600;
-    padding: .45rem 1rem;
-}
+    /* Botones */
+    .modal-oficio .btn {
+        font-size: .9rem;
+        font-weight: 600;
+        padding: .45rem 1rem;
+    }
+
+    .form-block {
+        padding: .75rem 1rem;
+        background: #f8f9fc;
+        border-radius: .35rem;
+        border: 1px solid #eaecf4;
+    }
+
+    .actor-title {
+        color: #4e73df;
+        font-size: .75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .03em;
+    }
+
+    .tipo-oficio-selector {
+        display: flex;
+        gap: .4rem;
+    }
+
+    .tipo-oficio-card {
+        flex: 1;
+        height: 34px;
+        border: 1px solid #d1d3e2;
+        border-radius: .3rem;
+        background: #fff;
+        color: #5a5c69;
+        font-size: .8rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all .15s ease;
+    }
+
+    .tipo-oficio-card:hover {
+        border-color: #4e73df;
+        color: #4e73df;
+    }
+
+    .tipo-oficio-card.active {
+        background: #4e73df;
+        border-color: #4e73df;
+        color: #fff;
+    }
+
+    .oficio-autocomplete {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        left: 0;
+        z-index: 1055;
+        display: none;
+        max-height: 180px;
+        overflow-y: auto;
+        border: 1px solid #d1d3e2;
+        border-radius: .25rem;
+        background: #fff;
+        box-shadow: 0 .15rem .5rem rgba(58, 59, 69, .15);
+    }
 
 </style>
 @section('content')
@@ -544,6 +603,52 @@ function generarNumeroOficio() {
         });
 
 }
+
+$(document).on('change', '#selectCoordinacion', function () {
+
+    const coordinacionId = $(this).val();
+
+    const remitenteNombre = $('input[name="remitente_nombre"]');
+    const remitenteCargo = $('input[name="remitente_cargo"]');
+    const remitenteDependencia = $('#remitente_dependencia');
+
+    if (!coordinacionId) {
+        remitenteNombre.val('');
+        remitenteCargo.val('');
+        remitenteDependencia.val('');
+        return;
+    }
+
+    fetch(`{{ url('coordinaciones') }}/${coordinacionId}/coordinador`)
+        .then(res => {
+            if (!res.ok) {
+                throw new Error(`HTTP ${res.status}`);
+            }
+
+            return res.json();
+        })
+        .then(data => {
+
+            if (!data.coordinador) {
+                remitenteNombre.val('');
+                remitenteCargo.val('');
+                remitenteDependencia.val(
+                    'Secretaría Ejecutiva del Sistema Estatal Anticorrupción'
+                );
+                return;
+            }
+
+            remitenteNombre.val(data.coordinador.nombre);
+            remitenteCargo.val(data.coordinador.cargo || '');
+            remitenteDependencia.val(
+                'Secretaría Ejecutiva del Sistema Estatal Anticorrupción'
+            );
+        })
+        .catch(err => {
+            console.error('Error obteniendo coordinador:', err);
+        });
+});
+
 
 // ---- Relacion con oficio ----
 document.addEventListener('change', function (e) {
