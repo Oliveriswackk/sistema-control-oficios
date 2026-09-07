@@ -653,7 +653,179 @@
 
 </div>
 
-<!-- SCRIPTS -->
+
+{{-- ============================================================
+    3. MODAL TURNAR OFICIO  
+============================================================ --}}
+<style>
+    #modalTurnar .coord-item {
+        cursor: pointer;
+        transition: .15s ease;
+    }
+
+    #modalTurnar .coord-item:hover {
+        background: #ffffff;
+    }
+
+    #modalTurnar .coord-item.selected {
+        background: #e4edff;
+        border-color: #4e73df !important;
+        box-shadow: 0 0 0 1px rgba(78, 115, 223, .15);
+    }
+</style>
+
+<div class="modal fade"
+     id="modalTurnar"
+     tabindex="-1"
+     role="dialog"
+     aria-labelledby="modalTurnarLabel"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+
+        <div class="modal-content border-0 shadow-lg"
+             style="border-radius: .4rem; overflow: hidden;">
+
+            <form id="formTurnar" method="POST">
+
+                @csrf
+
+                <div class="modal-header bg-light px-4 py-3 border-bottom">
+
+                    <h5 class="modal-title text-primary font-weight-bold"
+                        id="modalTurnarLabel">
+                        <i class="fas fa-share mr-2"></i>
+                        Turnar oficio
+                    </h5>
+
+                    <button type="button"
+                            class="close text-gray-500"
+                            data-dismiss="modal"
+                            aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+
+                </div>
+
+                <div class="modal-body px-4 py-3 bg-white">
+
+                    <div class="form mb-3">
+
+                        <div class="d-flex align-items-center">
+
+                            <div class="mr-3">
+                                <i class="fas fa-file-alt text-primary"></i>
+                            </div>
+
+                            <div>
+                                <small class="text-muted d-block">
+                                    Oficio
+                                </small>
+
+                                <strong id="turnarNumeroOficio">
+                                    —
+                                </strong>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-block mb-3">
+
+                        <label class="mb-2 font-weight-bold">
+                            Turnar a
+                        </label>
+
+                        <div id="lista-coordinaciones">
+
+                            @foreach(App\Models\Coordinacion::where('activo', true)->get() as $coord)
+
+                                <div
+                                    class="coord-item border rounded px-3 py-2 mb-2 d-flex align-items-center justify-content-between"
+                                    data-coord="{{ $coord->id }}">
+
+                                    <div>
+                                        <strong>
+                                            {{ $coord->nombre }}
+                                        </strong>
+                                    </div>
+
+                                    <div style="width:250px;">
+
+                                        <select
+                                            class="form-control form-control-sm participacion-select"
+                                            name="participacion[{{ $coord->id }}]"
+                                            disabled>
+
+                                            <option value="">
+                                                Seleccione participación
+                                            </option>
+
+                                            @foreach(App\Models\TipoParticipacion::where('activo', true)->get() as $tipo)
+
+                                                <option value="{{ $tipo->id }}">
+                                                    {{ $tipo->nombre }}
+                                                </option>
+
+                                            @endforeach
+
+                                        </select>
+
+                                    </div>
+
+                                </div>
+
+                            @endforeach
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-block">
+
+                        <label class="mb-1">
+                            Observación general
+                        </label>
+
+                        <textarea
+                            class="form-control form-control-sm"
+                            name="observaciones"
+                            rows="3"></textarea>
+
+                    </div>
+
+                </div>
+
+
+                <div class="modal-footer bg-light py-2 px-4 justify-content-end">
+
+                    <button type="button"
+                            class="btn btn-secondary btn-sm px-3"
+                            data-dismiss="modal">
+                        Cancelar
+                    </button>
+
+                    <button type="submit"
+                            class="btn btn-primary btn-sm px-3 font-weight-bold">
+                        <i class="fas fa-share mr-1"></i>
+                        Turnar oficio
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- SCRIPT - Modal 1 -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const radioReservado = document.getElementById('usar_reservado');
@@ -818,4 +990,9 @@
     document.addEventListener('DOMContentLoaded', function () {
         setTipoOficio('1', 'enviado');
     });
+</script>
+
+<!-- SCRIPT - Modal 3 -->
+<script>
+
 </script>

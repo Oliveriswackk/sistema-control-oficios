@@ -53,12 +53,6 @@
     }
 
     /* Botones */
-    .modal-oficio .btn {
-        font-size: .9rem;
-        font-weight: 600;
-        padding: .45rem 1rem;
-    }
-
     .form-block {
         padding: .75rem 1rem;
         background: #f8f9fc;
@@ -775,47 +769,42 @@ document.addEventListener('change', function(e){
 // =========================================================
 // ABRIR MODAL TURNAR
 // =========================================================
-function abrirTurnar(oficioId) {
+function abrirTurnar(oficioId, numeroOficio, action) {
 
-    $('#modalGlobalTitle').text('Turnar oficio');
+    $('#turnarNumeroOficio').text(numeroOficio);
 
-    $('#modalGlobalBody').html('<div class="text-center p-3">Cargando...</div>');
+    $('#formTurnar').attr('action', action);
 
-    $('#modalGlobalFooter').html(`
-    <div class="modal-footer">
-        <button type="button"
-                class="btn btn-secondary btn-cerrar-modal">
-            Cerrar
-        </button>
+    $('#formTurnar')[0].reset();
 
-        <button type="button"
-                class="btn btn-primary"
-                id="btnGuardarTurnado">
-            Guardar turnado
-        </button>
-    </div>
-    `);
+    $('#modalTurnar .coord-item').removeClass('selected');
 
-    $('#modalGlobal').modal('show');
+    $('#modalTurnar .participacion-select')
+        .prop('disabled', true)
+        .val('');
 
-    OficiosApi.getTurnarModal(oficioId)
-
-        .done(function(html) {
-
-            $('#modalGlobalBody').html(html);
-
-        })
-
-        .fail(function() {
-
-            $('#modalGlobalBody').html(
-                '<div class="text-danger p-3">Error cargando modal</div>'
-            );
-
-        });
-
+    $('#modalTurnar').modal('show');
 }
 
+$(document).on('click', '#modalTurnar .coord-item', function(e) {
+
+    if ($(e.target).is('select') || $(e.target).is('option')) {
+        return;
+    }
+
+    const fila = $(this);
+    const select = fila.find('select');
+
+    fila.toggleClass('selected');
+
+    if (fila.hasClass('selected')) {
+        select.prop('disabled', false);
+    } else {
+        select.prop('disabled', true);
+        select.val('');
+    }
+
+});
 
 // =========================================================
 // MOSTRAR INPUT TAG
@@ -832,76 +821,6 @@ $(document).on(
     }
 );
 
-
-// =========================================================
-// GUARDAR TURNADO
-// =========================================================
-$(document).on('click', '#btnGuardarTurnado', function () {
-
-    const form = $('#modalGlobalBody').find('form');
-
-    if (!form.length) {
-        Alerts.error('No se encontró el formulario de turnado');
-        return;
-    }
-
-    // validación simple del navegador
-    if (!form[0].checkValidity()) {
-        form[0].reportValidity();
-        return;
-    }
-
-    form.submit();
-});
-
-
-// =========================================================
-// MOSTRAR / OCULTAR COORDINACIONES
-// =========================================================
-$(document).on('change', '.coord-toggle', function () {
-
-    const id = $(this).data('id');
-
-    const block = $('#modalGlobalBody')
-        .find(`.coord-block[data-coord="${id}"]`);
-
-    if ($(this).is(':checked')) {
-
-        block.show();
-
-    } else {
-
-        block.hide();
-
-    }
-
-});
-
-
-// =========================================================
-// SELECCIÓN DE USUARIOS
-// =========================================================
-$(document).on('change', '.user-check', function () {
-
-    const row = $(this).closest('tr');
-
-    const select = row.find('.participation-select');
-
-    if ($(this).is(':checked')) {
-
-        row.addClass('table-primary');
-
-        select.prop('disabled', false);
-
-    } else {
-
-        row.removeClass('table-primary');
-
-        select.prop('disabled', true);
-
-    }
-
-});
 
 // =========================================================
 // DINÁMICA TIPO DE OFICIO

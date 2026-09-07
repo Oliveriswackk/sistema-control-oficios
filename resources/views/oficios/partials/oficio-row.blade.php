@@ -47,9 +47,13 @@
                 )
             )
 
-                <button 
+                <button
                     class="btn btn-sm btn-info"
-                    onclick="abrirTurnar({{ $oficio->id }})">
+                    onclick="abrirTurnar(
+                        {{ $oficio->id }},
+                        '{{ $oficio->numero_oficio }}',
+                        '{{ route('oficios.turnar', $oficio->id) }}'
+                    )">
                     Turnar
                 </button>
 

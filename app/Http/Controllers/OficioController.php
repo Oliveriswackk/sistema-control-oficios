@@ -811,13 +811,13 @@ class OficioController extends Controller
             ->get();
 
         return view(
-            'oficios.modals.turnar',
+            'oficios.modals',
             compact(
                 'oficio',
                 'coordinaciones',
                 'tiposParticipacion'
             )
-        );
+        )->with('turnarModal', true);
     }
 
 
