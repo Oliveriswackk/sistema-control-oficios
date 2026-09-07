@@ -537,6 +537,123 @@
 
 </div>
 
+
+{{-- ============================================================
+    2. MODAL RESERVAR FOLIOS
+============================================================ --}}
+<div class="modal fade"
+     id="modalReservarFolios"
+     tabindex="-1"
+     role="dialog"
+     aria-labelledby="modalReservarFoliosLabel"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-md modal-dialog-centered" role="document">
+
+        <div class="modal-content border-0 shadow-lg"
+             style="border-radius: .4rem; overflow: hidden;">
+
+            <form id="formReservarFolios">
+
+                @csrf
+
+                <input type="hidden"
+                       name="fecha"
+                       value="{{ now()->toDateString() }}">
+
+                {{-- HEADER --}}
+                <div class="modal-header bg-light px-4 py-3 border-bottom">
+                    <h5 class="modal-title text-primary font-weight-bold"
+                        id="modalReservarFoliosLabel">
+                        <i class="fas fa-bookmark mr-2"></i> Reservar folios
+                    </h5>
+
+                    <button type="button"
+                            class="close text-gray-500"
+                            data-dismiss="modal"
+                            aria-label="Cerrar">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+
+                {{-- BODY --}}
+                <div class="modal-body px-4 py-4 bg-white">
+
+                    <div class="form-block mb-3">
+
+                        <div class="row">
+
+                            {{-- COORDINACIÓN --}}
+                            <div class="col-md-8">
+                                <label class="mb-1">
+                                    Coordinación <span class="text-danger">*</span>
+                                </label>
+
+                                <select name="coordinacion_id"
+                                        class="form-control form-control-sm"
+                                        required>
+
+                                    @foreach(App\Models\Coordinacion::all() as $coord)
+                                        <option value="{{ $coord->id }}">
+                                            {{ $coord->clave }} - {{ $coord->nombre }}
+                                        </option>
+                                    @endforeach
+
+                                </select>
+                            </div>
+
+                            {{-- CANTIDAD --}}
+                            <div class="col-md-4">
+                                <label class="mb-1">
+                                    Cantidad <span class="text-danger">*</span>
+                                </label>
+
+                                <input type="number"
+                                       name="cantidad"
+                                       class="form-control form-control-sm"
+                                       min="1"
+                                       max="200"
+                                       value="10"
+                                       required>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    {{-- RESULTADO --}}
+                    <div id="resultadoReserva"
+                         class="small">
+                    </div>
+
+                </div>
+
+                {{-- FOOTER --}}
+                <div class="modal-footer bg-light py-2 px-4 justify-content-end">
+
+                    <button type="button"
+                            class="btn btn-secondary btn-sm px-3"
+                            data-dismiss="modal">
+                        Cancelar
+                    </button>
+
+                    <button type="submit"
+                            class="btn btn-primary btn-sm px-3 font-weight-bold">
+                        Reservar folios
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- SCRIPTS -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {
         const radioReservado = document.getElementById('usar_reservado');

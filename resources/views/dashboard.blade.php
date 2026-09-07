@@ -255,93 +255,6 @@
 @include('oficios.modals')
 
 
-{{-- MODAL RESERVAR NÚMERO DE OFICIO --}}
-<div class="modal fade" id="modalReservarFolios" tabindex="-1" role="dialog">
-
-    <div class="modal-dialog modal-md" role="document">
-
-        <div class="modal-content">
-
-            <form id="formReservarFolios">
-
-                @csrf
-
-                <div class="modal-header py-2">
-
-                    <h5 class="modal-title">
-                        Reservar Folios
-                    </h5>
-
-                    <button type="button" class="close" data-dismiss="modal">
-                        <span>&times;</span>
-                    </button>
-
-                </div>
-
-                <div class="modal-body">
-
-                    {{-- COORDINACIÓN --}}
-                    <div class="form-group">
-                        <label>Coordinación</label>
-
-                        <select class="form-control" name="coordinacion_id" required>
-                            @foreach(App\Models\Coordinacion::all() as $coord)
-                                <option value="{{ $coord->id }}">
-                                    {{ $coord->nombre }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    {{-- FECHA --}}
-                    <div class="form-group">
-                        <input
-                            type="hidden"
-                            name="fecha"
-                            value="{{ now()->toDateString() }}"
-                        >
-                    </div>
-
-                    {{-- CANTIDAD --}}
-                    <div class="form-group">
-                        <label>Cantidad de folios</label>
-
-                        <input type="number"
-                               class="form-control"
-                               name="cantidad"
-                               min="1"
-                               max="200"
-                               value="10"
-                               required>
-                    </div>
-
-                    <div id="resultadoReserva" class="small text-muted"></div>
-
-                </div>
-
-                <div class="modal-footer">
-
-                    <button type="button"
-                            class="btn btn-secondary"
-                            data-dismiss="modal">
-                        Cancelar
-                    </button>
-
-                    <button type="submit"
-                            class="btn btn-primary">
-                        Reservar
-                    </button>
-
-                </div>
-
-            </form>
-
-        </div>
-
-    </div>
-
-</div>
-
 @endsection
 
 @section('scripts')
@@ -1286,7 +1199,13 @@ document.getElementById('formReservarFolios').addEventListener('submit', async f
     }
 
     document.getElementById('resultadoReserva').innerHTML =
-        `Se reservaron ${result.cantidad} folios.<br>Grupo: ${result.grupo_uuid}`;
+        `<div class="alert alert-success mb-0 py-2">
+            <i class="fas fa-check-circle mr-1"></i>
+            <strong>Reserva realizada correctamente.</strong>
+            <br>
+            Tus folios reservados son del
+            <strong>${result.folio_inicial} al ${result.folio_final}</strong>.
+        </div>`;
 
     // opcional: reset
     form.reset();

@@ -296,7 +296,8 @@ class OficioService
             return [
                 'grupo_uuid' => $grupoUuid,
                 'cantidad' => $cantidad,
-                'folios' => $folios,
+                'folio_inicial' => $folios[0]->numero,
+                'folio_final' => $folios[count($folios) - 1]->numero,
             ];
         });
     }
