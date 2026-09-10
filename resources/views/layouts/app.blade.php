@@ -382,44 +382,58 @@ $(document).on('keypress', '#input-tag', function (e) {
 
     e.preventDefault();
 
-    const nombre = $(this).val().trim();
+    const input = $(this);
+    const oficioId = input.data('oficio-id');
 
-    if (!nombre) {
+    const nombres = input.val()
+        .split(',')
+        .map(function (nombre) {
+            return nombre.trim();
+        })
+        .filter(function (nombre) {
+            return nombre !== '';
+        });
+
+    if (!nombres.length) {
         return;
     }
 
-    const oficioId = $(this).data('oficio-id');
+    nombres.forEach(function (nombre) {
 
-    $.post(
-        `{{ url('oficios') }}/${oficioId}/tags`,
-        {
-            _token: $('meta[name="csrf-token"]').attr('content'),
-            nombre: nombre
-        }
-    )
-    .done(function (response) {
+        $.post(
+            `{{ url('oficios') }}/${oficioId}/tags`,
+            {
+                _token: $('meta[name="csrf-token"]').attr('content'),
+                nombre: nombre
+            }
+        )
+        .done(function (response) {
 
-        $('#input-tag').val('');
-
-        $('#btn-mostrar-tag').before(`
-            <span
-                class="badge badge-info mr-1 tag-item"
-                data-tag-id="${response.tag.id}">
-
-                ${response.tag.nombre}
-
+            $('#btn-mostrar-tag').before(`
                 <span
-                    class="ml-1 text-white btn-eliminar-tag"
-                    data-tag-id="${response.tag.id}"
-                    data-oficio-id="${oficioId}"
-                    style="cursor:pointer;">
-                    ×
-                </span>
+                    class="badge badge-info mr-1 tag-item"
+                    data-tag-id="${response.tag.id}">
 
-            </span>
-        `);
+                    ${response.tag.nombre}
+
+                    <span
+                        class="ml-1 text-white btn-eliminar-tag"
+                        data-tag-id="${response.tag.id}"
+                        data-oficio-id="${oficioId}"
+                        style="cursor:pointer;">
+
+                        ×
+
+                    </span>
+
+                </span>
+            `);
+
+        });
 
     });
+
+    input.val('');
 
 });
 
@@ -456,92 +470,523 @@ window.Oficios = {
     */
     open(id, editable = false) {
 
-        $('#btnGuardarOficio').show();
-
-        $('#modalGlobalTitle').text('Detalle del Oficio');
-
-        $('#modalGlobalBody').html('<div class="text-center">Cargando...</div>');
-        
-        $('#modalGlobalFooter').html(`
-
-        <div class="modal-footer">
-
-            <button type="button" 
-                    class="btn btn-secondary btn-cerrar-modal">
-                Cerrar
-            </button>
-
-            <button type="button"
-                    class="btn btn-danger"
-                    id="btnCancelarOficio">
-                Cancelar oficio
-            </button>
-
-            <button type="button"
-                    class="btn btn-success"
-                    id="btnGuardarOficio"
-                    disabled>
-                Guardar cambios
-            </button>
-
-        </div>
-        `);
-
         ModalState.reset();
 
-        const canEdit = Oficios.canEdit();
+        // Guardamos desde el inicio el ID del oficio.
+            ModalState.original = {
+            id: id
+        };
 
-        $('#btnCancelarOficio').addClass('d-none');
+        $('#btnCancelarOficio').hide();
 
-        $('#btnGuardarOficio')
-            .toggle(canEdit)
-            .prop('disabled', true);
+        $('#detalleNumeroOficio').text('Cargando...');
+        $('#detalleConsecutivo').text('');
+        $('#detalleTipoOficio').html('');
+        $('#detalleEstado').html('');
+        $('#detalleTags').html('');
+        $('#detalleDocumentos').html('');
 
-        $('#modalGlobal').modal('show');
+        $('#detalleResponsable').html(`
+            <div class="text-center text-muted py-3">
+                <i class="fas fa-spinner fa-spin mr-1"></i>
+                Cargando información...
+            </div>
+        `);
 
-        $.get(`{{ url('oficios') }}/${id}/detalle`, (html) => {
+        $('#modalDetalleOficio').modal('show');
 
-            $('#modalGlobalBody').html(html);
+        $.get(
+            `${window.LaravelBaseUrl}/oficios/${id}/detalle-json`,
+            function (oficio) {
 
-            ModalState.original = { id: id };
+                // Guardamos el oficio completo para las acciones posteriores.
+                ModalState.original = oficio;
 
-            Oficios.enableChangeDetection();
+                /*
+                |--------------------------------------------------------------------------
+                | CANCELAR
+                |--------------------------------------------------------------------------
+                */
 
-            if (canEdit) {
-                Oficios.bindSave();
+                if (oficio.puede_cancelar === true) {
+                    $('#btnCancelarOficio').show();
+                } else {
+                    $('#btnCancelarOficio').hide();
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | IDENTIDAD
+                |--------------------------------------------------------------------------
+                */
+
+                $('#detalleNumeroOficio').text(
+                    oficio.numero_oficio || 'Sin número'
+                );
+
+                $('#detalleConsecutivo').text(
+                    oficio.consecutivo
+                        ? `Consecutivo ${oficio.consecutivo}`
+                        : ''
+                );
+
+                $('#detalleTipoOficio').html(
+                    oficio.tipo_oficio_nombre
+                        ? `
+                            <span class="badge badge-secondary px-2 py-1">
+                                ${oficio.tipo_oficio_nombre}
+                            </span>
+                        `
+                        : ''
+                );
+
+                if (oficio.estado) {
+
+                    $('#detalleEstado').html(`
+                        <span
+                            class="badge px-2 py-1"
+                            style="
+                                background-color: ${oficio.estado.color || '#6c757d'};
+                                color: #fff;
+                            ">
+                            ${oficio.estado.nombre}
+                        </span>
+                    `);
+
+                } else {
+
+                    $('#detalleEstado').html('');
+
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | CONTENIDO
+                |--------------------------------------------------------------------------
+                */
+
+                $('#detalleAsunto').val(
+                    oficio.asunto || ''
+                );
+
+                $('#detalleDescripcion').val(
+                    oficio.descripcion || ''
+                );
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | REMITENTE
+                |--------------------------------------------------------------------------
+                */
+
+                $('#detalleRemitenteNombre').val(
+                    oficio.remitente_nombre || ''
+                );
+
+                $('#detalleRemitenteCargo').val(
+                    oficio.remitente_cargo || ''
+                );
+
+                $('#detalleRemitenteDependencia').val(
+                    oficio.remitente_dependencia || ''
+                );
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | DESTINATARIO
+                |--------------------------------------------------------------------------
+                */
+
+                $('#detalleDestinatarioNombre').val(
+                    oficio.destinatario_nombre || ''
+                );
+
+                $('#detalleDestinatarioCargo').val(
+                    oficio.destinatario_cargo || ''
+                );
+
+                $('#detalleDestinatarioDependencia').val(
+                    oficio.destinatario_dependencia || ''
+                );
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | ATENCIÓN
+                |--------------------------------------------------------------------------
+                */
+
+                $('#detalleFechaOficio').val(
+                    oficio.fecha_oficio || ''
+                );
+
+                $('#detalleFechaRecepcion').val(
+                    oficio.fecha_recepcion || ''
+                );
+
+                $('#detalleFechaLimite').val(
+                    oficio.fecha_limite || ''
+                );
+
+
+                $(
+                    `input[name="requiere_respuesta"][value="${oficio.requiere_respuesta ? 1 : 0}"]`
+                ).prop('checked', true);
+
+
+                $(
+                    `input[name="es_sensible"][value="${oficio.es_sensible ? 1 : 0}"]`
+                ).prop('checked', true);
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | ENLACE DE TRANSPARENCIA
+                |--------------------------------------------------------------------------
+                */
+
+                $('#detalleLinkDocumento').val(
+                    oficio.link_documento || ''
+                );
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | RESPONSABLE
+                |--------------------------------------------------------------------------
+                |
+                | Este bloque se conserva tal como está planteado.
+                |
+                */
+
+                if (oficio.responsable) {
+
+                    $('#detalleResponsable').html(`
+                        <div class="card border-left-primary shadow-sm mb-3">
+                            <div class="card-body py-3">
+
+                                <div class="d-flex align-items-center">
+
+                                    <div class="mr-3">
+
+                                        <div
+                                            class="rounded-circle border bg-light d-flex align-items-center justify-content-center"
+                                            style="width:60px;height:60px;">
+
+                                            <i class="fas fa-user text-secondary"></i>
+
+                                        </div>
+
+                                    </div>
+
+                                    <div class="flex-grow-1">
+
+                                        <div class="font-weight-bold text-dark">
+                                            ${oficio.responsable.coordinacion}
+                                        </div>
+
+                                        <div class="text-muted">
+                                            ${oficio.responsable.usuario}
+                                        </div>
+
+                                    </div>
+
+                                    <div>
+
+                                        <span class="badge badge-primary px-3 py-2">
+                                            ${oficio.estado.nombre}
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+                        </div>
+                    `);
+
+                } else {
+
+                    $('#detalleResponsable').html('');
+
+                }
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | TAGS
+                |--------------------------------------------------------------------------
+                */
+
+                let tagsHtml = '';
+
+                if (Array.isArray(oficio.tags)) {
+
+                    oficio.tags.forEach(function (tag) {
+
+                        tagsHtml += `
+                            <span
+                                class="badge badge-info mr-1 tag-item"
+                                data-tag-id="${tag.id}">
+
+                                ${tag.nombre}
+
+                                <span
+                                    class="ml-1 text-white btn-eliminar-tag"
+                                    data-tag-id="${tag.id}"
+                                    data-oficio-id="${oficio.id}"
+                                    style="cursor:pointer;">
+
+                                    ×
+
+                                </span>
+
+                            </span>
+                        `;
+
+                    });
+
+                }
+
+                tagsHtml += `
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-outline-primary"
+                        id="btn-mostrar-tag">
+
+                        +
+
+                    </button>
+
+                    <div
+                        id="contenedor-nuevo-tag"
+                        class="mt-2"
+                        style="display:none;">
+
+                        <input
+                            type="text"
+                            id="input-tag"
+                            data-oficio-id="${oficio.id}"
+                            class="form-control form-control-sm"
+                            placeholder="Agregar tags separados por coma">
+
+                    </div>
+                `;
+
+                $('#detalleTags').html(tagsHtml);
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | DOCUMENTOS
+                |--------------------------------------------------------------------------
+                */
+
+                let documentosHtml = '';
+
+                if (Array.isArray(oficio.archivos)) {
+
+                    oficio.archivos.forEach(function (archivo) {
+
+                        const versionActual = archivo.versiones.find(
+                            function (version) {
+                                return version.es_actual;
+                            }
+                        );
+
+                        if (!versionActual) {
+                            return;
+                        }
+
+                        documentosHtml += `
+                            <div class="border rounded p-2 mb-2">
+
+                                <strong>
+                                    ${archivo.nombre_original}
+                                </strong>
+
+                                <br>
+
+                                <small class="text-muted">
+                                    V${versionActual.version} · versión actual
+                                </small>
+
+                                <br>
+
+                                <div class="mt-2">
+
+                                    <a
+                                        href="${versionActual.url}"
+                                        target="_blank"
+                                        class="btn btn-sm btn-outline-primary">
+
+                                        <i class="fas fa-file-pdf mr-1"></i>
+                                        Ver PDF
+
+                                    </a>
+
+                                    ${Oficios.canEdit() ? `
+                                        <button
+                                            type="button"
+                                            class="btn btn-sm btn-outline-secondary ml-1"
+                                            onclick="
+                                                document
+                                                    .getElementById('reemplazo-pdf-${archivo.id}')
+                                                    .classList
+                                                    .toggle('d-none')
+                                            ">
+
+                                            <i class="fas fa-sync-alt mr-1"></i>
+                                            Reemplazar PDF
+
+                                        </button>
+                                    ` : ''}
+
+                                </div>
+
+                                ${Oficios.canEdit() ? `
+                                    <div
+                                        id="reemplazo-pdf-${archivo.id}"
+                                        class="d-none mt-3">
+
+                                        <form
+                                            method="POST"
+                                            action="${window.LaravelBaseUrl}/oficios/${oficio.id}/archivos"
+                                            enctype="multipart/form-data">
+
+                                            <input
+                                                type="hidden"
+                                                name="_token"
+                                                value="${$('meta[name="csrf-token"]').attr('content')}">
+
+                                            <div class="form-group mb-2">
+
+                                                <label class="mb-1">
+                                                    Nuevo PDF
+                                                </label>
+
+                                                <input
+                                                    type="file"
+                                                    name="archivo"
+                                                    accept="application/pdf"
+                                                    class="form-control form-control-sm"
+                                                    required>
+
+                                            </div>
+
+                                            <button
+                                                type="submit"
+                                                class="btn btn-primary btn-sm">
+
+                                                <i class="fas fa-upload mr-1"></i>
+                                                Guardar nueva versión
+
+                                            </button>
+
+                                        </form>
+
+                                    </div>
+                                ` : ''}
+
+                            </div>
+                        `;
+
+                    });
+
+                }
+
+                if (!documentosHtml) {
+
+                    documentosHtml = `
+                        <div class="border rounded p-3">
+
+                            <div class="text-muted small mb-3">
+                                Este oficio no tiene documentos cargados.
+                            </div>
+
+                            ${Oficios.canEdit() ? `
+                                <form
+                                    method="POST"
+                                    action="${window.LaravelBaseUrl}/oficios/${oficio.id}/archivos"
+                                    enctype="multipart/form-data">
+
+                                    <input
+                                        type="hidden"
+                                        name="_token"
+                                        value="${$('meta[name="csrf-token"]').attr('content')}">
+
+                                    <div class="form-group mb-2">
+
+                                        <label class="mb-1">
+                                            Subir PDF principal
+                                        </label>
+
+                                        <input
+                                            type="file"
+                                            name="archivo"
+                                            accept="application/pdf"
+                                            class="form-control form-control-sm"
+                                            required>
+
+                                    </div>
+
+                                    <button
+                                        type="submit"
+                                        class="btn btn-primary btn-sm">
+
+                                        <i class="fas fa-upload mr-1"></i>
+                                        Subir PDF
+
+                                    </button>
+
+                                </form>
+                            ` : ''}
+
+                        </div>
+                    `;
+
+                }
+
+                $('#detalleDocumentos').html(
+                    documentosHtml
+                );
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | ESTADO INICIAL DEL MODAL
+                |--------------------------------------------------------------------------
+                */
+
+                ModalState.changed = false;
+
             }
+        )
+        .fail(function (xhr) {
 
-        });
+            console.error(xhr.responseText);
 
-        $.get(`{{ url('oficios') }}/${id}/detalle-json`, (oficio) => {
+            $('#detalleNumeroOficio').text(
+                'No se pudo cargar el oficio'
+            );
 
+            $('#detalleResponsable').html(`
+                <div class="text-center text-danger py-3">
+                    No se pudo cargar la información del oficio.
+                </div>
+            `);
 
-            if (
-                oficio.puede_cancelar &&
-                oficio.estado.clave !== 'cerrado' &&
-                oficio.estado.clave !== 'cancelado'
-            ) {
-
-                $('#btnCancelarOficio')
-                    .removeClass('d-none')
-                    .show()
-
-            }
-
-
-            if (
-                oficio.estado.clave === 'en_seguimiento'
-            ) {
-
-                $('#btnCerrarOficio')
-                    .removeClass('d-none');
-
-            }
+            Alerts.error(
+                'No se pudo cargar la información del oficio.'
+            );
 
         });
 
     },
-
 
     /*
     |--------------------------------------------------------------------------
@@ -554,8 +999,7 @@ window.Oficios = {
 
     canCancel(oficio) {
 
-        return oficio.estado.clave !== 'cerrado'
-            && oficio.estado.clave !== 'cancelado';
+        return oficio.puede_cancelar === true;
 
     },
 
@@ -586,26 +1030,93 @@ window.Oficios = {
     */
     bindClose() {
 
-    $(document).off('click', '.btn-cerrar-modal');
+        $(document)
+            .off('click.oficios', '#btnCerrarDetalle')
+            .on('click.oficios', '#btnCerrarDetalle', function () {
 
-        $(document).on('click', '.btn-cerrar-modal', function () {
+                $('#modalDetalleOficio').modal('hide');
 
-            if (ModalState.changed) {
+            });
 
-                Alerts.confirm('Tienes cambios sin guardar. ¿Cerrar?')
-                    .then(result => {
+    },
 
-                        if (result.isConfirmed) {
-                            $('#modalGlobal').modal('hide');
+    /*
+    |--------------------------------------------------------------------------
+    | CANCELAR
+    |--------------------------------------------------------------------------
+    */
+    bindCancel() {
+
+        $(document)
+            .off('click.oficios', '#btnCancelarOficio')
+            .on('click.oficios', '#btnCancelarOficio', function () {
+
+                const oficioId = ModalState.original?.id;
+
+                if (!oficioId) {
+
+                    Alerts.error(
+                        'No se pudo identificar el oficio.'
+                    );
+
+                    return;
+                }
+
+                Alerts.confirm(
+                    '¿Está seguro de cancelar este oficio?'
+                )
+                .then(function (result) {
+
+                    if (!result.isConfirmed) {
+                        return;
+                    }
+
+                    $.ajax({
+                        url: `${window.LaravelBaseUrl}/oficios/${oficioId}/cancelar`,
+                        method: 'POST',
+                        data: {
+                            _token: $('meta[name="csrf-token"]').attr('content')
                         }
+                    })
+
+                    .done(function () {
+
+                        Alerts.success(
+                            'Oficio cancelado correctamente'
+                        )
+                        .then(function () {
+
+                            $('#modalDetalleOficio')
+                                .modal('hide');
+
+                            location.reload();
+
+                        });
+
+                    })
+
+                    .fail(function (xhr) {
+
+                        console.error(xhr.responseText);
+
+                        if (xhr.status === 403) {
+
+                            Alerts.error(
+                                'No tiene permiso para cancelar este oficio.'
+                            );
+
+                            return;
+                        }
+
+                        Alerts.error(
+                            'No se pudo cancelar el oficio.'
+                        );
 
                     });
 
-            } else {
-                $('#modalGlobal').modal('hide');
-            }
+                });
 
-        });
+            });
 
     },
 
@@ -701,85 +1212,11 @@ window.ModalState = {
 
 };
 
-$(document).on('click', '#btnCancelarOficio', function(){
-
-    Alerts.confirm(
-        '¿Está seguro de cancelar este oficio?'
-    )
-    .then(result => {
-
-        if(result.isConfirmed){
-
-            $.post(
-                `${window.LaravelBaseUrl}/oficios/${ModalState.original.id}/cancelar`,
-                {
-                    _token: $('meta[name="csrf-token"]').attr('content')
-                }
-            )
-            .done(() => {
-
-                Alerts.success(
-                    'Oficio cancelado correctamente'
-                );
-
-                $('#modalGlobal').modal('hide');
-
-                location.reload();
-
-            })
-            .fail(() => {
-
-                Alerts.error(
-                    'No se pudo cancelar el oficio'
-                );
-
-            });
-
-        }
-
-    });
-
-});
 
 window.Oficios.bindClose();
+window.Oficios.bindCancel();
+
 </script>
-
-
-{{-- =========================================================
-|  MODAL GLOBAL (REUTILIZABLE)
-========================================================= --}}
-<div class="modal fade" id="modalGlobal" tabindex="-1" role="dialog" data-backdrop="static">
-
-    <div class="modal-dialog modal-xl" role="document">
-
-        <div class="modal-content">
-
-            {{-- Header --}}
-            <div class="modal-header">
-
-                <h5 class="modal-title" id="modalGlobalTitle">Cargando...</h5>
-
-                <button type="button" class="close btn-cerrar-modal">
-                    <span>&times;</span>
-                </button>
-
-            </div>
-
-            {{-- Contenido --}}
-            <div class="modal-body" id="modalGlobalBody">
-                Cargando...
-            </div>
-
-            {{-- Footer (vacio) --}}
-            <div id="modalGlobalFooter">
-                
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
 
 </body>
 </html>

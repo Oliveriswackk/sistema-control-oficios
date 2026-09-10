@@ -825,6 +825,585 @@
 </div>
 
 
+{{-- ============================================================
+    4. MODAL DETALLE DE OFICIO
+============================================================ --}}
+<div class="modal fade"
+     id="modalDetalleOficio"
+     tabindex="-1"
+     role="dialog"
+     aria-labelledby="modalDetalleOficioLabel"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-xl modal-dialog-centered" role="document">
+
+        <div class="modal-content border-0 shadow-lg"
+             style="border-radius: .4rem; overflow: hidden;">
+
+            {{-- =================================================
+                 HEADER
+            ================================================== --}}
+            <div class="modal-header bg-light px-4 py-3 border-bottom">
+
+                <h5 class="modal-title text-primary font-weight-bold mb-0"
+                    id="modalDetalleOficioLabel">
+
+                    <i class="fas fa-file-alt mr-2"></i>
+                    Detalle del oficio
+
+                </h5>
+
+                <button type="button"
+                        class="close text-gray-500 m-0 p-0"
+                        data-dismiss="modal"
+                        aria-label="Cerrar">
+
+                    <span aria-hidden="true">&times;</span>
+
+                </button>
+
+            </div>
+
+
+            {{-- =================================================
+                 BODY
+            ================================================== --}}
+            <div class="modal-body px-4 py-3 bg-white">
+
+                {{-- TABS --}}
+                <ul class="nav nav-tabs mb-3"
+                    id="detalleOficioTabs"
+                    role="tablist">
+
+                    <li class="nav-item">
+
+                        <a class="nav-link active text-primary font-weight-bold"
+                           id="detalle-info-tab"
+                           data-toggle="tab"
+                           href="#detalle-info"
+                           role="tab"
+                           aria-controls="detalle-info"
+                           aria-selected="true">
+
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Información
+
+                        </a>
+
+                    </li>
+
+                    <li class="nav-item">
+
+                        <a class="nav-link text-muted"
+                           id="detalle-relaciones-tab"
+                           data-toggle="tab"
+                           href="#detalle-relaciones"
+                           role="tab"
+                           aria-controls="detalle-relaciones"
+                           aria-selected="false">
+
+                            <i class="fas fa-project-diagram mr-1"></i>
+                            Relaciones
+
+                        </a>
+
+                    </li>
+
+                </ul>
+
+
+                <div class="tab-content"
+                     id="detalleOficioTabContent">
+
+
+                    {{-- =================================================
+                         TAB: INFORMACIÓN
+                    ================================================== --}}
+                    <div class="tab-pane fade show active"
+                         id="detalle-info"
+                         role="tabpanel"
+                         aria-labelledby="detalle-info-tab">
+
+                        {{-- =================================================
+                            RESPONSABLE
+                        ================================================== --}}
+                        <div id="detalleResponsable"
+                             class="mb-3">
+                        </div>
+
+                        {{-- =================================================
+                            IDENTIDAD Y CLASIFICACIÓN
+                        ================================================== --}}
+                        <div class="form-block mb-3">
+
+                            <div class="row align-items-center">
+
+                                {{-- NÚMERO --}}
+                                <div class="col-12 col-lg-4">
+
+                                    <div class="small text-muted mb-1">
+                                        Número de oficio
+                                    </div>
+
+                                    <div class="d-flex align-items-baseline flex-wrap">
+
+                                        <span id="detalleNumeroOficio"
+                                              class="font-weight-bold text-dark"
+                                              style="font-size: 1.25rem;">
+                                            —
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+
+                                {{-- TAGS --}}
+                                <div class="col-12 col-lg-5 mt-3 mt-lg-0">
+
+                                    <div class="small text-muted mb-1">
+                                        Etiquetas
+                                    </div>
+
+                                    <div id="detalleTags">
+                                        {{-- JS --}}
+                                    </div>
+
+                                </div>
+
+
+                                {{-- TIPO / ESTADO --}}
+                                <div class="col-12 col-lg-3 mt-3 mt-lg-0 text-lg-right">
+
+                                    <div id="detalleTipoOficio"
+                                         class="d-inline-block">
+                                    </div>
+
+                                    <div class="mt-1">
+
+                                        <a href="javascript:void(0)"
+                                           id="btnCorregirIdentidad"
+                                           class="small text-primary font-weight-bold">
+
+                                            <i class="fas fa-pen mr-1"></i>
+                                            Corregir identidad
+
+                                        </a>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        {{-- =================================================
+                            CONTENIDO DEL OFICIO
+                        ================================================== --}}
+                        <div class="form-block mb-3">
+
+                            <label class="mb-1">
+                                Asunto
+                            </label>
+
+                            <input type="text"
+                                   id="detalleAsunto"
+                                   name="asunto"
+                                   class="form-control form-control-sm">
+
+                            <label class="mb-1 mt-3">
+                                Descripción
+                            </label>
+
+                            <textarea id="detalleDescripcion"
+                                      name="descripcion"
+                                      class="form-control form-control-sm"
+                                      rows="3"></textarea>
+
+                        </div>
+
+
+                        {{-- =================================================
+                            DOCUMENTO
+                        ================================================== --}}
+                        <div class="form-block mb-3">
+
+                            <label class="mb-1">
+                                Documento
+                            </label>
+
+                            <div id="detalleDocumentos">
+                                {{-- JS inyecta PDF --}}
+                            </div>
+
+                        </div>
+
+
+                        {{-- =================================================
+                            PROCEDENCIA
+                        ================================================== --}}
+                        <div class="form-block mb-3">
+
+                            <div class="row">
+
+                                {{-- REMITENTE --}}
+                                <div class="col-12 col-lg-6">
+
+                                    <div class="font-weight-bold text-dark mb-2">
+
+                                        <i class="fas fa-paper-plane text-primary mr-1"></i>
+                                        Remitente
+
+                                    </div>
+
+                                    <div class="form-row">
+
+                                        <div class="col-12 col-sm-6 mb-2">
+
+                                            <label class="small text-muted mb-1">
+                                                Nombre
+                                            </label>
+
+                                            <input type="text"
+                                                   id="detalleRemitenteNombre"
+                                                   name="remitente_nombre"
+                                                   class="form-control form-control-sm">
+
+                                        </div>
+
+                                        <div class="col-12 col-sm-6 mb-2">
+
+                                            <label class="small text-muted mb-1">
+                                                Cargo
+                                            </label>
+
+                                            <input type="text"
+                                                   id="detalleRemitenteCargo"
+                                                   name="remitente_cargo"
+                                                   class="form-control form-control-sm">
+
+                                        </div>
+
+                                        <div class="col-12">
+
+                                            <label class="small text-muted mb-1">
+                                                Dependencia
+                                            </label>
+
+                                            <input type="text"
+                                                   id="detalleRemitenteDependencia"
+                                                   name="remitente_dependencia"
+                                                   class="form-control form-control-sm">
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+
+                                {{-- DESTINATARIO --}}
+                                <div class="col-12 col-lg-6 mt-4 mt-lg-0">
+
+                                    <div class="font-weight-bold text-dark mb-2">
+
+                                        <i class="fas fa-inbox text-primary mr-1"></i>
+                                        Destinatario
+
+                                    </div>
+
+                                    <div class="form-row">
+
+                                        <div class="col-12 col-sm-6 mb-2">
+
+                                            <label class="small text-muted mb-1">
+                                                Nombre
+                                            </label>
+
+                                            <input type="text"
+                                                   id="detalleDestinatarioNombre"
+                                                   name="destinatario_nombre"
+                                                   class="form-control form-control-sm">
+
+                                        </div>
+
+                                        <div class="col-12 col-sm-6 mb-2">
+
+                                            <label class="small text-muted mb-1">
+                                                Cargo
+                                            </label>
+
+                                            <input type="text"
+                                                   id="detalleDestinatarioCargo"
+                                                   name="destinatario_cargo"
+                                                   class="form-control form-control-sm">
+
+                                        </div>
+
+                                        <div class="col-12">
+
+                                            <label class="small text-muted mb-1">
+                                                Dependencia
+                                            </label>
+
+                                            <input type="text"
+                                                   id="detalleDestinatarioDependencia"
+                                                   name="destinatario_dependencia"
+                                                   class="form-control form-control-sm">
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        {{-- =================================================
+                            ATENCIÓN
+                        ================================================== --}}
+                        <div class="form-block mb-3">
+
+                            <div class="small text-muted text-uppercase font-weight-bold mb-3">
+                                Atención
+                            </div>
+
+                            <div class="row">
+
+                                {{-- FECHA DEL OFICIO --}}
+                                <div class="col-12 col-md-6 col-lg-3">
+
+                                    <label class="mb-1">
+                                        Fecha del oficio
+                                    </label>
+
+                                    <input type="date"
+                                           id="detalleFechaOficio"
+                                           name="fecha_oficio"
+                                           class="form-control form-control-sm">
+
+                                </div>
+
+
+                                {{-- RECEPCIÓN --}}
+                                <div class="col-12 col-md-6 col-lg-3 mt-3 mt-md-0">
+
+                                    <label class="mb-1">
+                                        Fecha de recepción
+                                    </label>
+
+                                    <input type="date"
+                                           id="detalleFechaRecepcion"
+                                           name="fecha_recepcion"
+                                           class="form-control form-control-sm">
+
+                                </div>
+
+
+                                {{-- LÍMITE --}}
+                                <div class="col-12 col-md-6 col-lg-3 mt-3 mt-lg-0">
+
+                                    <label class="mb-1">
+                                        Límite de atención
+                                    </label>
+
+                                    <input type="date"
+                                           id="detalleFechaLimite"
+                                           name="fecha_limite"
+                                           class="form-control form-control-sm">
+
+                                </div>
+
+
+                                {{-- RESPUESTA --}}
+                                <div class="col-12 col-md-6 col-lg-3 mt-3 mt-lg-0">
+
+                                    <label class="mb-1">
+                                        Requiere respuesta
+                                    </label>
+
+                                    <div class="d-flex align-items-center pt-1">
+
+                                        <div class="custom-control custom-radio mr-3">
+
+                                            <input type="radio"
+                                                   id="detalleRespuestaNo"
+                                                   name="requiere_respuesta"
+                                                   value="0"
+                                                   class="custom-control-input">
+
+                                            <label class="custom-control-label small"
+                                                   for="detalleRespuestaNo">
+                                                No
+                                            </label>
+
+                                        </div>
+
+                                        <div class="custom-control custom-radio">
+
+                                            <input type="radio"
+                                                   id="detalleRespuestaSi"
+                                                   name="requiere_respuesta"
+                                                   value="1"
+                                                   class="custom-control-input">
+
+                                            <label class="custom-control-label small"
+                                                   for="detalleRespuestaSi">
+                                                Sí
+                                            </label>
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                            {{-- CLASIFICACIÓN --}}
+                            <div class="mt-3">
+
+                                <label class="mb-1">
+                                    Clasificación
+                                </label>
+
+                                <div class="d-flex align-items-center">
+
+                                    <div class="custom-control custom-radio mr-3">
+
+                                        <input type="radio"
+                                               id="detalleSensibleNo"
+                                               name="es_sensible"
+                                               value="0"
+                                               class="custom-control-input">
+
+                                        <label class="custom-control-label small"
+                                               for="detalleSensibleNo">
+
+                                            Público
+
+                                        </label>
+
+                                    </div>
+
+                                    <div class="custom-control custom-radio">
+
+                                        <input type="radio"
+                                               id="detalleSensibleSi"
+                                               name="es_sensible"
+                                               value="1"
+                                               class="custom-control-input">
+
+                                        <label class="custom-control-label small"
+                                               for="detalleSensibleSi">
+
+                                            <i class="fas fa-lock text-danger mr-1"></i>
+                                            Sensible / reservado
+
+                                        </label>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        {{-- =================================================
+                            INFORMACIÓN COMPLEMENTARIA
+                        ================================================== --}}
+                        <div class="form-block">
+
+                            <label class="mb-1">
+                                Enlace de transparencia
+                            </label>
+
+                            <input type="text"
+                                   id="detalleLinkDocumento"
+                                   name="link_documento"
+                                   class="form-control form-control-sm font-mono"
+                                   placeholder="Sin enlace">
+
+                        </div>
+
+                    </div>
+
+
+                    {{-- =================================================
+                         TAB: RELACIONES
+                    ================================================== --}}
+                    <div class="tab-pane fade"
+                         id="detalle-relaciones"
+                         role="tabpanel"
+                         aria-labelledby="detalle-relaciones-tab">
+
+                        <div id="contenedorArbolRelaciones"
+                             class="bg-light p-3 rounded border">
+
+                            <div class="text-center text-muted py-4">
+
+                                <i class="fas fa-project-diagram mb-2"
+                                   style="font-size: 1.5rem;"></i>
+
+                                <div class="font-weight-bold">
+                                    Relaciones del oficio
+                                </div>
+
+                                <small>
+                                    Aquí se visualizará la relación con otros oficios.
+                                </small>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            {{-- =================================================
+                 FOOTER
+            ================================================== --}}
+            <div class="modal-footer bg-light py-2 px-4 justify-content-end">
+
+                <button type="button"
+                        id="btnCancelarOficio"
+                        class="btn btn-danger btn-sm px-3 mr-2"
+                        style="display: none;">
+
+                    <i class="fas fa-ban mr-1"></i>
+                    Cancelar oficio
+
+                </button>
+
+                <button type="button"
+                        class="btn btn-secondary btn-sm px-4"
+                        data-dismiss="modal">
+
+                    Cerrar
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
 <!-- SCRIPT - Modal 1 -->
 <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -992,7 +1571,7 @@
     });
 </script>
 
-<!-- SCRIPT - Modal 3 -->
+<!-- SCRIPT - Modal 4 -->
 <script>
 
 </script>

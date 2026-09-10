@@ -16,7 +16,8 @@
     <td>
 
         <button
-            class="btn btn-primary btn-ver-oficio"
+            type="button"
+            class="btn btn-sm btn-primary btn-ver-oficio"
             data-id="{{ $oficio->id }}">
             Ver
         </button>

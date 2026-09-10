@@ -971,15 +971,85 @@ class OficioController extends Controller
 
     public function detalleJson(Oficio $oficio)
     {
+        $oficio->load([
+            'estado',
+            'responsableActual.usuario',
+            'responsableActual.coordinacion',
+            'tags',
+            'archivos.versiones',
+        ]);
+
         return response()->json([
             'id' => $oficio->id,
 
+            'numero_oficio' => $oficio->numero_oficio,
+            'consecutivo' => $oficio->consecutivo,
+            'asunto' => $oficio->asunto,
+            'descripcion' => $oficio->descripcion,
+
+            'fecha_oficio' => optional($oficio->fecha_oficio)->format('Y-m-d'),
+            'fecha_recepcion' => optional($oficio->fecha_recepcion)->format('Y-m-d'),
+            'fecha_limite' => optional($oficio->fecha_limite)->format('Y-m-d'),
+
+            'tipo_oficio_id' => $oficio->tipo_oficio_id,
+
+            'remitente_nombre' => $oficio->remitente_nombre,
+            'remitente_cargo' => $oficio->remitente_cargo,
+            'remitente_dependencia' => $oficio->remitente_dependencia,
+
+            'destinatario_nombre' => $oficio->destinatario_nombre,
+            'destinatario_cargo' => $oficio->destinatario_cargo,
+            'destinatario_dependencia' => $oficio->destinatario_dependencia,
+
+            'quien_elabora_nombre' => $oficio->quien_elabora_nombre,
+            'quien_elabora_cargo' => $oficio->quien_elabora_cargo,
+
+            'link_documento' => $oficio->link_documento,
+
+            'requiere_respuesta' => $oficio->requiere_respuesta,
+            'es_sensible' => $oficio->es_sensible,
+
+            'respuesta_a_oficio_id' => $oficio->respuesta_a_oficio_id,
+
             'estado' => [
-                'clave' => $oficio->estado->clave
+                'clave' => $oficio->estado->clave,
+                'nombre' => $oficio->estado->nombre,
+                'color' => $oficio->estado->color,
             ],
 
+            'responsable' => $oficio->responsableActual ? [
+                'coordinacion' => $oficio->responsableActual->coordinacion->nombre,
+                'usuario' => $oficio->responsableActual->usuario->name,
+            ] : null,
+
+            'tags' => $oficio->tags->map(function ($tag) {
+                return [
+                    'id' => $tag->id,
+                    'nombre' => $tag->nombre,
+                ];
+            })->values(),
+
+            'archivos' => $oficio->archivos->map(function ($archivo) {
+
+                return [
+                    'id' => $archivo->id,
+                    'nombre_original' => $archivo->nombre_original,
+
+                    'versiones' => $archivo->versiones->map(function ($version) {
+
+                        return [
+                            'version' => $version->version,
+                            'ruta' => $version->ruta,
+                            'es_actual' => $version->es_actual,
+                        ];
+
+                    })->values(),
+                ];
+
+            })->values(),
+
             'puede_cancelar' => auth()->user()
-                ->can('cancelar', $oficio)
+                ->can('cancelar', $oficio),
         ]);
     }
 
