@@ -192,6 +192,82 @@
         font-size: .7rem;
         color: #858796;
     }
+
+    /* Pestañas tabla */
+    .oficios-vistas {
+        border-bottom: 1px solid #eaecf4;
+    }
+
+    .oficios-vistas .nav-link {
+        position: relative;
+        border: 0;
+        color: #858796;
+        font-size: .9rem;
+        font-weight: 600;
+        padding: .8rem 1rem .75rem;
+    }
+
+    .oficios-vistas .nav-link:hover {
+        color: #4e73df;
+    }
+
+    .oficios-vistas .nav-link.active {
+        color: #4e73df;
+    }
+
+    .oficios-vistas .nav-link.active::after {
+        content: '';
+        position: absolute;
+        right: 1rem;
+        bottom: -1px;
+        left: 1rem;
+        height: 2px;
+        background: #4e73df;
+        border-radius: 2px;
+    }
+
+    .dataTables_filter {
+        margin-bottom: 0;
+    }
+
+    .dataTables_filter label {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        margin-bottom: 0;
+        font-size: 0;
+    }
+
+    .dataTables_filter input {
+        margin-left: 0 !important;
+        width: 280px;
+        height: 36px;
+        border: 1px solid #d1d3e2;
+        border-radius: .35rem;
+        font-size: .875rem;
+        padding: .375rem .75rem;
+    }
+
+    .dataTables_length {
+        margin-bottom: 0;
+    }
+
+    .dataTables_length label {
+        margin-bottom: 0;
+        font-size: .8rem;
+        color: #858796;
+    }
+
+    .dataTables_length select {
+        margin: 0 .35rem;
+        border: 1px solid #d1d3e2;
+        border-radius: .35rem;
+        font-size: .8rem;
+    }
+
+    .dataTables_paginate {
+        margin-top: 0 !important;
+    }
 </style>
 
 @section('content')
@@ -251,6 +327,9 @@
         $('#tabla-oficios').DataTable({
             pageLength: 10,
             order: [[0, 'desc']],
+            dom:
+                '<"tabla-oficios-contenido"t>'
+                + '<"px-3 pb-3 pt-2"<"row align-items-center"<"col-md-6"l><"col-md-6 text-right"p>>>',
             language: {
                 url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-MX.json'
             },
@@ -261,6 +340,13 @@
                     searchable: true
                 }
             ]
+        });
+
+        $('#inputBuscadorGlobal').on('input', function () {
+            $('#tabla-oficios')
+                .DataTable()
+                .search(this.value)
+                .draw();
         });
 
         // Cambiar etiqueta fecha según tipo de oficio

@@ -101,11 +101,36 @@ class OficioController extends Controller
 
     public function dashboard(Request $request)
     {
+        $vista = $request->input('vista', 'enviados');
+
+        $puedeVerTodos =
+            auth()->user()->hasRole('admin') ||
+            auth()->user()->hasRole('coordinador');
+
+        if ($vista === 'todos' && !$puedeVerTodos) {
+            $vista = 'enviados';
+        }
+
+        $tipoVista = [
+            'enviados' => 'enviado',
+            'recibidos' => 'recibido',
+            'recibidos_cpc' => 'recibido_cpc',
+        ];
+
         $query = Oficio::with([
             'estado',
             'turnados',
             'tags'
         ]);
+
+        if ($vista !== 'todos') {
+            $tipoOficioId = TipoOficio::where(
+                'clave',
+                $tipoVista[$vista]
+            )->value('id');
+
+            $query->where('tipo_oficio_id', $tipoOficioId);
+        }
 
         $this->aplicarFiltros(
             $query,
@@ -121,6 +146,7 @@ class OficioController extends Controller
             'numero_oficio',
             'asunto'
         )
+        ->where('estado_id', '!=', EstadoOficio::CANCELADO)
         ->latest()
         ->get();
 
@@ -139,7 +165,9 @@ class OficioController extends Controller
                 'oficiosRelacionables',
                 'coordinaciones',
                 'estados',
-                'tiposOficio'
+                'tiposOficio',
+                'vista',
+                'puedeVerTodos'
             )
         );
     }
