@@ -9,7 +9,7 @@ class OficioPolicy
 {
     public function before(User $user, string $ability): ?bool
     {
-        if ($user->hasRole('admin')) {
+        if ($user->hasRole('admin') && $ability !== 'cancelar') {
             return true;
         }
 

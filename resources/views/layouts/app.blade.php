@@ -514,6 +514,22 @@ window.Oficios = {
                     $('#btnCancelarOficio').hide();
                 }
 
+                const bloqueado =
+                    oficio.estado?.clave === 'cerrado' ||
+                    oficio.estado?.clave === 'cancelado';
+
+                $('#modalDetalleOficio')
+                    .find('input, textarea, select')
+                    .prop('readonly', bloqueado)
+                    .prop('disabled', bloqueado);
+
+                $('#btnGuardarOficio')
+                    .prop('disabled', bloqueado || !ModalState.changed)
+                    .toggle(!bloqueado);
+
+                $('#btnCorregirIdentidad')
+                    .toggle(!bloqueado);
+
 
                 /*
                 |--------------------------------------------------------------------------
@@ -613,6 +629,32 @@ window.Oficios = {
                     oficio.destinatario_dependencia || ''
                 );
 
+                /*
+                |--------------------------------------------------------------------------
+                | ELABORADOR INTERNO
+                |--------------------------------------------------------------------------
+                */
+
+                if (parseInt(oficio.tipo_oficio_id, 10) === 1) {
+
+                    $('#detalleElaborador').show();
+
+                    $('#detalleElaboradorNombre').val(
+                        oficio.quien_elabora_nombre || ''
+                    );
+
+                    $('#detalleElaboradorCargo').val(
+                        oficio.quien_elabora_cargo || ''
+                    );
+
+                } else {
+
+                    $('#detalleElaborador').hide();
+
+                    $('#detalleElaboradorNombre').val('');
+                    $('#detalleElaboradorCargo').val('');
+
+                }
 
                 /*
                 |--------------------------------------------------------------------------
@@ -1011,16 +1053,135 @@ window.Oficios = {
     */
     enableChangeDetection() {
 
-        const $inputs = $('#modalGlobalBody').find('input, textarea, select');
+        $(document)
+            .off(
+                'input.oficios change.oficios',
+                '#modalDetalleOficio input, #modalDetalleOficio textarea, #modalDetalleOficio select'
+            )
+            .on(
+                'input.oficios change.oficios',
+                '#modalDetalleOficio input, #modalDetalleOficio textarea, #modalDetalleOficio select',
+                function () {
 
-        $inputs.off('input.oficios').on('input.oficios', () => {
+                    if (!ModalState.original) {
+                        return;
+                    }
 
-            ModalState.changed = true;
+                    const changed = Oficios.hasEditableChanges();
 
-            $('#btnGuardarOficio').prop('disabled', false);
+                    ModalState.changed = changed;
 
-        });
+                    $('#btnGuardarOficio').prop('disabled', !changed);
+                }
+            );
+    },
 
+    getEditableData() {
+
+        const requiereRespuesta = $(
+            '#modalDetalleOficio input[name="requiere_respuesta"]:checked'
+        ).val();
+
+        const esSensible = $(
+            '#modalDetalleOficio input[name="es_sensible"]:checked'
+        ).val();
+
+        return {
+            asunto: $('#detalleAsunto').val() || '',
+            descripcion: $('#detalleDescripcion').val() || '',
+            fecha_oficio: $('#detalleFechaOficio').val() || '',
+            fecha_recepcion: $('#detalleFechaRecepcion').val() || '',
+            fecha_limite: $('#detalleFechaLimite').val() || '',
+
+            requiere_respuesta:
+                requiereRespuesta !== undefined
+                    ? parseInt(requiereRespuesta, 10)
+                    : 0,
+
+            es_sensible:
+                esSensible !== undefined
+                    ? parseInt(esSensible, 10)
+                    : 0,
+
+            remitente_nombre:
+                $('#detalleRemitenteNombre').val() || '',
+
+            remitente_cargo:
+                $('#detalleRemitenteCargo').val() || '',
+
+            remitente_dependencia:
+                $('#detalleRemitenteDependencia').val() || '',
+
+            destinatario_nombre:
+                $('#detalleDestinatarioNombre').val() || '',
+
+            destinatario_cargo:
+                $('#detalleDestinatarioCargo').val() || '',
+
+            destinatario_dependencia:
+                $('#detalleDestinatarioDependencia').val() || '',
+
+            quien_elabora_nombre:
+                $('#detalleElaboradorNombre').val() || '',
+
+            quien_elabora_cargo:
+                $('#detalleElaboradorCargo').val() || '',
+
+            link_documento:
+                $('#detalleLinkDocumento').val() || ''
+        };
+    },
+
+    hasEditableChanges() {
+
+        if (!ModalState.original) {
+            return false;
+        }
+
+        const current = Oficios.getEditableData();
+
+        const original = {
+            asunto: ModalState.original.asunto || '',
+            descripcion: ModalState.original.descripcion || '',
+            fecha_oficio: ModalState.original.fecha_oficio || '',
+            fecha_recepcion: ModalState.original.fecha_recepcion || '',
+            fecha_limite: ModalState.original.fecha_limite || '',
+
+            requiere_respuesta:
+                ModalState.original.requiere_respuesta ? 1 : 0,
+
+            es_sensible:
+                ModalState.original.es_sensible ? 1 : 0,
+
+            remitente_nombre:
+                ModalState.original.remitente_nombre || '',
+
+            remitente_cargo:
+                ModalState.original.remitente_cargo || '',
+
+            remitente_dependencia:
+                ModalState.original.remitente_dependencia || '',
+
+            destinatario_nombre:
+                ModalState.original.destinatario_nombre || '',
+
+            destinatario_cargo:
+                ModalState.original.destinatario_cargo || '',
+
+            destinatario_dependencia:
+                ModalState.original.destinatario_dependencia || '',
+
+            quien_elabora_nombre:
+                ModalState.original.quien_elabora_nombre || '',
+
+            quien_elabora_cargo:
+                ModalState.original.quien_elabora_cargo || '',
+
+            link_documento:
+                ModalState.original.link_documento || ''
+        };
+
+        return JSON.stringify(current) !== JSON.stringify(original);
     },
 
     /*
@@ -1127,59 +1288,212 @@ window.Oficios = {
     */
     bindSave() {
 
-        $('#btnGuardarOficio')
-            .off('click')
-            .on('click', () => {
+        $(document)
+            .off('click.oficios', '#btnGuardarOficio')
+            .on('click.oficios', '#btnGuardarOficio', function () {
 
-                const data = {};
+                if (!ModalState.original) {
+                    Alerts.error('No se pudo identificar el oficio.');
+                    return;
+                }
 
-                const $container = $('#modalGlobalBody');
-
-                // inputs normales
-                $container.find('input[name], textarea[name], select[name]').each(function () {
-
-                    const name = $(this).attr('name');
-
-                    if (!name) return;
-
-                    if ($(this).is(':radio')) {
-                        if ($(this).is(':checked')) {
-                            data[name] = $(this).val();
-                        }
-                    } else {
-                        data[name] = $(this).val();
-                    }
-                });
-
-                OficiosApi.update(
-                    ModalState.original.id,
-                    data
-                )
-
-                .done(() => {
-
-                    Alerts.success('Oficio actualizado');
-
+                if (!Oficios.hasEditableChanges()) {
                     ModalState.changed = false;
+                    $('#btnGuardarOficio').prop('disabled', true);
+                    return;
+                }
 
-                    $('#btnGuardarOficio')
-                        .prop('disabled', true);
+                const $button = $(this);
+                const oficioId = ModalState.original.id;
+                const data = Oficios.getEditableData();
 
-                    $('#modalGlobal')
-                        .modal('hide');
+                $button
+                    .prop('disabled', true)
+                    .html(`
+                        <i class="fas fa-spinner fa-spin mr-1"></i>
+                        Guardando...
+                    `);
 
-                })
+                OficiosApi.update(oficioId, data)
+                    .done(function (response) {
 
-                .fail((xhr) => {
+                        ModalState.original = {
+                            ...ModalState.original,
+                            ...data
+                        };
 
-                    console.log(xhr.responseText);
+                        ModalState.changed = false;
 
-                    Alerts.error('Error al guardar');
+                        $button
+                            .prop('disabled', true)
+                            .html(`
+                                <i class="fas fa-save mr-1"></i>
+                                Guardar cambios
+                            `);
 
-                });
+                        Alerts.success(
+                            response.message || 'Oficio actualizado correctamente'
+                        );
+                    })
+                    .fail(function (xhr) {
+
+                        console.error(xhr.responseText);
+
+                        $button
+                            .prop('disabled', false)
+                            .html(`
+                                <i class="fas fa-save mr-1"></i>
+                                Guardar cambios
+                            `);
+
+                        if (xhr.status === 403) {
+                            Alerts.error(
+                                'No tiene permiso para modificar este oficio.'
+                            );
+                            return;
+                        }
+
+                        if (xhr.status === 422) {
+                            Alerts.error(
+                                xhr.responseJSON?.message ||
+                                'Los datos proporcionados no son válidos.'
+                            );
+                            return;
+                        }
+
+                        Alerts.error(
+                            'No se pudieron guardar los cambios.'
+                        );
+                    });
             });
-    }
+    },
+
+    restoreOriginalValues() {
+
+        if (!ModalState.original) {
+            return;
+        }
+
+        const oficio = ModalState.original;
+
+        $('#detalleAsunto').val(oficio.asunto || '');
+        $('#detalleDescripcion').val(oficio.descripcion || '');
+
+        $('#detalleRemitenteNombre').val(
+            oficio.remitente_nombre || ''
+        );
+
+        $('#detalleRemitenteCargo').val(
+            oficio.remitente_cargo || ''
+        );
+
+        $('#detalleRemitenteDependencia').val(
+            oficio.remitente_dependencia || ''
+        );
+
+        $('#detalleDestinatarioNombre').val(
+            oficio.destinatario_nombre || ''
+        );
+
+        $('#detalleDestinatarioCargo').val(
+            oficio.destinatario_cargo || ''
+        );
+
+        $('#detalleDestinatarioDependencia').val(
+            oficio.destinatario_dependencia || ''
+        );
+
+        $('#detalleElaboradorNombre').val(
+            oficio.quien_elabora_nombre || ''
+        );
+
+        $('#detalleElaboradorCargo').val(
+            oficio.quien_elabora_cargo || ''
+        );
+
+        $('#detalleFechaOficio').val(
+            oficio.fecha_oficio || ''
+        );
+
+        $('#detalleFechaRecepcion').val(
+            oficio.fecha_recepcion || ''
+        );
+
+        $('#detalleFechaLimite').val(
+            oficio.fecha_limite || ''
+        );
+
+        $(
+            `#modalDetalleOficio input[name="requiere_respuesta"][value="${oficio.requiere_respuesta ? 1 : 0}"]`
+        ).prop('checked', true);
+
+        $(
+            `#modalDetalleOficio input[name="es_sensible"][value="${oficio.es_sensible ? 1 : 0}"]`
+        ).prop('checked', true);
+
+        $('#detalleLinkDocumento').val(
+            oficio.link_documento || ''
+        );
+    },
+
+    bindCloseGuard() {
+
+        $(document)
+            .off('hide.bs.modal.oficios', '#modalDetalleOficio')
+            .on(
+                'hide.bs.modal.oficios',
+                '#modalDetalleOficio',
+                function (event) {
+
+                    if (ModalState.allowClose) {
+                        ModalState.allowClose = false;
+                        return;
+                    }
+
+                    if (!ModalState.changed) {
+                        return;
+                    }
+
+                    event.preventDefault();
+
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Cambios sin guardar',
+                        text: 'Este oficio tiene cambios sin guardar.',
+                        showDenyButton: true,
+                        showCancelButton: true,
+                        confirmButtonText: 'Guardar cambios',
+                        denyButtonText: 'Deshacer cambios',
+                        cancelButtonText: 'Seguir editando',
+                        reverseButtons: true
+                    }).then(function (result) {
+
+                        if (result.isConfirmed) {
+                            $('#btnGuardarOficio').trigger('click');
+                            return;
+                        }
+
+                        if (result.isDenied) {
+
+                            Oficios.restoreOriginalValues();
+
+                            ModalState.changed = false;
+
+                            $('#btnGuardarOficio').prop(
+                                'disabled',
+                                true
+                            );
+
+                            ModalState.allowClose = true;
+
+                            $('#modalDetalleOficio').modal('hide');
+                        }
+                    });
+                }
+            );
+    },
 };
+
 
 $(document).on('change', '.turnado-check', function () {
 
@@ -1201,20 +1515,22 @@ $(document).on('change', '.turnado-check', function () {
 });
 
 window.ModalState = {
-
     original: null,
     changed: false,
+    allowClose: false,
 
     reset() {
         this.original = null;
         this.changed = false;
+        this.allowClose = false;
     }
-
 };
-
 
 window.Oficios.bindClose();
 window.Oficios.bindCancel();
+window.Oficios.enableChangeDetection();
+window.Oficios.bindSave();
+window.Oficios.bindCloseGuard();
 
 </script>
 

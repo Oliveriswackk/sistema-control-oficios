@@ -577,52 +577,35 @@ class OficioController extends Controller
     */
     public function update(Request $request, Oficio $oficio)
     {
-        
         $this->authorize('update', $oficio);
 
-        if (
-            $request->respuesta_a_oficio_id == $oficio->id
-        ) {
+        if (in_array($oficio->estado_id, [
+            EstadoOficio::CERRADO,
+            EstadoOficio::CANCELADO,
+        ])) {
             return response()->json([
                 'success' => false,
-                'message' => 'Un oficio no puede responderse a sí mismo.'
+                'message' => 'El oficio está cerrado o cancelado. No puede modificarse.'
             ], 422);
         }
 
         $oficio->update([
-
-            'numero_oficio' => $request->numero_oficio,
-            'consecutivo' => $request->consecutivo,
-
-            'asunto' => $request->asunto,
-            'descripcion' => $request->descripcion,
-
-            'fecha_oficio' => $request->fecha_oficio,
-            'fecha_recepcion' => $request->fecha_recepcion,
-            'fecha_limite' => $request->fecha_limite,
-
+            'asunto' => $request->input('asunto'),
+            'descripcion' => $request->input('descripcion'),
+            'fecha_oficio' => $request->input('fecha_oficio'),
+            'fecha_recepcion' => $request->input('fecha_recepcion'),
+            'fecha_limite' => $request->input('fecha_limite'),
             'requiere_respuesta' => $request->boolean('requiere_respuesta'),
-
-            'respuesta_a_oficio_id' =>
-                    $request->respuesta_a_oficio_id != 0
-                        ? $request->respuesta_a_oficio_id
-                        : null,
-
             'es_sensible' => $request->boolean('es_sensible'),
-            'tipo_oficio_id' => $request->tipo_oficio_id,
-
-            'remitente_nombre' => $request->remitente_nombre,
-            'remitente_cargo' => $request->remitente_cargo,
-            'remitente_dependencia' => $request->remitente_dependencia,
-
-            'destinatario_nombre' => $request->destinatario_nombre,
-            'destinatario_cargo' => $request->destinatario_cargo,
-            'destinatario_dependencia' => $request->destinatario_dependencia,
-
-            'quien_elabora_nombre' => $request->quien_elabora_nombre,
-            'quien_elabora_cargo' => $request->quien_elabora_cargo,
-
-            'link_documento' => $request->link_documento,
+            'remitente_nombre' => $request->input('remitente_nombre'),
+            'remitente_cargo' => $request->input('remitente_cargo'),
+            'remitente_dependencia' => $request->input('remitente_dependencia'),
+            'destinatario_nombre' => $request->input('destinatario_nombre'),
+            'destinatario_cargo' => $request->input('destinatario_cargo'),
+            'destinatario_dependencia' => $request->input('destinatario_dependencia'),
+            'quien_elabora_nombre' => $request->input('quien_elabora_nombre'),
+            'quien_elabora_cargo' => $request->input('quien_elabora_cargo'),
+            'link_documento' => $request->input('link_documento'),
         ]);
 
         $oficio->historial()->create([
@@ -947,6 +930,16 @@ class OficioController extends Controller
     {
         $this->authorize('cancelar', $oficio);
 
+        if (in_array($oficio->estado_id, [
+            EstadoOficio::CERRADO,
+            EstadoOficio::CANCELADO,
+        ])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El oficio está cerrado o cancelado y no puede cancelarse.'
+            ], 422);
+        }
+
         $estadoAnterior = $oficio->estado_id;
 
         $oficio->update([
@@ -962,10 +955,10 @@ class OficioController extends Controller
             'estado_nuevo_id' => EstadoOficio::CANCELADO,
         ]);
 
-        return back()->with(
-            'success',
-            'Oficio cancelado correctamente'
-        );
+        return response()->json([
+            'success' => true,
+            'message' => 'Oficio cancelado correctamente'
+        ]);
     }
 
 
@@ -1048,8 +1041,12 @@ class OficioController extends Controller
 
             })->values(),
 
-            'puede_cancelar' => auth()->user()
-                ->can('cancelar', $oficio),
+            'puede_cancelar' =>
+                !in_array($oficio->estado_id, [
+                    EstadoOficio::CERRADO,
+                    EstadoOficio::CANCELADO,
+                ]) &&
+                auth()->user()->can('cancelar', $oficio),
         ]);
     }
 

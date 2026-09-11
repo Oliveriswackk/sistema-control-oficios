@@ -465,6 +465,7 @@
                             </div>
                         </div>
 
+
                         <div class="row mt-3 pt-3 border-top">
                             <div class="col-md-6" id="bloqueElaborador">
                                 <div class="actor-title mb-2">
@@ -1163,6 +1164,46 @@
 
                         </div>
 
+                        {{-- =================================================
+                            ELABORADOR INTERNO
+                        ================================================== --}}
+                        <div id="detalleElaborador"
+                            class="form-block mb-3"
+                            style="display: none;">
+
+                            <div class="font-weight-bold text-dark mb-2">
+                                <i class="fas fa-user-edit text-primary mr-1"></i>
+                                Elaborador interno
+                            </div>
+
+                            <div class="row">
+
+                                <div class="col-12 col-md-7">
+                                    <label class="mb-1">
+                                        Nombre
+                                    </label>
+
+                                    <input type="text"
+                                        id="detalleElaboradorNombre"
+                                        name="quien_elabora_nombre"
+                                        class="form-control form-control-sm">
+                                </div>
+
+                                <div class="col-12 col-md-5 mt-3 mt-md-0">
+                                    <label class="mb-1">
+                                        Cargo
+                                    </label>
+
+                                    <input type="text"
+                                        id="detalleElaboradorCargo"
+                                        name="quien_elabora_cargo"
+                                        class="form-control form-control-sm">
+                                </div>
+
+                            </div>
+
+                        </div>
+
 
                         {{-- =================================================
                             ATENCIÓN
@@ -1375,25 +1416,34 @@
             {{-- =================================================
                  FOOTER
             ================================================== --}}
-            <div class="modal-footer bg-light py-2 px-4 justify-content-end">
+            <div class="modal-footer bg-light py-2 px-4 justify-content-between">
 
-                <button type="button"
-                        id="btnCancelarOficio"
-                        class="btn btn-danger btn-sm px-3 mr-2"
-                        style="display: none;">
+                <div>
+                    <button type="button"
+                            id="btnCancelarOficio"
+                            class="btn btn-danger btn-sm px-3"
+                            style="display: none;">
+                        <i class="fas fa-ban mr-1"></i>
+                        Cancelar oficio
+                    </button>
+                </div>
 
-                    <i class="fas fa-ban mr-1"></i>
-                    Cancelar oficio
+                <div>
+                    <button type="button"
+                            id="btnGuardarOficio"
+                            class="btn btn-primary btn-sm px-3 font-weight-bold"
+                            disabled>
+                        <i class="fas fa-save mr-1"></i>
+                        Guardar cambios
+                    </button>
 
-                </button>
-
-                <button type="button"
-                        class="btn btn-secondary btn-sm px-4"
-                        data-dismiss="modal">
-
-                    Cerrar
-
-                </button>
+                    <button type="button"
+                            id="btnCerrarDetalle"
+                            class="btn btn-secondary btn-sm px-3"
+                            data-dismiss="modal">
+                        Cerrar
+                    </button>
+                </div>
 
             </div>
 
@@ -1569,9 +1619,4 @@
     document.addEventListener('DOMContentLoaded', function () {
         setTipoOficio('1', 'enviado');
     });
-</script>
-
-<!-- SCRIPT - Modal 4 -->
-<script>
-
 </script>
