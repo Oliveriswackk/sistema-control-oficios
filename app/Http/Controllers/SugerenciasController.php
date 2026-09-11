@@ -74,6 +74,7 @@ class SugerenciasController extends Controller
         }
 
         $oficios = \App\Models\Oficio::query()
+            ->where('estado_id', '!=', \App\Models\EstadoOficio::CANCELADO)
             ->where(function ($query) use ($q) {
                 $query->where('numero_oficio', 'like', "%{$q}%")
                     ->orWhere('asunto', 'like', "%{$q}%");
