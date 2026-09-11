@@ -46,31 +46,6 @@ class OficioController extends Controller
     // Filtros
     private function aplicarFiltros($query, Request $request)
     {
-        if ($request->filled('numero_oficio')) {
-            $query->where(
-                'numero_oficio',
-                'like',
-                '%' . $request->numero_oficio . '%'
-            );
-        }
-
-        if ($request->filled('asunto')) {
-            $query->where(
-                'asunto',
-                'like',
-                '%' . $request->asunto . '%'
-            );
-        }
-
-        if ($request->filled('tipo_oficio_id')) {
-
-            $query->where(
-                'tipo_oficio_id',
-                $request->tipo_oficio_id
-            );
-
-        }
-
         if ($request->filled('remitente_dependencia')) {
             $query->where(
                 'remitente_dependencia',
@@ -80,12 +55,7 @@ class OficioController extends Controller
         }
 
         if ($request->filled('estado_id')) {
-
-            $query->where(
-                'estado_id',
-                $request->estado_id
-            );
-
+            $query->where('estado_id', $request->estado_id);
         }
 
         if ($request->filled('coordinacion_origen_id')) {
@@ -95,12 +65,33 @@ class OficioController extends Controller
             );
         }
 
+        if ($request->filled('fecha_desde')) {
+            $query->whereDate(
+                'fecha_oficio',
+                '>=',
+                $request->fecha_desde
+            );
+        }
+
+        if ($request->filled('fecha_hasta')) {
+            $query->whereDate(
+                'fecha_oficio',
+                '<=',
+                $request->fecha_hasta
+            );
+        }
+
         return $query;
     }
 
 
     public function dashboard(Request $request)
     {
+        $request->validate([
+            'fecha_desde' => ['nullable', 'date'],
+            'fecha_hasta' => ['nullable', 'date', 'after_or_equal:fecha_desde'],
+        ]);
+
         $vista = $request->input('vista', 'enviados');
 
         $puedeVerTodos =
