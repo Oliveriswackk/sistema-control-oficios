@@ -268,6 +268,22 @@
     .dataTables_paginate {
         margin-top: 0 !important;
     }
+
+    .filtro-fecha {
+        position: relative;
+    }
+
+    .filtro-fecha-label {
+        display: block;
+        margin-bottom: .2rem;
+        font-size: .7rem;
+        font-weight: 600;
+        color: #858796;
+    }
+
+    .filtro-fecha-input {
+        width: 100%;
+    }
 </style>
 
 @section('content')
@@ -295,9 +311,7 @@
         @endif
     </div>
 
-    <form method="GET" action="{{ route('dashboard') }}">
-        @include('oficios.partials.oficio-search')
-    </form>
+    @include('oficios.partials.oficio-search')
 
     @include('oficios.partials.oficios-table', [
         'tableId' => 'tabla-oficios'
@@ -314,7 +328,6 @@
 
     $(document).ready(function () {
 
-        // Ver Detalles del Oficio
         $(document).on('click', '.btn-ver-oficio', function () {
 
             Oficios.open(
@@ -324,7 +337,7 @@
 
         });
 
-        $('#tabla-oficios').DataTable({
+        const tablaOficios = $('#tabla-oficios').DataTable({
             pageLength: 10,
             order: [[0, 'desc']],
             dom:
@@ -342,17 +355,201 @@
             ]
         });
 
-        $('#inputBuscadorGlobal').on('input', function () {
-            $('#tabla-oficios')
-                .DataTable()
-                .search(this.value)
-                .draw();
+        const normalizarTexto = function (texto) {
+            return texto
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase()
+                .trim();
+        };
+
+        $.fn.dataTable.ext.search.push(function (settings, data) {
+
+            if (settings.nTable.id !== 'tabla-oficios') {
+                return true;
+            }
+
+            const busqueda = normalizarTexto(
+                $('#inputBuscadorGlobal').val()
+            );
+
+            if (!busqueda) {
+                return true;
+            }
+
+            const contenido = normalizarTexto(
+                $('<div>').html(data.join(' ')).text()
+            );
+
+            return contenido.includes(busqueda);
         });
 
-        // Cambiar etiqueta fecha según tipo de oficio
+        $(document).on('input', '#inputBuscadorGlobal', function () {
+            tablaOficios.draw();
+        });
+
+        const formFiltrosOficios =
+            $('#formFiltrosOficios');
+
+        const cargarOficios =
+            function () {
+
+                const url =
+                    formFiltrosOficios.attr('action') +
+                    '?' +
+                    formFiltrosOficios.serialize();
+
+                $.ajax({
+                    url: url,
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    beforeSend: function () {
+                        $('#tabla-oficios tbody')
+                            .css('opacity', '0.5');
+                    },
+                    success: function (html) {
+
+                        const filas =
+                            $('<tbody>')
+                                .html(html)
+                                .children('tr');
+
+                        tablaOficios
+                            .clear()
+                            .rows
+                            .add(filas)
+                            .draw(false);
+
+                        window.history.pushState(
+                            {},
+                            '',
+                            url
+                        );
+                    },
+                    error: function (xhr) {
+
+                        console.error(
+                            'Error filtrando oficios:',
+                            xhr
+                        );
+
+                    },
+                    complete: function () {
+
+                        $('#tabla-oficios tbody')
+                            .css('opacity', '1');
+
+                    }
+                });
+            };
+
+        $(document).on(
+            'change',
+            '#formFiltrosOficios select[name="coordinacion_origen_id"], #formFiltrosOficios select[name="estado_id"]',
+            function () {
+
+                cargarOficios();
+
+            }
+        );
+
+        let timeoutRemitente;
+
+        $(document).on(
+            'input',
+            '#formFiltrosOficios input[name="remitente_dependencia"]',
+            function () {
+
+                clearTimeout(timeoutRemitente);
+
+                timeoutRemitente = setTimeout(function () {
+                    cargarOficios();
+                }, 500);
+
+            }
+        );
+
+        const hoy = new Date();
+
+        const inicioAnio = new Date(
+            hoy.getFullYear(),
+            0,
+            1
+        );
+
+        const convertirAISO = function (fecha) {
+
+            return [
+                fecha.getFullYear(),
+                String(fecha.getMonth() + 1).padStart(2, '0'),
+                String(fecha.getDate()).padStart(2, '0')
+            ].join('-');
+        };
+
+        const fechaDesde =
+            "{{ request('fecha_desde') }}" ||
+            convertirAISO(inicioAnio);
+
+        const fechaHasta =
+            "{{ request('fecha_hasta') }}" ||
+            convertirAISO(hoy);
+
+        flatpickr('#fechaDesdeVisible', {
+            locale: 'es',
+            dateFormat: 'd/m/Y',
+            defaultDate: fechaDesde,
+            allowInput: true,
+            disableMobile: true,
+
+            onChange: function (selectedDates) {
+
+                if (!selectedDates.length) {
+                    $('#fechaDesde').val('');
+                    cargarOficios();
+                    return;
+                }
+
+                $('#fechaDesde').val(
+                    convertirAISO(selectedDates[0])
+                );
+
+                cargarOficios();
+            }
+        });
+
+        flatpickr('#fechaHastaVisible', {
+            locale: 'es',
+            dateFormat: 'd/m/Y',
+            defaultDate: fechaHasta,
+            allowInput: true,
+            disableMobile: true,
+
+            onChange: function (selectedDates) {
+
+                if (!selectedDates.length) {
+                    $('#fechaHasta').val('');
+                    cargarOficios();
+                    return;
+                }
+
+                $('#fechaHasta').val(
+                    convertirAISO(selectedDates[0])
+                );
+
+                cargarOficios();
+            }
+        });
+
+        $('#fechaDesde').val(fechaDesde);
+        $('#fechaHasta').val(fechaHasta);
+
+
         $('input[name="tipo_oficio_id"]').on('change', function () {
 
-            const tipo = $('input[name="tipo_oficio_id"]:checked').val();
+            const tipo =
+                $('input[name="tipo_oficio_id"]:checked').val();
 
             if (tipo == 1) {
 
@@ -437,15 +634,6 @@
 
     });
 
-
-    // =========================================================
-    // DATATABLES
-    // =========================================================
-    $(document).ready(function () {
-
-    //
-
-    });
 
     // =========================================================
     // GENERAR NÚMERO DE OFICIO

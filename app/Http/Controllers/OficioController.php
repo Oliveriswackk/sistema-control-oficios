@@ -92,6 +92,18 @@ class OficioController extends Controller
             'fecha_hasta' => ['nullable', 'date', 'after_or_equal:fecha_desde'],
         ]);
 
+        if (!$request->has('fecha_desde')) {
+            $request->merge([
+                'fecha_desde' => now()->startOfYear()->toDateString(),
+            ]);
+        }
+
+        if (!$request->has('fecha_hasta')) {
+            $request->merge([
+                'fecha_hasta' => now()->toDateString(),
+            ]);
+        }
+
         $vista = $request->input('vista', 'enviados');
 
         $puedeVerTodos =
@@ -120,7 +132,10 @@ class OficioController extends Controller
                 $tipoVista[$vista]
             )->value('id');
 
-            $query->where('tipo_oficio_id', $tipoOficioId);
+            $query->where(
+                'tipo_oficio_id',
+                $tipoOficioId
+            );
         }
 
         $this->aplicarFiltros(
@@ -132,18 +147,36 @@ class OficioController extends Controller
             ->latest()
             ->get();
 
+        if ($request->ajax()) {
+            return $oficios
+                ->map(function ($oficio) {
+                    return view(
+                        'oficios.partials.oficio-row',
+                        compact('oficio')
+                    )->render();
+                })
+                ->implode('');
+        }
+
         $oficiosRelacionables = Oficio::select(
             'id',
             'numero_oficio',
             'asunto'
         )
-        ->where('estado_id', '!=', EstadoOficio::CANCELADO)
+        ->where(
+            'estado_id',
+            '!=',
+            EstadoOficio::CANCELADO
+        )
         ->latest()
         ->get();
 
-        $coordinaciones = Coordinacion::where('activo', true)
-            ->orderBy('nombre')
-            ->get();
+        $coordinaciones = Coordinacion::where(
+            'activo',
+            true
+        )
+        ->orderBy('nombre')
+        ->get();
 
         $estados = EstadoOficio::all();
 

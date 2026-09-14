@@ -4,6 +4,8 @@
         <form id="formFiltrosOficios" method="GET" action="{{ route('dashboard') }}">
 
             <input type="hidden" name="vista" value="{{ request('vista', 'enviados') }}">
+            <input type="hidden" name="fecha_desde" id="fechaDesde">
+            <input type="hidden" name="fecha_hasta" id="fechaHasta">
 
             <div class="mb-3">
                 <div class="card border-0 rounded-lg bg-light mb-0">
@@ -71,7 +73,7 @@
 
             <div class="row align-items-end mb-3">
 
-                <div class="col-md-6 mb-2 mb-md-0">
+                <div class="col-md-6 mb-3 mb-md-0">
                     <label class="small text-muted font-weight-bold mb-1">
                         Remitente
                     </label>
@@ -86,37 +88,53 @@
                     >
                 </div>
 
-                <div class="col-md-6 mb-2 mb-md-0">
+                <div class="col-md-6">
 
                     <label class="small text-muted font-weight-bold mb-1">
                         Periodo
                     </label>
 
-                    <div class="d-flex align-items-center">
-                        <input
-                            type="date"
-                            name="fecha_desde"
-                            class="form-control filtro-auto mr-2"
-                            value="{{ request()->has('fecha_desde') ? request('fecha_desde') : now()->startOfYear()->format('Y-m-d') }}"
-                        >
+                    <div class="row">
 
-                        <span class="text-muted small mr-2">
-                            a
-                        </span>
+                        <div class="col-12 col-sm-6 mb-2 mb-sm-0">
+                            <div class="filtro-fecha">
+                                <span class="filtro-fecha-label">
+                                    Desde
+                                </span>
 
-                        <input
-                            type="date"
-                            name="fecha_hasta"
-                            class="form-control filtro-auto"
-                            value="{{ request()->has('fecha_hasta') ? request('fecha_hasta') : now()->format('Y-m-d') }}"
-                        >
+                                <input
+                                    type="text"
+                                    id="fechaDesdeVisible"
+                                    class="form-control filtro-fecha-input"
+                                    placeholder="dd/mm/yyyy"
+                                    autocomplete="off"
+                                >
+                            </div>
+                        </div>
+
+                        <div class="col-12 col-sm-6">
+                            <div class="filtro-fecha">
+                                <span class="filtro-fecha-label">
+                                    Hasta
+                                </span>
+
+                                <input
+                                    type="text"
+                                    id="fechaHastaVisible"
+                                    class="form-control filtro-fecha-input"
+                                    placeholder="dd/mm/yyyy"
+                                    autocomplete="off"
+                                >
+                            </div>
+                        </div>
+
                     </div>
 
                 </div>
 
             </div>
 
-            <div class="d-flex align-items-center border-top pt-3">
+            <div class="d-flex flex-wrap align-items-center border-top pt-3">
 
                 @can('create', App\Models\Oficio::class)
                     <button

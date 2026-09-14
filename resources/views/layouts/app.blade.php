@@ -19,6 +19,12 @@
     {{-- DATATABLES --}}
     <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap4.min.css" rel="stylesheet">
 
+    {{-- DATEPICKER --}}
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+    >
+
     {{-- FUENTE --}}
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
 
@@ -283,7 +289,8 @@
     };
 </script>
 
-
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 {{-- =========================================================
 |  FLASH MESSAGES (SESSION)
 ========================================================= --}}
