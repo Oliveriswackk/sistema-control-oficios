@@ -97,7 +97,7 @@
         color: #fff;
     }
 
-/* Autocomplete / Sugerencias */
+    /* Autocomplete / Sugerencias */
 
     .oficio-autocomplete {
         position: absolute;
@@ -302,11 +302,13 @@
 
         @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('recepcion'))
             <button
-                class="btn btn-indigo btn-sm rounded shadow-sm px-3"
+                type="button"
+                class="btn btn-sage btn-sm rounded shadow-sm px-3 font-weight-bold"
                 data-toggle="modal"
                 data-target="#modalReservarFolios"
             >
-                Reservar Folios
+                <i class="fas fa-layer-group mr-1"></i>
+                Reservar folios
             </button>
         @endif
     </div>
@@ -337,6 +339,7 @@
 
         });
 
+
         const tablaOficios = $('#tabla-oficios').DataTable({
             pageLength: 10,
             order: [[0, 'desc']],
@@ -355,38 +358,6 @@
             ]
         });
 
-        const normalizarTexto = function (texto) {
-            return texto
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '')
-                .toLowerCase()
-                .trim();
-        };
-
-        $.fn.dataTable.ext.search.push(function (settings, data) {
-
-            if (settings.nTable.id !== 'tabla-oficios') {
-                return true;
-            }
-
-            const busqueda = normalizarTexto(
-                $('#inputBuscadorGlobal').val()
-            );
-
-            if (!busqueda) {
-                return true;
-            }
-
-            const contenido = normalizarTexto(
-                $('<div>').html(data.join(' ')).text()
-            );
-
-            return contenido.includes(busqueda);
-        });
-
-        $(document).on('input', '#inputBuscadorGlobal', function () {
-            tablaOficios.draw();
-        });
 
         const formFiltrosOficios =
             $('#formFiltrosOficios');
@@ -445,6 +416,7 @@
                 });
             };
 
+
         $(document).on(
             'change',
             '#formFiltrosOficios select[name="coordinacion_origen_id"], #formFiltrosOficios select[name="estado_id"]',
@@ -455,32 +427,23 @@
             }
         );
 
-        let timeoutRemitente;
+        let timeoutBusqueda;
 
         $(document).on(
             'input',
-            '#formFiltrosOficios input[name="remitente_dependencia"]',
+            '#inputBuscadorGlobal',
             function () {
 
-                clearTimeout(timeoutRemitente);
+                clearTimeout(timeoutBusqueda);
 
-                timeoutRemitente = setTimeout(function () {
+                timeoutBusqueda = setTimeout(function () {
                     cargarOficios();
                 }, 500);
 
             }
         );
 
-        const hoy = new Date();
-
-        const inicioAnio = new Date(
-            hoy.getFullYear(),
-            0,
-            1
-        );
-
         const convertirAISO = function (fecha) {
-
             return [
                 fecha.getFullYear(),
                 String(fecha.getMonth() + 1).padStart(2, '0'),
@@ -488,18 +451,9 @@
             ].join('-');
         };
 
-        const fechaDesde =
-            "{{ request('fecha_desde') }}" ||
-            convertirAISO(inicioAnio);
-
-        const fechaHasta =
-            "{{ request('fecha_hasta') }}" ||
-            convertirAISO(hoy);
-
         flatpickr('#fechaDesdeVisible', {
             locale: 'es',
             dateFormat: 'd/m/Y',
-            defaultDate: fechaDesde,
             allowInput: true,
             disableMobile: true,
 
@@ -522,7 +476,6 @@
         flatpickr('#fechaHastaVisible', {
             locale: 'es',
             dateFormat: 'd/m/Y',
-            defaultDate: fechaHasta,
             allowInput: true,
             disableMobile: true,
 
@@ -542,9 +495,18 @@
             }
         });
 
-        $('#fechaDesde').val(fechaDesde);
-        $('#fechaHasta').val(fechaHasta);
-
+        // Modals
+        flatpickr(
+            '#formCrearOficio input[name="fecha_oficio"], #formCrearOficio input[name="fecha_recepcion"], #formCrearOficio input[name="fecha_limite"]',
+            {
+                locale: 'es',
+                dateFormat: 'Y-m-d',
+                altInput: true,
+                altFormat: 'd/m/Y',
+                allowInput: true,
+                disableMobile: true
+            }
+        );
 
         $('input[name="tipo_oficio_id"]').on('change', function () {
 
@@ -568,6 +530,7 @@
         });
 
     });
+
 
     // =========================================================
     // CREAR OFICIO
@@ -610,6 +573,7 @@
             Alerts.error(msg);
         });
     });
+
 
     // =========================================================
     // CAMBIAR LABEL DE FECHA
@@ -1021,6 +985,7 @@
 
 
     });
+
 
     // =========================================================
     // ABRIR MODAL TURNAR

@@ -4,8 +4,6 @@
         <form id="formFiltrosOficios" method="GET" action="{{ route('dashboard') }}">
 
             <input type="hidden" name="vista" value="{{ request('vista', 'enviados') }}">
-            <input type="hidden" name="fecha_desde" id="fechaDesde">
-            <input type="hidden" name="fecha_hasta" id="fechaHasta">
 
             <div class="mb-3">
                 <div class="card border-0 rounded-lg bg-light mb-0">
@@ -19,8 +17,10 @@
 
                             <input
                                 type="text"
+                                name="busqueda"
                                 id="inputBuscadorGlobal"
                                 class="form-control border-0 bg-transparent shadow-none"
+                                value="{{ request('busqueda') }}"
                                 placeholder="Escribe para buscar un oficio de manera global..."
                                 autocomplete="off"
                             >
@@ -31,7 +31,7 @@
 
             <div class="row align-items-end mb-3">
 
-                <div class="col-md-6 mb-2 mb-md-0">
+                <div class="col-md-3 mb-2 mb-md-0">
                     <label class="small text-muted font-weight-bold mb-1">
                         Coordinación origen
                     </label>
@@ -50,7 +50,7 @@
                     </select>
                 </div>
 
-                <div class="col-md-6 mb-2 mb-md-0">
+                <div class="col-md-3 mb-2 mb-md-0">
                     <label class="small text-muted font-weight-bold mb-1">
                         Estado
                     </label>
@@ -69,25 +69,6 @@
                     </select>
                 </div>
 
-            </div>
-
-            <div class="row align-items-end mb-3">
-
-                <div class="col-md-6 mb-3 mb-md-0">
-                    <label class="small text-muted font-weight-bold mb-1">
-                        Remitente
-                    </label>
-
-                    <input
-                        type="text"
-                        name="remitente_dependencia"
-                        class="form-control filtro-auto-texto"
-                        value="{{ request('remitente_dependencia') }}"
-                        placeholder="Buscar remitente..."
-                        autocomplete="off"
-                    >
-                </div>
-
                 <div class="col-md-6">
 
                     <label class="small text-muted font-weight-bold mb-1">
@@ -96,7 +77,7 @@
 
                     <div class="row">
 
-                        <div class="col-12 col-sm-6 mb-2 mb-sm-0">
+                        <div class="col-6">
                             <div class="filtro-fecha">
                                 <span class="filtro-fecha-label">
                                     Desde
@@ -106,13 +87,21 @@
                                     type="text"
                                     id="fechaDesdeVisible"
                                     class="form-control filtro-fecha-input"
+                                    value="{{ $fechaMinima ? \Carbon\Carbon::parse($fechaMinima)->format('d/m/Y') : '' }}"
                                     placeholder="dd/mm/yyyy"
                                     autocomplete="off"
+                                >
+
+                                <input
+                                    type="hidden"
+                                    name="fecha_desde"
+                                    id="fechaDesde"
+                                    value="{{ $fechaMinima }}"
                                 >
                             </div>
                         </div>
 
-                        <div class="col-12 col-sm-6">
+                        <div class="col-6">
                             <div class="filtro-fecha">
                                 <span class="filtro-fecha-label">
                                     Hasta
@@ -122,8 +111,16 @@
                                     type="text"
                                     id="fechaHastaVisible"
                                     class="form-control filtro-fecha-input"
+                                    value="{{ $fechaMaxima ? \Carbon\Carbon::parse($fechaMaxima)->format('d/m/Y') : '' }}"
                                     placeholder="dd/mm/yyyy"
                                     autocomplete="off"
+                                >
+
+                                <input
+                                    type="hidden"
+                                    name="fecha_hasta"
+                                    id="fechaHasta"
+                                    value="{{ $fechaMaxima }}"
                                 >
                             </div>
                         </div>

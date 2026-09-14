@@ -46,16 +46,43 @@ class OficioController extends Controller
     // Filtros
     private function aplicarFiltros($query, Request $request)
     {
-        if ($request->filled('remitente_dependencia')) {
-            $query->where(
-                'remitente_dependencia',
-                'like',
-                '%' . $request->remitente_dependencia . '%'
+        if ($request->filled('busqueda')) {
+            $terminos = preg_split(
+                '/\s+/',
+                trim($request->busqueda)
             );
+
+            foreach ($terminos as $termino) {
+                $like = "%{$termino}%";
+
+                $query->where(function ($q) use ($like) {
+                    $q->where('numero_oficio', 'like', $like)
+                        ->orWhere('asunto', 'like', $like)
+                        ->orWhere('descripcion', 'like', $like)
+                        ->orWhere('remitente_nombre', 'like', $like)
+                        ->orWhere('remitente_cargo', 'like', $like)
+                        ->orWhere('remitente_dependencia', 'like', $like)
+                        ->orWhere('destinatario_nombre', 'like', $like)
+                        ->orWhere('destinatario_cargo', 'like', $like)
+                        ->orWhere('destinatario_dependencia', 'like', $like)
+                        ->orWhere('quien_elabora_nombre', 'like', $like)
+                        ->orWhere('quien_elabora_cargo', 'like', $like)
+                        ->orWhereHas('tags', function ($tagQuery) use ($like) {
+                            $tagQuery->where(
+                                'nombre',
+                                'like',
+                                $like
+                            );
+                        });
+                });
+            }
         }
 
         if ($request->filled('estado_id')) {
-            $query->where('estado_id', $request->estado_id);
+            $query->where(
+                'estado_id',
+                $request->estado_id
+            );
         }
 
         if ($request->filled('coordinacion_origen_id')) {
@@ -92,15 +119,18 @@ class OficioController extends Controller
             'fecha_hasta' => ['nullable', 'date', 'after_or_equal:fecha_desde'],
         ]);
 
-        if (!$request->has('fecha_desde')) {
+        $fechaMinima = Oficio::min('fecha_oficio');
+        $fechaMaxima = Oficio::max('fecha_oficio');
+
+        if (!$request->filled('fecha_desde')) {
             $request->merge([
-                'fecha_desde' => now()->startOfYear()->toDateString(),
+                'fecha_desde' => $fechaMinima,
             ]);
         }
 
-        if (!$request->has('fecha_hasta')) {
+        if (!$request->filled('fecha_hasta')) {
             $request->merge([
-                'fecha_hasta' => now()->toDateString(),
+                'fecha_hasta' => $fechaMaxima,
             ]);
         }
 
@@ -191,7 +221,9 @@ class OficioController extends Controller
                 'estados',
                 'tiposOficio',
                 'vista',
-                'puedeVerTodos'
+                'puedeVerTodos',
+                'fechaMinima',
+                'fechaMaxima'
             )
         );
     }
@@ -210,15 +242,12 @@ class OficioController extends Controller
             ->latest()
             ->get();
 
-
         $listosCerrar = collect();
-
 
         if (
             auth()->user()->hasRole('admin') ||
             auth()->user()->hasRole('coordinador')
         ) {
-
             $listosCerrar = Oficio::with([
                 'turnados.tipoParticipacion'
             ])
@@ -230,40 +259,56 @@ class OficioController extends Controller
             ->get()
             ->filter(function ($oficio) {
 
-
-                // Solo responsables operativos cuentan
                 $responsables = $oficio->turnados
                     ->filter(function ($turnado) {
 
                         return $turnado->tipoParticipacion
                             && $turnado->tipoParticipacion->implica_responsabilidad;
-
                     });
 
-
-                // Debe existir al menos un responsable
                 if ($responsables->isEmpty()) {
                     return false;
                 }
 
-
-                // Todos los responsables deben haber atendido
                 return $responsables->every(function ($turnado) {
 
                     return !is_null($turnado->atendido_en);
-
                 });
-
-
             })
             ->values();
-
         }
 
+        $oficiosRelacionables = Oficio::select(
+            'id',
+            'numero_oficio',
+            'asunto'
+        )
+        ->where(
+            'estado_id',
+            '!=',
+            EstadoOficio::CANCELADO
+        )
+        ->latest()
+        ->get();
+
+        $coordinaciones = Coordinacion::where(
+            'activo',
+            true
+        )
+        ->orderBy('nombre')
+        ->get();
+
+        $estados = EstadoOficio::all();
+
+        $tiposOficio = TipoOficio::all();
 
         return view('home', compact(
             'turnados',
-            'listosCerrar'
+            'listosCerrar',
+            'oficiosRelacionables',
+            'coordinaciones',
+            'estados',
+            'tiposOficio'
         ));
     }
 
@@ -558,22 +603,29 @@ class OficioController extends Controller
 
             if ($padre && $padre->requiere_respuesta) {
 
-                $estadoAnterior = $padre->estado_id;
+                $pendientes = $padre->turnados()
+                    ->where('tipo_participacion_id', 1)
+                    ->whereNull('atendido_en')
+                    ->exists();
 
-                $padre->update([
-                    'estado_id' => EstadoOficio::CERRADO,
-                    'cerrado_en' => now(),
-                ]);
-               
-                $padre->refresh();
+                if (!$pendientes) {
 
-                $padre->historial()->create([
-                    'usuario_id' => auth()->id(),
-                    'accion' => 'oficio_cerrado_automaticamente',
-                    'descripcion' => 'El oficio fue cerrado automáticamente al registrar una respuesta.',
-                    'estado_anterior_id' => $estadoAnterior,
-                    'estado_nuevo_id' => EstadoOficio::CERRADO,
-                ]);
+                    $estadoAnterior = $padre->estado_id;
+
+                    $padre->update([
+                        'estado_id' => EstadoOficio::CERRADO,
+                        'cerrado_en' => now(),
+                    ]);
+
+                    $padre->historial()->create([
+                        'usuario_id' => auth()->id(),
+                        'accion' => 'oficio_cerrado_automaticamente',
+                        'descripcion' => 'El oficio fue cerrado automáticamente al registrar una respuesta y quedar atendidos todos los responsables.',
+                        'estado_anterior_id' => $estadoAnterior,
+                        'estado_nuevo_id' => EstadoOficio::CERRADO,
+                    ]);
+
+                }
 
             }
 
@@ -879,42 +931,66 @@ class OficioController extends Controller
 
         $oficio = $turnado->oficio;
 
-        $oficio->update([
-            'estado_id' => EstadoOficio::EN_SEGUIMIENTO,
-        ]);
-
-        $turnado->oficio->historial()->create([
+        $oficio->historial()->create([
             'usuario_id' => auth()->id(),
             'accion' => 'turnado_atendido',
             'descripcion' => 'El responsable marcó el turnado como atendido',
         ]);
 
-        $pendientes = $turnado->oficio
-            ->turnados()
-            ->whereHas('tipoParticipacion', function ($q) {
-                $q->where('implica_responsabilidad', true);
-            })
+        $pendientes = $oficio->turnados()
+            ->where('tipo_participacion_id', 1)
             ->whereNull('atendido_en')
-            ->count();
+            ->exists();
 
+        $tieneRespuesta = Oficio::where(
+            'respuesta_a_oficio_id',
+            $oficio->id
+        )->exists();
 
-        if ($pendientes === 0) {
+        if (
+            $oficio->requiere_respuesta &&
+            !$pendientes &&
+            $tieneRespuesta
+        ) {
+            $estadoAnterior = $oficio->estado_id;
 
-            if ($turnado->oficio->requiere_respuesta) {
+            $oficio->update([
+                'estado_id' => EstadoOficio::CERRADO,
+                'cerrado_en' => now(),
+            ]);
 
+            $oficio->historial()->create([
+                'usuario_id' => auth()->id(),
+                'accion' => 'oficio_cerrado_automaticamente',
+                'descripcion' => 'Oficio cerrado automáticamente al quedar atendidos todos los responsables y existir una respuesta registrada.',
+                'estado_anterior_id' => $estadoAnterior,
+                'estado_nuevo_id' => EstadoOficio::CERRADO,
+            ]);
+
+            return back()->with(
+                'success',
+                'Turnado atendido. El oficio quedó cerrado automáticamente.'
+            );
+        }
+
+        $oficio->update([
+            'estado_id' => EstadoOficio::EN_SEGUIMIENTO,
+        ]);
+
+        if (!$pendientes) {
+
+            if ($oficio->requiere_respuesta) {
                 return back()->with(
                     'success',
-                    'Todos los responsables atendieron. Este oficio requiere respuesta y se cerrará automáticamente al registrar el oficio correspondiente.'
+                    'Todos los responsables atendieron. El oficio quedará cerrado al registrar la respuesta correspondiente.'
                 );
-
             }
 
             return back()->with([
                 'success' => 'Turnado atendido',
                 'mostrar_cierre' => true,
-                'oficio_id' => $turnado->oficio_id,
+                'oficio_id' => $oficio->id,
             ]);
-
         }
 
         return back()->with(

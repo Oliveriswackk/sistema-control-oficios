@@ -2576,46 +2576,74 @@ fieldset:disabled a.btn {
 .show > .btn-danger.dropdown-toggle:focus {
   box-shadow: 0 0 0 0.2rem rgba(235, 101, 88, 0.5);
 }
+.btn-sage {
 
-.btn-indigo {
   color: #fff;
-  background-color: #6f42c1;
-  border-color: #6f42c1;
+
+  background-color: #58766B;
+
+  border-color: #58766B;
+
 }
 
-.btn-indigo:hover {
+.btn-sage:hover {
+
   color: #fff;
-  background-color: #5d17d6;
-  border-color: #520fc5;
+
+  background-color: #49645B;
+
+  border-color: #435D54;
+
 }
 
-.btn-indigo:focus,
-.btn-indigo.focus {
+.btn-sage:focus,
+
+.btn-sage.focus {
+
   color: #fff;
-  background-color: #5d17d6;
-  border-color: #520fc5;
-  box-shadow: 0 0 0 0.2rem rgba(102, 16, 242, 0.5);
+
+  background-color: #49645B;
+
+  border-color: #435D54;
+
+  box-shadow: 0 0 0 0.2rem rgba(88, 118, 107, 0.5);
+
 }
 
-.btn-indigo.disabled,
-.btn-indigo:disabled {
+.btn-sage.disabled,
+
+.btn-sage:disabled {
+
   color: #fff;
-  background-color: #6610f2;
-  border-color: #6610f2;
+
+  background-color: #58766B;
+
+  border-color: #58766B;
+
 }
 
-.btn-indigo:not(:disabled):not(.disabled):active,
-.btn-indigo:not(:disabled):not(.disabled).active,
-.show > .btn-indigo.dropdown-toggle {
+.btn-sage:not(:disabled):not(.disabled):active,
+
+.btn-sage:not(:disabled):not(.disabled).active,
+
+.show > .btn-sage.dropdown-toggle {
+
   color: #fff;
-  background-color: #520fc5;
-  border-color: #4b0eb5;
+
+  background-color: #435D54;
+
+  border-color: #3D554D;
+
 }
 
-.btn-indigo:not(:disabled):not(.disabled):active:focus,
-.btn-indigo:not(:disabled):not(.disabled).active:focus,
-.show > .btn-indigo.dropdown-toggle:focus {
-  box-shadow: 0 0 0 0.2rem rgba(102, 16, 242, 0.5);
+.btn-sage:not(:disabled):not(.disabled):active:focus,
+
+.btn-sage:not(:disabled):not(.disabled).active:focus,
+
+.show > .btn-sage.dropdown-toggle:focus {
+
+  box-shadow: 0 0 0 0.2rem rgba(88, 118, 107, 0.5);
+
 }
 
 .btn-light {

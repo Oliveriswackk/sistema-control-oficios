@@ -112,19 +112,19 @@
                                 </label>
 
                                 <input type="text"
-                                       id="numero_oficio"
-                                       name="numero_oficio"
-                                       class="form-control form-control-sm font-mono"
-                                       readonly
-                                       required>
+                                    id="numero_oficio"
+                                    name="numero_oficio"
+                                    class="form-control form-control-sm font-mono"
+                                    readonly
+                                    required>
 
                                 <input type="hidden"
-                                       id="consecutivo"
-                                       name="consecutivo">
+                                    id="consecutivo"
+                                    name="consecutivo">
 
                                 <input type="hidden"
-                                       id="folio_reservado_id"
-                                       name="folio_reservado_id">
+                                    id="folio_reservado_id"
+                                    name="folio_reservado_id">
                             </div>
 
                             <div class="col-md-4">
@@ -132,11 +132,13 @@
                                     Fecha del oficio <span class="text-danger">*</span>
                                 </label>
 
-                                <input type="date"
-                                       name="fecha_oficio"
-                                       class="form-control form-control-sm"
-                                       value="{{ now()->toDateString() }}"
-                                       required>
+                                <input type="text"
+                                    name="fecha_oficio"
+                                    class="form-control form-control-sm fecha-oficio"
+                                    value="{{ now()->toDateString() }}"
+                                    placeholder="dd/mm/yyyy"
+                                    autocomplete="off"
+                                    required>
                             </div>
                         </div>
 
@@ -224,16 +226,19 @@
                     {{-- 3. CRONOLOGÍA Y FECHAS --}}
                     <div class="form-block mb-3">
                         <div class="row">
+
                             <div class="col-md-3">
                                 <label class="mb-1" id="labelFechaCrear">
                                     Fecha de recepción <span class="text-danger">*</span>
                                 </label>
 
-                                <input type="date"
-                                       name="fecha_recepcion"
-                                       class="form-control form-control-sm"
-                                       value="{{ now()->toDateString() }}"
-                                       required>
+                                <input type="text"
+                                    name="fecha_recepcion"
+                                    class="form-control form-control-sm fecha-oficio"
+                                    value="{{ now()->toDateString() }}"
+                                    placeholder="dd/mm/yyyy"
+                                    autocomplete="off"
+                                    required>
                             </div>
 
                             <div class="col-md-3">
@@ -241,9 +246,12 @@
                                     Fecha límite de atención
                                 </label>
 
-                                <input type="date"
-                                       name="fecha_limite"
-                                       class="form-control form-control-sm">
+                                <input type="text"
+                                    name="fecha_limite"
+                                    class="form-control form-control-sm fecha-oficio"
+                                    value=""
+                                    placeholder="dd/mm/yyyy"
+                                    autocomplete="off">
                             </div>
 
                             <div class="col-md-3">
@@ -254,33 +262,34 @@
                                 <div class="d-flex pt-1">
                                     <div class="custom-control custom-radio mr-4">
                                         <input type="radio"
-                                               id="req_no"
-                                               name="requiere_respuesta"
-                                               value="0"
-                                               class="custom-control-input"
-                                               checked
-                                               required>
+                                            id="req_no"
+                                            name="requiere_respuesta"
+                                            value="0"
+                                            class="custom-control-input"
+                                            checked
+                                            required>
 
                                         <label class="custom-control-label small"
-                                               for="req_no">
+                                            for="req_no">
                                             No
                                         </label>
                                     </div>
 
                                     <div class="custom-control custom-radio">
                                         <input type="radio"
-                                               id="req_si"
-                                               name="requiere_respuesta"
-                                               value="1"
-                                               class="custom-control-input">
+                                            id="req_si"
+                                            name="requiere_respuesta"
+                                            value="1"
+                                            class="custom-control-input">
 
                                         <label class="custom-control-label small"
-                                               for="req_si">
+                                            for="req_si">
                                             Sí
                                         </label>
                                     </div>
                                 </div>
                             </div>
+
                         </div>
                     </div>
 
