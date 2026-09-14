@@ -1388,32 +1388,14 @@
 
 
                     {{-- =================================================
-                         TAB: RELACIONES
+                        TAB: RELACIONES
                     ================================================== --}}
                     <div class="tab-pane fade"
-                         id="detalle-relaciones"
-                         role="tabpanel"
-                         aria-labelledby="detalle-relaciones-tab">
+                        id="detalle-relaciones"
+                        role="tabpanel"
+                        aria-labelledby="detalle-relaciones-tab">
 
-                        <div id="contenedorArbolRelaciones"
-                             class="bg-light p-3 rounded border">
-
-                            <div class="text-center text-muted py-4">
-
-                                <i class="fas fa-project-diagram mb-2"
-                                   style="font-size: 1.5rem;"></i>
-
-                                <div class="font-weight-bold">
-                                    Relaciones del oficio
-                                </div>
-
-                                <small>
-                                    Aquí se visualizará la relación con otros oficios.
-                                </small>
-
-                            </div>
-
-                        </div>
+                        <div id="contenedorArbolRelaciones"></div>
 
                     </div>
 

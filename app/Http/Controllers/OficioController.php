@@ -1090,91 +1090,144 @@ class OficioController extends Controller
     }
 
 
+    private function obtenerTrayectoria(Oficio $oficio): array
+    {
+        $raiz = $oficio;
+
+        while ($raiz->respuesta_a_oficio_id) {
+            $padre = $raiz->oficioPadre;
+
+            if (!$padre) {
+                break;
+            }
+
+            $raiz = $padre;
+        }
+
+        $nodos = collect();
+
+        $agregarDescendientes = function (Oficio $actual) use (&$agregarDescendientes, &$nodos) {
+            $actual->loadMissing([
+                'estado',
+                'tipo',
+            ]);
+
+            $nodos->push($actual);
+
+            foreach ($actual->respuestas as $respuesta) {
+                $agregarDescendientes($respuesta);
+            }
+        };
+
+        $agregarDescendientes($raiz);
+
+        return [
+            'raiz_id' => $raiz->id,
+            'actual_id' => $oficio->id,
+            'nodos' => $nodos->values()->all(),
+        ];
+    }
+
+
     public function detalleJson(Oficio $oficio)
     {
         $oficio->load([
             'estado',
+            'tipo',
             'responsableActual.usuario',
             'responsableActual.coordinacion',
             'tags',
             'archivos.versiones',
         ]);
 
+        $trayectoria = $this->obtenerTrayectoria($oficio);
+
         return response()->json([
             'id' => $oficio->id,
-
             'numero_oficio' => $oficio->numero_oficio,
             'consecutivo' => $oficio->consecutivo,
             'asunto' => $oficio->asunto,
             'descripcion' => $oficio->descripcion,
-
             'fecha_oficio' => optional($oficio->fecha_oficio)->format('Y-m-d'),
             'fecha_recepcion' => optional($oficio->fecha_recepcion)->format('Y-m-d'),
             'fecha_limite' => optional($oficio->fecha_limite)->format('Y-m-d'),
-
             'tipo_oficio_id' => $oficio->tipo_oficio_id,
-
             'remitente_nombre' => $oficio->remitente_nombre,
             'remitente_cargo' => $oficio->remitente_cargo,
             'remitente_dependencia' => $oficio->remitente_dependencia,
-
             'destinatario_nombre' => $oficio->destinatario_nombre,
             'destinatario_cargo' => $oficio->destinatario_cargo,
             'destinatario_dependencia' => $oficio->destinatario_dependencia,
-
             'quien_elabora_nombre' => $oficio->quien_elabora_nombre,
             'quien_elabora_cargo' => $oficio->quien_elabora_cargo,
-
             'link_documento' => $oficio->link_documento,
-
             'requiere_respuesta' => $oficio->requiere_respuesta,
             'es_sensible' => $oficio->es_sensible,
-
             'respuesta_a_oficio_id' => $oficio->respuesta_a_oficio_id,
-
             'estado' => [
                 'clave' => $oficio->estado->clave,
                 'nombre' => $oficio->estado->nombre,
                 'color' => $oficio->estado->color,
             ],
-
             'responsable' => $oficio->responsableActual ? [
                 'coordinacion' => $oficio->responsableActual->coordinacion->nombre,
                 'usuario' => $oficio->responsableActual->usuario->name,
             ] : null,
-
             'tags' => $oficio->tags->map(function ($tag) {
                 return [
                     'id' => $tag->id,
                     'nombre' => $tag->nombre,
                 ];
             })->values(),
-
             'archivos' => $oficio->archivos->map(function ($archivo) {
-
                 return [
                     'id' => $archivo->id,
                     'nombre_original' => $archivo->nombre_original,
-
                     'versiones' => $archivo->versiones->map(function ($version) {
-
                         return [
                             'version' => $version->version,
                             'ruta' => $version->ruta,
                             'es_actual' => $version->es_actual,
                         ];
-
                     })->values(),
                 ];
-
             })->values(),
-
             'puede_cancelar' =>
                 !in_array($oficio->estado_id, [
                     EstadoOficio::CERRADO,
                     EstadoOficio::CANCELADO,
                 ]) &&
                 auth()->user()->can('cancelar', $oficio),
+            'trayectoria' => [
+                'raiz_id' => $trayectoria['raiz_id'],
+                'actual_id' => $trayectoria['actual_id'],
+                'nodos' => collect($trayectoria['nodos'])->map(function ($nodo) {
+                    $fechaPrincipal = $nodo->cerrado_en
+                        ? $nodo->cerrado_en->format('Y-m-d H:i:s')
+                        : optional($nodo->fecha_oficio)->format('Y-m-d');
+
+                    return [
+                        'id' => $nodo->id,
+                        'numero_oficio' => $nodo->numero_oficio,
+                        'asunto' => $nodo->asunto,
+                        'tipo_oficio_id' => $nodo->tipo_oficio_id,
+                        'tipo_nombre' => $nodo->tipo?->nombre,
+                        'estado_id' => $nodo->estado_id,
+                        'estado' => [
+                            'clave' => $nodo->estado?->clave,
+                            'nombre' => $nodo->estado?->nombre,
+                            'color' => $nodo->estado?->color,
+                        ],
+                        'fecha_oficio' => optional($nodo->fecha_oficio)->format('Y-m-d'),
+                        'fecha_recepcion' => optional($nodo->fecha_recepcion)->format('Y-m-d'),
+                        'fecha_limite' => optional($nodo->fecha_limite)->format('Y-m-d'),
+                        'fecha_principal' => $fechaPrincipal,
+                        'requiere_respuesta' => $nodo->requiere_respuesta,
+                        'cerrado_en' => optional($nodo->cerrado_en)->format('Y-m-d H:i:s'),
+                        'respuesta_a_oficio_id' => $nodo->respuesta_a_oficio_id,
+                    ];
+                })->values(),
+            ],
         ]);
     }
 

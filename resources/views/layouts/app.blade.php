@@ -29,6 +29,270 @@
     <link href="https://fonts.googleapis.com/css?family=Nunito:200,300,400,600,700,800,900" rel="stylesheet">
 
     @yield('styles')
+    <style>
+        #contenedorArbolRelaciones {
+            width: 100%;
+        }
+
+        .trayectoria-superficie {
+            position: relative;
+            width: 100%;
+            min-height: 380px;
+            padding: 42px 24px;
+            overflow: hidden;
+            border: 1px solid #e3e6f0;
+            border-radius: 16px;
+            background-color: #f8f9fc;
+            background-image: radial-gradient(#d4d7de 1px, transparent 1px);
+            background-size: 18px 18px;
+        }
+
+        .trayectoria-viewport {
+            position: relative;
+            width: 100%;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 10px 0;
+        }
+
+        .trayectoria-linea {
+            position: absolute;
+            top: 20px;
+            bottom: 20px;
+            left: 50%;
+            width: 2px;
+            transform: translateX(-50%);
+            background: #d9dce3;
+        }
+
+        .trayectoria-item {
+            position: relative;
+            display: flex;
+            width: 100%;
+            min-height: 132px;
+        }
+
+        .trayectoria-item:nth-child(odd) {
+            justify-content: flex-start;
+            padding-right: calc(50% + 28px);
+        }
+
+        .trayectoria-item:nth-child(even) {
+            justify-content: flex-end;
+            padding-left: calc(50% + 28px);
+        }
+
+        .trayectoria-nodo {
+            position: relative;
+            display: flex;
+            width: 100%;
+            max-width: 360px;
+            min-height: 92px;
+            padding: 15px 17px;
+            border: 1px solid rgba(222, 225, 232, .95);
+            border-radius: 13px;
+            background: rgba(255, 255, 255, .86);
+            box-shadow: 0 3px 12px rgba(58, 59, 69, .045);
+            text-align: left;
+            cursor: pointer;
+            transition:
+                transform .18s ease,
+                border-color .18s ease,
+                box-shadow .18s ease,
+                background-color .18s ease;
+        }
+
+        .trayectoria-item:nth-child(odd) .trayectoria-nodo:hover {
+            transform: translateX(-4px);
+        }
+
+        .trayectoria-item:nth-child(even) .trayectoria-nodo:hover {
+            transform: translateX(4px);
+        }
+
+        .trayectoria-nodo:hover {
+            border-color: #cbd0da;
+            background: rgba(255, 255, 255, .97);
+            box-shadow: 0 7px 20px rgba(58, 59, 69, .09);
+        }
+
+        .trayectoria-punto {
+            position: absolute;
+            top: 50%;
+            left: auto;
+            right: -38px;
+            z-index: 4;
+            width: 18px;
+            height: 18px;
+            border: 4px solid #f8f9fc;
+            border-radius: 50%;
+            background: #adb2bc;
+            box-shadow: 0 0 0 1px #d0d4dc;
+            transform: translateY(-50%);
+        }
+
+        .trayectoria-item:nth-child(even) .trayectoria-punto {
+            left: -38px;
+            right: auto;
+        }
+
+        .trayectoria-info {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            min-width: 0;
+        }
+
+        .trayectoria-numero {
+            color: #343a40;
+            font-size: .9rem;
+            font-weight: 700;
+            line-height: 1.35;
+            overflow-wrap: anywhere;
+        }
+
+        .trayectoria-asunto {
+            margin-top: 4px;
+            color: #60646d;
+            font-size: .84rem;
+            line-height: 1.45;
+            overflow-wrap: anywhere;
+        }
+
+        .trayectoria-meta {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 7px;
+            margin-top: 11px;
+            color: #858796;
+            font-size: .7rem;
+            line-height: 1.4;
+        }
+
+        .trayectoria-meta::before {
+            content: "";
+            width: 5px;
+            height: 5px;
+            flex: 0 0 auto;
+            border-radius: 50%;
+            background: #b7bbc4;
+        }
+
+        .trayectoria-actual {
+            display: inline-flex;
+            align-items: center;
+            width: fit-content;
+            margin-top: 9px;
+            padding: 4px 9px;
+            border-radius: 999px;
+            background: rgba(78, 115, 223, .1);
+            color: #4e73df;
+            font-size: .66rem;
+            font-weight: 700;
+            letter-spacing: .01em;
+        }
+
+        .trayectoria-item.is-actual .trayectoria-nodo {
+            border-color: rgba(78, 115, 223, .38);
+            background: rgba(255, 255, 255, .96);
+            box-shadow:
+                0 5px 18px rgba(78, 115, 223, .09),
+                0 0 0 1px rgba(78, 115, 223, .04);
+        }
+
+        .trayectoria-item.is-actual .trayectoria-punto {
+            background: #4e73df;
+            box-shadow:
+                0 0 0 1px #4e73df,
+                0 0 0 5px rgba(78, 115, 223, .12);
+        }
+
+        .trayectoria-item.is-actual .trayectoria-numero {
+            color: #4e73df;
+        }
+
+        .trayectoria-item.is-raiz .trayectoria-punto {
+            background: #858796;
+        }
+
+        .trayectoria-item.is-ultimo {
+            min-height: 100px;
+        }
+
+        @media (max-width: 768px) {
+            .trayectoria-superficie {
+                padding: 32px 14px;
+            }
+
+            .trayectoria-viewport {
+                max-width: 100%;
+            }
+
+            .trayectoria-item:nth-child(odd),
+            .trayectoria-item:nth-child(even) {
+                padding-left: 0;
+                padding-right: 0;
+                justify-content: center;
+            }
+
+            .trayectoria-item {
+                min-height: 118px;
+            }
+
+            .trayectoria-nodo {
+                max-width: calc(100% - 58px);
+            }
+
+            .trayectoria-punto,
+            .trayectoria-item:nth-child(even) .trayectoria-punto {
+                left: 50%;
+                right: auto;
+                transform: translate(-50%, -50%);
+            }
+
+            .trayectoria-item:nth-child(odd) .trayectoria-nodo:hover,
+            .trayectoria-item:nth-child(even) .trayectoria-nodo:hover {
+                transform: translateY(-2px);
+            }
+        }
+
+        @media (max-width: 480px) {
+            .trayectoria-superficie {
+                padding: 24px 10px;
+                border-radius: 12px;
+                background-size: 16px 16px;
+            }
+
+            .trayectoria-item {
+                min-height: 112px;
+            }
+
+            .trayectoria-nodo {
+                max-width: calc(100% - 48px);
+                min-height: 88px;
+                padding: 12px 13px;
+                border-radius: 11px;
+            }
+
+            .trayectoria-numero {
+                font-size: .8rem;
+            }
+
+            .trayectoria-asunto {
+                font-size: .76rem;
+            }
+
+            .trayectoria-meta {
+                margin-top: 9px;
+                font-size: .66rem;
+            }
+
+            .trayectoria-actual {
+                font-size: .62rem;
+            }
+        }
+    </style>
 
 </head>
 
@@ -506,8 +770,94 @@ window.Oficios = {
             `${window.LaravelBaseUrl}/oficios/${id}/detalle-json`,
             function (oficio) {
 
-                // Guardamos el oficio completo para las acciones posteriores.
-                ModalState.original = oficio;
+            ModalState.original = oficio;
+
+                const trayectoria = oficio.trayectoria;
+
+                $('#contenedorArbolRelaciones').html(`
+                    <div class="trayectoria-superficie">
+                        <div class="trayectoria-viewport">
+                            <div class="trayectoria-linea"></div>
+
+                            ${trayectoria.nodos.map(function (nodo, index) {
+
+                                const esRaiz = nodo.respuesta_a_oficio_id === null;
+                                const esActual = nodo.id === trayectoria.actual_id;
+                                const esUltimo = index === trayectoria.nodos.length - 1;
+
+                                const fecha = nodo.fecha_principal
+                                    ? new Date(nodo.fecha_principal.replace(' ', 'T'))
+                                    : null;
+
+                                const fechaTexto = fecha
+                                    ? fecha.toLocaleDateString('es-MX', {
+                                        day: '2-digit',
+                                        month: 'short',
+                                        year: 'numeric'
+                                    })
+                                    : '';
+
+                                const horaTexto = fecha && nodo.cerrado_en
+                                    ? fecha.toLocaleTimeString('es-MX', {
+                                        hour: '2-digit',
+                                        minute: '2-digit'
+                                    })
+                                    : '';
+
+                                const fechaLabel = nodo.cerrado_en
+                                    ? `Cerrado el ${fechaTexto}${horaTexto ? ` · ${horaTexto}` : ''}`
+                                    : `Registrado el ${fechaTexto}`;
+
+                                return `
+                                    <div class="trayectoria-item ${esActual ? 'is-actual' : ''} ${esRaiz ? 'is-raiz' : ''} ${esUltimo ? 'is-ultimo' : ''}"
+                                        data-oficio-id="${nodo.id}"
+                                        data-padre-id="${nodo.respuesta_a_oficio_id ?? ''}">
+
+                                        <button type="button"
+                                                class="trayectoria-nodo"
+                                                data-oficio-id="${nodo.id}">
+
+                                            <span class="trayectoria-punto"></span>
+
+                                            <span class="trayectoria-info">
+
+                                                <span class="trayectoria-numero">
+                                                    ${nodo.numero_oficio}
+                                                </span>
+
+                                                <span class="trayectoria-asunto">
+                                                    ${nodo.asunto || 'Sin asunto'}
+                                                </span>
+
+                                                <span class="trayectoria-meta">
+                                                    ${nodo.estado?.nombre || 'Sin estado'}
+                                                    ${nodo.tipo_nombre ? ` · ${nodo.tipo_nombre}` : ''}
+                                                    · ${fechaLabel}
+                                                </span>
+
+                                                ${esRaiz ? `
+                                                    <span class="trayectoria-meta">
+                                                        Inicio de la trayectoria
+                                                    </span>
+                                                ` : ''}
+
+                                                ${esActual ? `
+                                                    <span class="trayectoria-actual">
+                                                        Oficio actual
+                                                    </span>
+                                                ` : ''}
+
+                                            </span>
+
+                                        </button>
+
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `);
+
 
                 /*
                 |--------------------------------------------------------------------------
