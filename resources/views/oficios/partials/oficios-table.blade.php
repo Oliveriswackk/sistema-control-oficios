@@ -36,8 +36,8 @@
 
         </div>
 
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0 w-100" id="{{ $tableId ?? 'tabla-oficios' }}">
+        <div class="table-responsive px-3 pb-3">
+    <table class="table table-hover align-middle mb-0 w-100" id="{{ $tableId ?? 'tabla-oficios' }}">
                 <thead class="bg-light text-muted small text-uppercase">
                     <tr>
                         <th class="border-top-0 pl-3 py-3" style="width: 8%;">ID</th>
