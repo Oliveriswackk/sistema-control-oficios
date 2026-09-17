@@ -1187,6 +1187,7 @@ class OficioController extends Controller
                         return [
                             'version' => $version->version,
                             'ruta' => $version->ruta,
+                            'url' => \Illuminate\Support\Facades\Storage::disk('public')->url($version->ruta),
                             'es_actual' => $version->es_actual,
                         ];
                     })->values(),

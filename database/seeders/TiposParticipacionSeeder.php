@@ -17,20 +17,14 @@ class TiposParticipacionSeeder extends Seeder
                 'activo' => true,
             ],
             [
-                'clave' => 'copiado',
-                'nombre' => 'Copia para (C.C.P.)',
-                'implica_responsabilidad' => false,
-                'activo' => true,
-            ],
-            [
                 'clave' => 'apoyo',
                 'nombre' => 'Apoyo operativo',
                 'implica_responsabilidad' => false,
                 'activo' => true,
             ],
             [
-                'clave' => 'revision',
-                'nombre' => 'Revisión',
+                'clave' => 'ccp',
+                'nombre' => 'C.C.P. — Para conocimiento',
                 'implica_responsabilidad' => false,
                 'activo' => true,
             ],

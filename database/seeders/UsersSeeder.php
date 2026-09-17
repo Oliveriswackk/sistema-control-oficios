@@ -26,7 +26,7 @@ class UsersSeeder extends Seeder
 
         $permisos = Permiso::all()->keyBy('clave');
 
-        $defaultPassword = env('SEEDER_DEFAULT_PASSWORD', 'SESEA_OFICIOS2026');
+        $defaultPassword = env('SEEDER_DEFAULT_PASSWORD', '123456789');
 
         $crear = function (
             string $nombre,
