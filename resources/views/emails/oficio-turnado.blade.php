@@ -52,6 +52,27 @@
                     </div>
                 @endif
 
+                {{-- Acciones --}}
+                <div style="margin:28px 0 20px 0; display:flex; gap:12px; flex-wrap:wrap;">
+                    <a
+                        href="{{ URL::temporarySignedRoute(
+                            'turnados.atender.correo',
+                            now()->addDays(7),
+                            ['turnado' => $turnado->id]
+                        ) }}"
+                        style="display:inline-block; padding:12px 20px; background:#4e73df; color:#ffffff; text-decoration:none; border-radius:6px; font-size:14px; font-weight:bold;"
+                    >
+                        Marcar como atendido
+                    </a>
+                    
+                    <a
+                        href="{{ route('home', ['buscar' => $turnado->oficio->numero_oficio]) }}"
+                        style="display:inline-block; padding:11px 18px; background:#ffffff; color:#4a5568; text-decoration:none; border:1px solid #cbd5e0; border-radius:6px; font-size:14px; font-weight:600;"
+                    >
+                        Ver en SCO
+                    </a>
+                </div>
+
                 {{-- Nota de Recepción --}}
                 @if($turnado->observaciones)
                     <div style="margin-bottom:24px; padding:14px; background:#fffaf0; border:1px solid #feebc8; border-radius:6px;">
@@ -98,21 +119,7 @@
                     📎 Adjunto a este correo encuentras el PDF del documento.
                 </p>
 
-                {{-- Acciones --}}
-                <div style="margin:28px 0 20px 0; display:flex; gap:12px; flex-wrap:wrap;">
-                    <a href="#" style="display:inline-block; padding:12px 20px; background:#4e73df; color:#ffffff; text-decoration:none; border-radius:6px; font-size:14px; font-weight:bold;">
-                        Marcar como atendido
-                    </a>
-                    
-                    <a
-                        href="{{ route('home', ['buscar' => $turnado->oficio->numero_oficio]) }}"
-                        style="display:inline-block; padding:11px 18px; background:#ffffff; color:#4a5568; text-decoration:none; border:1px solid #cbd5e0; border-radius:6px; font-size:14px; font-weight:600;"
-                    >
-                        Ver en SCO
-                    </a>
-                </div>
-
-                {{-- Pie humano --}}
+                {{-- Pie Correo --}}
                 <div style="border-top:1px solid #edf2f7; padding-top:20px; margin-top:28px;">
                     <p style="margin:0 0 4px 0; font-size:13px; color:#718096;">
                         Enviado por el equipo de <strong>Recepción</strong>.

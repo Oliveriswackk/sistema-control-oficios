@@ -23,6 +23,13 @@ Route::get('/', function () {
     return view('auth.login'); 
 });
 
+Route::get('/turnados/{turnado}/atender-correo', [
+    OficioController::class,
+    'atenderDesdeCorreo'
+])
+->middleware('signed')
+->name('turnados.atender.correo');
+
 /*
 |--------------------------------------------------------------------------
 | AUTH

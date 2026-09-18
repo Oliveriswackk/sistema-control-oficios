@@ -919,6 +919,13 @@ class OficioController extends Controller
             403
         );
 
+        return $this->procesarAtendido($turnado, auth()->id());
+    }
+
+
+    // SCO
+    private function procesarAtendido(Turnado $turnado, int $usuarioId)
+    {
         if ($turnado->atendido_en) {
             return back();
         }
@@ -931,7 +938,7 @@ class OficioController extends Controller
         $oficio = $turnado->oficio;
 
         $oficio->historial()->create([
-            'usuario_id' => auth()->id(),
+            'usuario_id' => $usuarioId,
             'accion' => 'turnado_atendido',
             'descripcion' => 'El responsable marcó el turnado como atendido',
         ]);
@@ -959,7 +966,7 @@ class OficioController extends Controller
             ]);
 
             $oficio->historial()->create([
-                'usuario_id' => auth()->id(),
+                'usuario_id' => $usuarioId,
                 'accion' => 'oficio_cerrado_automaticamente',
                 'descripcion' => 'Oficio cerrado automáticamente al quedar atendidos todos los responsables y existir una respuesta registrada.',
                 'estado_anterior_id' => $estadoAnterior,
@@ -996,6 +1003,28 @@ class OficioController extends Controller
             'success',
             'Turnado atendido'
         );
+    }
+
+
+    // Correo
+    public function atenderDesdeCorreo(Turnado $turnado)
+    {
+        if ($turnado->atendido_en) {
+            return view('turnados.atendido', [
+                'turnado' => $turnado->load('oficio'),
+                'yaAtendido' => true,
+            ]);
+        }
+
+        $this->procesarAtendido(
+            $turnado,
+            $turnado->usuario_id
+        );
+
+        return view('turnados.atendido', [
+            'turnado' => $turnado->load('oficio'),
+            'yaAtendido' => false,
+        ]);
     }
 
 
