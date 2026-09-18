@@ -175,4 +175,24 @@ class OficioPolicy
 
         return $user->hasPermission('puede_ver_sensibles');
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | SUBIR ARCHIVO
+    |--------------------------------------------------------------------------
+    */
+    public function subirArchivo(User $user, Oficio $oficio): bool
+    {
+        if ($user->hasRole('admin')) {
+            return true;
+        }
+
+        if ($oficio->estado->clave !== 'registrado') {
+            return false;
+        }
+
+        return
+            $user->hasPermission('puede_registrar_oficios') &&
+            $oficio->usuario_registro_id === $user->id;
+    }
 }

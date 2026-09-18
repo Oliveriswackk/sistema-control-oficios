@@ -13,7 +13,7 @@ class OficioArchivoController extends Controller
 {
     public function store(Request $request, Oficio $oficio)
     {
-        $this->authorize('update', $oficio);
+        $this->authorize('subirArchivo', $oficio);
 
         $request->validate([
             'archivo' => 'required|file|mimes:pdf|max:20480',

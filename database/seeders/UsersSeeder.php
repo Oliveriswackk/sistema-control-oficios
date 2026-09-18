@@ -84,7 +84,7 @@ class UsersSeeder extends Seeder
 
         $crear(
             'Salvador Jurado',
-            'salvador.jurado@sesea.test',
+            'oli.maco27@gmail.com',
             null,
             [$admin, $coordinador],
             [7],

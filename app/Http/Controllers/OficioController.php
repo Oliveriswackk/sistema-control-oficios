@@ -3,7 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreOficioRequest;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use App\Services\OficioService;
+use App\Mail\OficioTurnadoMail;
 use App\Models\Oficio;
 use App\Models\Turnado;
 use App\Models\EstadoOficio;
@@ -13,10 +19,6 @@ use App\Models\User;
 use App\Models\FolioReservado;
 use App\Models\Tag;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 class OficioController extends Controller
 {
@@ -825,27 +827,24 @@ class OficioController extends Controller
                 ->first();
 
 
-            Turnado::create([
-
+            $turnado = Turnado::create([
                 'oficio_id' => $oficio->id,
-
-                'usuario_id' => $coordinador?->id,
-
+                'usuario_id' => $coordinador->id,
                 'coordinacion_id' => $coordId,
-
                 'tipo_participacion_id' => $tipoId,
-
                 'estado_turnado_id' => 1,
-
                 'turnado_por_id' => auth()->id(),
-
                 'turnado_en' => now(),
-
                 'es_principal' => false,
-
                 'observaciones' => $request->observaciones,
-
             ]);
+
+            try {
+                Mail::to($coordinador->email)
+                    ->send(new OficioTurnadoMail($turnado->load('oficio.archivos.versiones')));
+            } catch (\Throwable $e) {
+                report($e);
+            }
 
             if ((int) $tipoId === 1) {
 

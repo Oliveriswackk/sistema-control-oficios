@@ -343,13 +343,20 @@
 
 $(document).ready(function () {
 
-    $('#tabla-bandeja').DataTable({
+    const params = new URLSearchParams(window.location.search);
+    const buscar = params.get('buscar') || '';
+
+    const tablaBandeja = $('#tabla-bandeja').DataTable({
         pageLength: 10,
         order: [[0, 'desc']],
         language: {
             url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-MX.json'
         }
     });
+
+    if (buscar) {
+        tablaBandeja.search(buscar).draw();
+    }
 
     @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('coordinador'))
 

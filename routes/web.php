@@ -86,7 +86,7 @@ Route::middleware('auth')->group(function () {
     
     /*
     |--------------------------------------------------------------------------
-    | SUGERENCIAS
+    | SUGERENCIAS (API Directorio - SCO)
     |--------------------------------------------------------------------------
     */
     Route::get('/api/sugerencias/personas', [SugerenciasController::class, 'personas'])
