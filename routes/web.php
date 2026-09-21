@@ -143,16 +143,11 @@ Route::middleware('auth')->group(function () {
     Route::post('/oficios/{oficio}/archivos', [OficioArchivoController::class, 'store'])
         ->name('oficios.archivos.store');
 
-    // CERRAR
-    Route::post('/oficios/{oficio}/cerrar', [OficioController::class, 'cerrar'])
-        ->name('oficios.cerrar');
-
     // CANCELAR
     Route::post('/oficios/{oficio}/cancelar', 
         [OficioController::class, 'cancelar']
     )
     ->name('oficios.cancelar');
-
 
     // CONSECUTIVO
     Route::get('/proximo-consecutivo', [OficioController::class, 'proximoConsecutivo']);    

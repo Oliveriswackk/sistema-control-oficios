@@ -116,7 +116,7 @@
                 </div>
 
                 <p style="margin:0 0 20px 0; font-size:14px; color:#718096; italic;">
-                    📎 Adjunto a este correo encuentras el PDF del documento.
+                    📎 Adjunto a este correo encuentras el PDF del documento en la parte del fondo.
                 </p>
 
                 {{-- Pie Correo --}}

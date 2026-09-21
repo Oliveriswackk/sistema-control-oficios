@@ -244,42 +244,6 @@ class OficioController extends Controller
             ->latest()
             ->get();
 
-        $listosCerrar = collect();
-
-        if (
-            auth()->user()->hasRole('admin') ||
-            auth()->user()->hasRole('coordinador')
-        ) {
-            $listosCerrar = Oficio::with([
-                'turnados.tipoParticipacion'
-            ])
-            ->where(
-                'estado_id',
-                EstadoOficio::EN_SEGUIMIENTO
-            )
-            ->where('requiere_respuesta', false)
-            ->get()
-            ->filter(function ($oficio) {
-
-                $responsables = $oficio->turnados
-                    ->filter(function ($turnado) {
-
-                        return $turnado->tipoParticipacion
-                            && $turnado->tipoParticipacion->implica_responsabilidad;
-                    });
-
-                if ($responsables->isEmpty()) {
-                    return false;
-                }
-
-                return $responsables->every(function ($turnado) {
-
-                    return !is_null($turnado->atendido_en);
-                });
-            })
-            ->values();
-        }
-
         $oficiosRelacionables = Oficio::select(
             'id',
             'numero_oficio',
@@ -306,7 +270,6 @@ class OficioController extends Controller
 
         return view('home', compact(
             'turnados',
-            'listosCerrar',
             'oficiosRelacionables',
             'coordinaciones',
             'estados',
@@ -919,7 +882,15 @@ class OficioController extends Controller
             403
         );
 
-        return $this->procesarAtendido($turnado, auth()->id());
+        $this->procesarAtendido(
+            $turnado,
+            auth()->id()
+        );
+
+        return back()->with(
+            'success',
+            'Turnado atendido correctamente.'
+        );
     }
 
 
@@ -927,7 +898,7 @@ class OficioController extends Controller
     private function procesarAtendido(Turnado $turnado, int $usuarioId)
     {
         if ($turnado->atendido_en) {
-            return back();
+            return;
         }
 
         $turnado->update([
@@ -948,14 +919,21 @@ class OficioController extends Controller
             ->whereNull('atendido_en')
             ->exists();
 
+        if ($pendientes) {
+            $oficio->update([
+                'estado_id' => EstadoOficio::EN_SEGUIMIENTO,
+            ]);
+
+            return;
+        }
+
         $tieneRespuesta = Oficio::where(
             'respuesta_a_oficio_id',
             $oficio->id
         )->exists();
 
         if (
-            $oficio->requiere_respuesta &&
-            !$pendientes &&
+            !$oficio->requiere_respuesta ||
             $tieneRespuesta
         ) {
             $estadoAnterior = $oficio->estado_id;
@@ -968,41 +946,17 @@ class OficioController extends Controller
             $oficio->historial()->create([
                 'usuario_id' => $usuarioId,
                 'accion' => 'oficio_cerrado_automaticamente',
-                'descripcion' => 'Oficio cerrado automáticamente al quedar atendidos todos los responsables y existir una respuesta registrada.',
+                'descripcion' => 'Oficio cerrado automáticamente al quedar atendidos todos los responsables y cumplirse las condiciones de cierre.',
                 'estado_anterior_id' => $estadoAnterior,
                 'estado_nuevo_id' => EstadoOficio::CERRADO,
             ]);
 
-            return back()->with(
-                'success',
-                'Turnado atendido. El oficio quedó cerrado automáticamente.'
-            );
+            return;
         }
 
         $oficio->update([
             'estado_id' => EstadoOficio::EN_SEGUIMIENTO,
         ]);
-
-        if (!$pendientes) {
-
-            if ($oficio->requiere_respuesta) {
-                return back()->with(
-                    'success',
-                    'Todos los responsables atendieron. El oficio quedará cerrado al registrar la respuesta correspondiente.'
-                );
-            }
-
-            return back()->with([
-                'success' => 'Turnado atendido',
-                'mostrar_cierre' => true,
-                'oficio_id' => $oficio->id,
-            ]);
-        }
-
-        return back()->with(
-            'success',
-            'Turnado atendido'
-        );
     }
 
 

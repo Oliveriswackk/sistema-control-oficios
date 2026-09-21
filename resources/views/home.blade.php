@@ -57,25 +57,6 @@
                     </span>
                 </a>
 
-                @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('coordinador'))
-
-                    <a
-                        href="#cerrar"
-                        class="nav-link"
-                        data-toggle="tab"
-                        role="tab"
-                        aria-controls="cerrar"
-                        aria-selected="false"
-                    >
-                        <i class="fas fa-check-circle mr-1"></i>
-                        Listos para cerrar
-                        <span class="badge badge-light border ml-1">
-                            {{ $listosCerrar->count() }}
-                        </span>
-                    </a>
-
-                @endif
-
             </div>
 
             <div class="tab-content">
@@ -207,124 +188,6 @@
 
                 </div>
 
-                @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('coordinador'))
-
-                    <div
-                        class="tab-pane fade px-3 pt-3 pb-3"
-                        id="cerrar"
-                        role="tabpanel"
-                    >
-
-                        <div class="table-responsive">
-
-                            <table
-                                class="table table-hover align-middle mb-0 w-100"
-                                id="tabla-cerrar"
-                            >
-
-                                <thead class="bg-light text-muted small text-uppercase">
-
-                                    <tr>
-
-                                        <th
-                                            class="border-top-0 pl-3 py-3"
-                                            style="width: 8%;"
-                                        >
-                                            ID
-                                        </th>
-
-                                        <th
-                                            class="border-top-0 py-3"
-                                            style="width: 20%;"
-                                        >
-                                            No. Oficio
-                                        </th>
-
-                                        <th
-                                            class="border-top-0 py-3"
-                                            style="width: 42%;"
-                                        >
-                                            Asunto
-                                        </th>
-
-                                        <th
-                                            class="border-top-0 text-right pr-3 py-3"
-                                            style="width: 30%;"
-                                        >
-                                            Acciones
-                                        </th>
-
-                                    </tr>
-
-                                </thead>
-
-                                <tbody class="text-sm">
-
-                                    @foreach($listosCerrar as $oficio)
-
-                                        <tr>
-
-                                            <td class="pl-3">
-                                                {{ $oficio->id }}
-                                            </td>
-
-                                            <td>
-                                                <span class="font-weight-bold text-gray-800">
-                                                    {{ $oficio->numero_oficio }}
-                                                </span>
-                                            </td>
-
-                                            <td>
-                                                <span class="text-gray-700">
-                                                    {{ $oficio->asunto }}
-                                                </span>
-                                            </td>
-
-                                            <td class="text-right pr-3">
-
-                                                <button
-                                                    type="button"
-                                                    class="btn btn-sm btn-light text-primary border-0 rounded mr-1 px-2"
-                                                    title="Ver oficio"
-                                                    onclick="Oficios.open({{ $oficio->id }}, false)"
-                                                >
-                                                    <i class="fas fa-eye fa-xs"></i>
-                                                </button>
-
-                                                <form
-                                                    method="POST"
-                                                    action="{{ route('oficios.cerrar', $oficio) }}"
-                                                    class="d-inline form-cerrar-oficio"
-                                                >
-
-                                                    @csrf
-
-                                                    <button
-                                                        type="submit"
-                                                        class="btn btn-sm btn-success rounded px-3"
-                                                    >
-                                                        <i class="fas fa-check mr-1"></i>
-                                                        Cerrar oficio
-                                                    </button>
-
-                                                </form>
-
-                                            </td>
-
-                                        </tr>
-
-                                    @endforeach
-
-                                </tbody>
-
-                            </table>
-
-                        </div>
-
-                    </div>
-
-                @endif
-
             </div>
 
         </div>
@@ -358,63 +221,8 @@ $(document).ready(function () {
         tablaBandeja.search(buscar).draw();
     }
 
-    @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('coordinador'))
-
-    $('#tabla-cerrar').DataTable({
-        pageLength: 10,
-        order: [[0, 'desc']],
-        language: {
-            url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-MX.json'
-        }
-    });
-
-    @endif
-
-    $('#homeTabs a[data-toggle="tab"]').on('shown.bs.tab', function () {
-
-        $.fn.dataTable
-            .tables({
-                visible: true,
-                api: true
-            })
-            .columns
-            .adjust();
-
-    });
-
 });
 
 </script>
-
-@if(session('mostrar_cierre'))
-
-<script>
-
-document.addEventListener('DOMContentLoaded', async () => {
-
-    const result = await Alerts.confirm(
-        'Todos los responsables han atendido el oficio. ¿Desea cerrarlo ahora?'
-    );
-
-    if (result.isConfirmed) {
-
-        const form = document.createElement('form');
-
-        form.method = 'POST';
-
-        form.action = "{{ url('oficios/' . session('oficio_id') . '/cerrar') }}";
-
-        form.innerHTML = `@csrf`;
-
-        document.body.appendChild(form);
-
-        form.submit();
-    }
-
-});
-
-</script>
-
-@endif
 
 @endsection
