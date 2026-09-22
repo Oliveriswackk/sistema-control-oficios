@@ -98,6 +98,7 @@ class Oficio extends Model
         */
 
         'link_documento',
+        'link_drive',
         'estado_actual',
 
         /*

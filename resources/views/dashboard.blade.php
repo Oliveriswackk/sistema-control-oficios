@@ -508,27 +508,6 @@
             }
         );
 
-        $('input[name="tipo_oficio_id"]').on('change', function () {
-
-            const tipo =
-                $('input[name="tipo_oficio_id"]:checked').val();
-
-            if (tipo == 1) {
-
-                $('#labelFechaCrear').html(
-                    'Fecha de envío <span class="text-danger">*</span>'
-                );
-
-            } else {
-
-                $('#labelFechaCrear').html(
-                    'Fecha de recepción <span class="text-danger">*</span>'
-                );
-
-            }
-
-        });
-
     });
 
 
@@ -572,30 +551,6 @@
 
             Alerts.error(msg);
         });
-    });
-
-
-    // =========================================================
-    // CAMBIAR LABEL DE FECHA
-    // =========================================================
-    $(document).on('change', '#tipo_oficio_id', function () {
-
-        const tipo = $(this).val();
-
-        if (tipo == 1) {
-
-            $('#labelFechaCrear').html(
-                'Fecha de envío <span class="text-danger">*</span>'
-            );
-
-        } else {
-
-            $('#labelFechaCrear').html(
-                'Fecha de recepción <span class="text-danger">*</span>'
-            );
-
-        }
-
     });
 
 
@@ -1055,8 +1010,6 @@
         const tipo =
             $('input[name="tipo_oficio_id"]:checked').val();
 
-        // IMPORTANTE:
-        // El ID REAL del modal es #contenedorCoordinacion
         const bloqueCoordinacion =
             $('#contenedorCoordinacion');
 
@@ -1078,100 +1031,71 @@
         const destinatarioDependencia =
             $('#destinatario_dependencia');
 
+        const linkDrive =
+            $('#link_drive');
 
-        // =====================================================
-        // ENVIADO
-        // =====================================================
+        const asteriscoLinkDrive =
+            $('#asteriscoLinkDrive');
+
+        const ayudaLinkDrive =
+            $('#ayudaLinkDrive');
 
         if (tipo == 1) {
 
-            // MOSTRAR coordinación
             bloqueCoordinacion.show();
+            selectCoordinacion.prop('required', true);
 
-            // Coordinación obligatoria
-            selectCoordinacion
-                .prop('required', true);
+            inputNumero.prop('readonly', true);
 
-
-            // Número generado por sistema
-            inputNumero
-                .prop('readonly', true);
-
-
-            // SESEA es el remitente
-            remitenteDependencia.val(
-                DEPENDENCIA_SESEA
-            );
-
-
-            // Destinatario se captura manualmente
+            remitenteDependencia.val(DEPENDENCIA_SESEA);
             destinatarioDependencia.val('');
 
-
-            // Elaborador sí aplica
             $('#bloqueElaborador').show();
 
-
-            // Cambiar etiqueta
             $('#labelFechaCrear').html(
                 'Fecha de envío <span class="text-danger">*</span>'
             );
 
+            linkDrive.prop('required', false);
+            asteriscoLinkDrive.hide();
 
-            // Generar número
+            ayudaLinkDrive.text(
+                'Opcional para oficios enviados.'
+            );
+
             generarNumeroOficio();
 
-        }
+        } else {
 
-
-        // =====================================================
-        // RECIBIDO / CPC
-        // =====================================================
-
-        else {
-
-            // OCULTAR COMPLETAMENTE coordinación
             bloqueCoordinacion.hide();
 
-            // No es obligatoria
             selectCoordinacion
                 .prop('required', false)
                 .val('');
 
-
-            // Número capturado manualmente
             inputNumero
                 .prop('readonly', false)
                 .val('');
 
-
-            // No utiliza consecutivo de SESEA
             consecutivo.val(0);
-
-
-            // Ocultar opciones de numeración
             opcionesNumeracion.hide();
 
-
-            // Remitente externo
             remitenteDependencia.val('');
+            destinatarioDependencia.val(DEPENDENCIA_SESEA);
 
-
-            // SESEA es el destinatario
-            destinatarioDependencia.val(
-                DEPENDENCIA_SESEA
-            );
-
-
-            // Elaborador no aplica
             $('#bloqueElaborador').hide();
 
-
-            // Cambiar etiqueta
             $('#labelFechaCrear').html(
                 'Fecha de recepción <span class="text-danger">*</span>'
             );
 
+            linkDrive.prop('required', true);
+
+            asteriscoLinkDrive.show();
+
+            ayudaLinkDrive.text(
+                'Obligatorio: enlace al documento recibido en Drive.'
+            );
         }
     }
 
@@ -1182,40 +1106,23 @@
 
     function setTipoOficio(tipo, vista) {
 
-        // Seleccionar radio real
         $('input[name="tipo_oficio_id"][value="' + tipo + '"]')
-            .prop('checked', true);
+            .prop('checked', true)
+            .trigger('change');
 
-
-        // Cambiar tarjetas visuales
-        $('.tipo-oficio-card')
-            .removeClass('active');
-
+        $('.tipo-oficio-card').removeClass('active');
 
         if (vista === 'enviado') {
-
-            $('#btnTipoEnviado')
-                .addClass('active');
-
+            $('#btnTipoEnviado').addClass('active');
         }
 
         if (vista === 'recibido') {
-
-            $('#btnTipoRecibido')
-                .addClass('active');
-
+            $('#btnTipoRecibido').addClass('active');
         }
 
         if (vista === 'recibido_cpc') {
-
-            $('#btnTipoRecibidoCPC')
-                .addClass('active');
-
+            $('#btnTipoRecibidoCPC').addClass('active');
         }
-
-
-        // Aplicar inmediatamente la lógica
-        actualizarFormularioTipoOficio();
     }
 
 
@@ -1227,93 +1134,11 @@
         'change',
         'input[name="tipo_oficio_id"]',
         function () {
-
             actualizarFormularioTipoOficio();
-
         }
     );
 
-
-    // =========================================================
-    // AL ABRIR EL MODAL
-    // =========================================================
-
-    $('#modalCrearOficio').on(
-        'shown.bs.modal',
-        function () {
-
-            actualizarFormularioTipoOficio();
-
-        }
-    );
-
-    function setTipoOficio(tipo, vista) {
-
-        /*
-        * Cambiar el radio real que se enviará al backend
-        */
-        $('input[name="tipo_oficio_id"][value="' + tipo + '"]')
-            .prop('checked', true)
-            .trigger('change');
-
-
-        /*
-        * Cambiar únicamente el estado visual
-        * de las tarjetas.
-        */
-        $('.tipo-oficio-card').removeClass('active');
-
-
-        if (vista === 'enviado') {
-
-            $('#btnTipoEnviado').addClass('active');
-
-        }
-
-
-        if (vista === 'recibido') {
-
-            $('#btnTipoRecibido').addClass('active');
-
-        }
-
-
-        if (vista === 'recibido_cpc') {
-
-            $('#btnTipoRecibidoCPC').addClass('active');
-
-        }
-
-    }
-
-
-    $(document).on('change', 'input[name="tipo_oficio_id"]', function () {
-
-        actualizarFormularioTipoOficio();
-
-    });
-
-
-    $('#modalCrearOficio').on('shown.bs.modal', function () {
-
-        actualizarFormularioTipoOficio();
-
-    });
-
-
-    // Cambio de radio buttons
-    $(document).on('change', 'input[name="tipo_oficio_id"]', function () {
-
-        actualizarFormularioTipoOficio();
-
-    });
-
-
-    // Inicialización al abrir modal
-    $('#modalCrearOficio').on('shown.bs.modal', function () {
-        actualizarFormularioTipoOficio();
-    });
-
+    
     // =========================================================
     // RESERVAR NO. OFICIOS
     // =========================================================

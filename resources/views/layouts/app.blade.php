@@ -1052,6 +1052,10 @@ window.Oficios = {
                     oficio.link_documento || ''
                 );
 
+                $('#detalleLinkDrive').val(
+                    oficio.link_drive || ''
+                );
+
 
                 /*
                 |--------------------------------------------------------------------------
@@ -1485,7 +1489,10 @@ window.Oficios = {
                 $('#detalleElaboradorCargo').val() || '',
 
             link_documento:
-                $('#detalleLinkDocumento').val() || ''
+                $('#detalleLinkDocumento').val() || '',
+                
+            link_drive:
+                $('#detalleLinkDrive').val() || ''
         };
     },
 
@@ -1535,7 +1542,10 @@ window.Oficios = {
                 ModalState.original.quien_elabora_cargo || '',
 
             link_documento:
-                ModalState.original.link_documento || ''
+                ModalState.original.link_documento || '',
+
+            link_drive:
+                ModalState.original.link_drive || ''
         };
 
         return JSON.stringify(current) !== JSON.stringify(original);
@@ -1790,6 +1800,10 @@ window.Oficios = {
 
         $('#detalleLinkDocumento').val(
             oficio.link_documento || ''
+        );
+
+        $('#detalleLinkDrive').val(
+            oficio.link_drive || ''
         );
     },
 

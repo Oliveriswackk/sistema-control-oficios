@@ -3,7 +3,6 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class StoreOficioRequest extends FormRequest
 {
@@ -14,7 +13,6 @@ class StoreOficioRequest extends FormRequest
 
     public function rules(): array
     {
-
         return [
             'tipo_oficio_id' => ['required', 'integer'],
 
@@ -26,8 +24,12 @@ class StoreOficioRequest extends FormRequest
 
             'numero_oficio' => ['required', 'string'],
 
-            'folio_reservado_id' => ['nullable', 'integer', 'exists:folios_reservados,id'],
-            
+            'folio_reservado_id' => [
+                'nullable',
+                'integer',
+                'exists:folios_reservados,id',
+            ],
+
             'asunto' => ['required', 'string'],
             'descripcion' => ['nullable', 'string'],
 
@@ -37,7 +39,10 @@ class StoreOficioRequest extends FormRequest
 
             'requiere_respuesta' => ['boolean'],
 
-            'respuesta_a_oficio_id' => ['nullable', 'integer'],
+            'respuesta_a_oficio_id' => [
+                'nullable',
+                'integer',
+            ],
 
             'es_sensible' => ['boolean'],
 
@@ -53,6 +58,12 @@ class StoreOficioRequest extends FormRequest
             'quien_elabora_cargo' => ['nullable', 'string'],
 
             'link_documento' => ['nullable', 'string'],
+
+            'link_drive' => [
+                'nullable',
+                'string',
+                'required_if:tipo_oficio_id,2,3',
+            ],
         ];
     }
 }

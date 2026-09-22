@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-
+use App\Models\NotificacionTurnado;
 
 // TODO:
 // Revisar cálculo automático del estado general del oficio.
@@ -80,5 +80,13 @@ class Turnado extends Model
     public function turnadoPor()
     {
         return $this->belongsTo(User::class, 'turnado_por_id');
+    }
+
+    public function notificacion()
+    {
+        return $this->hasOne(
+            NotificacionTurnado::class,
+            'turnado_id'
+        );
     }
 }

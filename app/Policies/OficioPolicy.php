@@ -61,6 +61,15 @@ class OficioPolicy
     */
     public function update(User $user, Oficio $oficio): bool
     {
+        if (
+            in_array($oficio->estado->clave, [
+                'cerrado',
+                'cancelado',
+            ])
+        ) {
+            return false;
+        }
+
         if ($user->hasRole('admin')) {
             return true;
         }
@@ -74,8 +83,8 @@ class OficioPolicy
                 ->exists();
         }
 
-        if ($oficio->estado->clave === 'registrado') {
-            return $oficio->usuario_registro_id === $user->id;
+        if ($oficio->usuario_registro_id === $user->id) {
+            return true;
         }
 
         return false;
@@ -183,12 +192,17 @@ class OficioPolicy
     */
     public function subirArchivo(User $user, Oficio $oficio): bool
     {
-        if ($user->hasRole('admin')) {
-            return true;
+        if (
+            in_array($oficio->estado->clave, [
+                'cerrado',
+                'cancelado',
+            ])
+        ) {
+            return false;
         }
 
-        if ($oficio->estado->clave !== 'registrado') {
-            return false;
+        if ($user->hasRole('admin')) {
+            return true;
         }
 
         return

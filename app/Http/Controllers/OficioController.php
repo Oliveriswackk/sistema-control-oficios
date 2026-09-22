@@ -6,6 +6,8 @@ use App\Http\Requests\StoreOficioRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use App\Services\OficioService;
@@ -18,6 +20,8 @@ use App\Models\Coordinacion;
 use App\Models\User;
 use App\Models\FolioReservado;
 use App\Models\Tag;
+use App\Models\NotificacionTurnado;
+use App\Models\TipoParticipacion;
 use Carbon\Carbon;
 
 class OficioController extends Controller
@@ -356,48 +360,42 @@ class OficioController extends Controller
         $esRespuesta = $request->respuesta_a_oficio_id != 0;
 
         if ($esRespuesta) {
-
             $padre = Oficio::find($request->respuesta_a_oficio_id);
 
             if (!$padre) {
                 return back()->with('error', 'Oficio padre no existe');
             }
-
-            /* Responder Oficios Cerrados - Deshabilitado
-
-            if ($padre->estado_id === EstadoOficio::CERRADO) {
-                return back()->with('error', 'No puedes responder un oficio cerrado');
-            }
-            */
         }
 
         $respuestaId = $request->input('respuesta_a_oficio_id');
-
         $tipo = (int) $request->tipo_oficio_id;
-
-        // =====================================================
-        // ENVIADO
-        // =====================================================
 
         if ($tipo === 1) {
 
-            // ----- CASO 1. Se usa el reservado -----
             if ($request->filled('folio_reservado_id')) {
 
-                $folio = \App\Models\FolioReservado::where('id', $request->folio_reservado_id)
-                    ->where('estado', 'reservado')
-                    ->lockForUpdate()
-                    ->first();
+                $folio = \App\Models\FolioReservado::where(
+                    'id',
+                    $request->folio_reservado_id
+                )
+                ->where('estado', 'reservado')
+                ->lockForUpdate()
+                ->first();
 
                 if (!$folio) {
-                    return back()->with('error', 'El folio reservado no está disponible');
+                    return back()->with(
+                        'error',
+                        'El folio reservado no está disponible'
+                    );
                 }
 
                 $coordinacionId = $folio->coordinacion_id;
                 $numero = $folio->numero;
                 $anio = $folio->anio;
 
-                $coordinacion = \App\Models\Coordinacion::findOrFail($coordinacionId);
+                $coordinacion = \App\Models\Coordinacion::findOrFail(
+                    $coordinacionId
+                );
 
                 $numeroOficio =
                     "SESEA-{$coordinacion->clave}-" .
@@ -410,8 +408,7 @@ class OficioController extends Controller
                     'estado' => 'usado',
                     'numero_oficio' => $numeroOficio,
                 ]);
-                
-            // ----- CASO 2. Se consume el siguiente número -----
+
             } else {
 
                 $datos = $oficioService->consumirSiguienteNumero(
@@ -424,18 +421,11 @@ class OficioController extends Controller
 
                 $coordinacionId = $request->coordinacion_origen_id;
             }
-        }
 
-        // =====================================================
-        // RECIBIDO / RECIBIDO CPC
-        // =====================================================
-
-        else {
+        } else {
 
             $numeroOficio = $request->numero_oficio;
-
             $consecutivo = 0;
-
             $coordinacionId = null;
         }
 
@@ -478,14 +468,13 @@ class OficioController extends Controller
             'quien_elabora_cargo' => $request->quien_elabora_cargo,
 
             'link_documento' => $request->link_documento,
+            'link_drive' => $request->link_drive,
 
             'usuario_registro_id' => auth()->id(),
             'responsable_inicial_id' => auth()->id(),
 
             'coordinacion_origen_id' => $coordinacionId,
         ]);
-
-        // -------- Tags --------
 
         if ($request->filled('tags')) {
 
@@ -500,7 +489,7 @@ class OficioController extends Controller
                 }
 
                 $tagModel = Tag::firstOrCreate([
-                    'nombre' => mb_strtolower($tag)
+                    'nombre' => mb_strtolower($tag),
                 ]);
 
                 $tagsIds[] = $tagModel->id;
@@ -514,32 +503,6 @@ class OficioController extends Controller
             'Oficio creado desde interfaz web'
         );
 
-        
-
-        // ============= CIERRE AUTOMÁTICO OFICIOS ENVIADOS SIN RESPUESTA =============
-
-        if (
-            (int) $oficio->tipo_oficio_id === 1 &&
-            !$oficio->requiere_respuesta
-        ) {
-
-            $oficio->update([
-                'estado_id' => EstadoOficio::CERRADO,
-                'cerrado_en' => now(),
-            ]);
-
-            $oficio->historial()->create([
-                'usuario_id' => auth()->id(),
-                'accion' => 'oficio_cerrado_automaticamente',
-                'descripcion' => 'Oficio enviado cerrado automáticamente porque no requiere respuesta.',
-                'estado_anterior_id' => EstadoOficio::REGISTRADO,
-                'estado_nuevo_id' => EstadoOficio::CERRADO,
-            ]);
-
-        }
-
-        // ============= ENVIADOS QUE REQUIEREN RESPUESTA =============
-
         if (
             (int) $oficio->tipo_oficio_id === 1 &&
             $oficio->requiere_respuesta
@@ -552,19 +515,18 @@ class OficioController extends Controller
             $oficio->historial()->create([
                 'usuario_id' => auth()->id(),
                 'accion' => 'oficio_en_seguimiento',
-                'descripcion' => 'El oficio enviado requiere respuesta y queda en seguimiento.',
+                'descripcion' =>
+                    'El oficio enviado requiere respuesta y queda en seguimiento.',
                 'estado_anterior_id' => EstadoOficio::REGISTRADO,
                 'estado_nuevo_id' => EstadoOficio::EN_SEGUIMIENTO,
             ]);
-
         }
-
-
-        // ============= CIERRE AUTOMÁTICO DE OFICIO CON RESPUESTA =============
 
         if ($oficio->respuesta_a_oficio_id) {
 
-            $padre = Oficio::find($oficio->respuesta_a_oficio_id);
+            $padre = Oficio::find(
+                $oficio->respuesta_a_oficio_id
+            );
 
             if ($padre && $padre->requiere_respuesta) {
 
@@ -585,15 +547,13 @@ class OficioController extends Controller
                     $padre->historial()->create([
                         'usuario_id' => auth()->id(),
                         'accion' => 'oficio_cerrado_automaticamente',
-                        'descripcion' => 'El oficio fue cerrado automáticamente al registrar una respuesta y quedar atendidos todos los responsables.',
+                        'descripcion' =>
+                            'El oficio fue cerrado automáticamente al registrar una respuesta y quedar atendidos todos los responsables.',
                         'estado_anterior_id' => $estadoAnterior,
                         'estado_nuevo_id' => EstadoOficio::CERRADO,
                     ]);
-
                 }
-
             }
-
         }
 
         if ($request->ajax()) {
@@ -604,13 +564,16 @@ class OficioController extends Controller
                 'row' => view(
                     'oficios.partials.oficio-row',
                     compact('oficio')
-                )->render()
+                )->render(),
             ]);
         }
 
         return redirect()
             ->route('dashboard')
-            ->with('success', 'Oficio creado correctamente');
+            ->with(
+                'success',
+                'Oficio creado correctamente'
+            );
     }
 
 
@@ -654,9 +617,18 @@ class OficioController extends Controller
         ])) {
             return response()->json([
                 'success' => false,
-                'message' => 'El oficio está cerrado o cancelado. No puede modificarse.'
+                'message' =>
+                    'El oficio está cerrado o cancelado. No puede modificarse.',
             ], 422);
         }
+
+        $request->validate([
+            'link_drive' => [
+                'nullable',
+                'string',
+                'required_if:tipo_oficio_id,2,3',
+            ],
+        ]);
 
         $oficio->update([
             'asunto' => $request->input('asunto'),
@@ -664,28 +636,47 @@ class OficioController extends Controller
             'fecha_oficio' => $request->input('fecha_oficio'),
             'fecha_recepcion' => $request->input('fecha_recepcion'),
             'fecha_limite' => $request->input('fecha_limite'),
-            'requiere_respuesta' => $request->boolean('requiere_respuesta'),
-            'es_sensible' => $request->boolean('es_sensible'),
-            'remitente_nombre' => $request->input('remitente_nombre'),
-            'remitente_cargo' => $request->input('remitente_cargo'),
-            'remitente_dependencia' => $request->input('remitente_dependencia'),
-            'destinatario_nombre' => $request->input('destinatario_nombre'),
-            'destinatario_cargo' => $request->input('destinatario_cargo'),
-            'destinatario_dependencia' => $request->input('destinatario_dependencia'),
-            'quien_elabora_nombre' => $request->input('quien_elabora_nombre'),
-            'quien_elabora_cargo' => $request->input('quien_elabora_cargo'),
-            'link_documento' => $request->input('link_documento'),
+            'requiere_respuesta' =>
+                $request->boolean('requiere_respuesta'),
+            'es_sensible' =>
+                $request->boolean('es_sensible'),
+
+            'remitente_nombre' =>
+                $request->input('remitente_nombre'),
+            'remitente_cargo' =>
+                $request->input('remitente_cargo'),
+            'remitente_dependencia' =>
+                $request->input('remitente_dependencia'),
+
+            'destinatario_nombre' =>
+                $request->input('destinatario_nombre'),
+            'destinatario_cargo' =>
+                $request->input('destinatario_cargo'),
+            'destinatario_dependencia' =>
+                $request->input('destinatario_dependencia'),
+
+            'quien_elabora_nombre' =>
+                $request->input('quien_elabora_nombre'),
+            'quien_elabora_cargo' =>
+                $request->input('quien_elabora_cargo'),
+
+            'link_documento' =>
+                $request->input('link_documento'),
+            'link_drive' =>
+                $request->input('link_drive'),
         ]);
 
         $oficio->historial()->create([
             'usuario_id' => auth()->id(),
             'accion' => 'oficio_editado',
-            'descripcion' => 'Se actualizaron datos generales del oficio',
+            'descripcion' =>
+                'Se actualizaron datos generales del oficio',
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Oficio actualizado correctamente'
+            'message' =>
+                'Oficio actualizado correctamente',
         ]);
     }
 
@@ -731,9 +722,9 @@ class OficioController extends Controller
         return response()->json(
             $oficio->load([
                 'estado',
-                'tipoOficio',
+                'tipo',
                 'turnados.usuario',
-                'historial.usuario'
+                'historial.usuario',
             ])
         );
     }
@@ -746,107 +737,235 @@ class OficioController extends Controller
     */
     public function turnar(Request $request, Oficio $oficio)
     {
-        if ($oficio->estado_id == EstadoOficio::CERRADO) {
-
+        if (in_array($oficio->estado_id, [
+            EstadoOficio::CERRADO,
+            EstadoOficio::CANCELADO,
+        ])) {
             return back()->with(
                 'error',
-                'No se puede turnar un oficio cerrado'
+                'No se puede turnar un oficio cerrado o cancelado.'
             );
         }
 
         $participaciones = $request->input('participacion', []);
 
+        if (!is_array($participaciones) || empty($participaciones)) {
+            return back()->with(
+                'error',
+                'Debe seleccionar al menos una coordinación.'
+            );
+        }
+
+        $participacionesValidas = [];
         $responsableEncontrado = false;
 
         foreach ($participaciones as $coordId => $tipoId) {
-
 
             if (empty($tipoId)) {
                 continue;
             }
 
-            // Buscar coordinador de esa coordinación
-            $coordinador = Coordinacion::find($coordId)
-                ->users()
+            $coordinacion = Coordinacion::where('id', $coordId)
+                ->where('activo', true)
+                ->first();
+
+            if (!$coordinacion) {
+                return back()->with(
+                    'error',
+                    'Una de las coordinaciones seleccionadas no está disponible.'
+                );
+            }
+
+            $tipoParticipacion = TipoParticipacion::where(
+                'id',
+                $tipoId
+            )
+            ->where('activo', true)
+            ->first();
+
+            if (!$tipoParticipacion) {
+                return back()->with(
+                    'error',
+                    'Uno de los tipos de participación seleccionados no es válido.'
+                );
+            }
+
+            $coordinador = $coordinacion->users()
                 ->whereHas('roles', function ($query) {
-
-                    $query->where('clave','coordinador');
-
+                    $query->where('clave', 'coordinador');
                 })
                 ->first();
 
             if (!$coordinador) {
                 return back()->with(
                     'error',
-                    'La coordinación seleccionada no tiene un coordinador asignado'
+                    "La coordinación {$coordinacion->nombre} no tiene un coordinador asignado."
                 );
             }
 
-            $coordinador = Coordinacion::find($coordId)
-                ->users()
-                ->whereHas('roles', function ($query) {
-                    $query->where('clave', 'coordinador');
-                })
-                ->first();
+            if ((int) $tipoId === 1) {
+                $responsableEncontrado = true;
+            }
 
+            $participacionesValidas[] = [
+                'coordinacion_id' => $coordinacion->id,
+                'tipo_participacion_id' => (int) $tipoId,
+                'coordinador' => $coordinador,
+            ];
+        }
 
-            $turnado = Turnado::create([
-                'oficio_id' => $oficio->id,
-                'usuario_id' => $coordinador->id,
-                'coordinacion_id' => $coordId,
-                'tipo_participacion_id' => $tipoId,
-                'estado_turnado_id' => 1,
-                'turnado_por_id' => auth()->id(),
-                'turnado_en' => now(),
-                'es_principal' => false,
-                'observaciones' => $request->observaciones,
+        if (!$responsableEncontrado) {
+            return back()->with(
+                'error',
+                'Debe existir al menos un Responsable Operativo.'
+            );
+        }
+
+        $archivoActual = $oficio->archivos()
+            ->whereHas('versiones', function ($query) {
+                $query->where('es_actual', true);
+            })
+            ->with([
+                'versiones' => function ($query) {
+                    $query->where('es_actual', true);
+                }
+            ])
+            ->first();
+
+        if (!$archivoActual || $archivoActual->versiones->isEmpty()) {
+            return back()->with(
+                'error',
+                'No se puede turnar el oficio porque aún no tiene un PDF adjunto.'
+            );
+        }
+
+        $versionActual = $archivoActual->versiones->first();
+
+        if (!Storage::disk('public')->exists($versionActual->ruta)) {
+            return back()->with(
+                'error',
+                'No se puede turnar el oficio porque el PDF adjunto no está disponible.'
+            );
+        }
+
+        if (
+            in_array((int) $oficio->tipo_oficio_id, [2, 3]) &&
+            (!is_string($oficio->link_drive) || trim($oficio->link_drive) === '')
+        ) {
+            return back()->with(
+                'error',
+                'No se puede turnar el oficio porque falta el enlace de Drive.'
+            );
+        }
+
+        $turnados = DB::transaction(function () use (
+            $oficio,
+            $participacionesValidas,
+            $request
+        ) {
+            $turnados = [];
+
+            foreach ($participacionesValidas as $participacion) {
+
+                $turnado = Turnado::create([
+                    'oficio_id' => $oficio->id,
+                    'usuario_id' => $participacion['coordinador']->id,
+                    'coordinacion_id' => $participacion['coordinacion_id'],
+                    'tipo_participacion_id' => $participacion['tipo_participacion_id'],
+                    'estado_turnado_id' => 1,
+                    'turnado_por_id' => auth()->id(),
+                    'turnado_en' => now(),
+                    'es_principal' => false,
+                    'observaciones' => $request->observaciones,
+                ]);
+
+                $notificacion = NotificacionTurnado::create([
+                    'turnado_id' => $turnado->id,
+                    'destinatario_email' => $participacion['coordinador']->email,
+                    'estado' => NotificacionTurnado::ESTADO_FALLIDO,
+                    'intentos' => 0,
+                ]);
+
+                $turnados[] = [
+                    'turnado' => $turnado,
+                    'notificacion' => $notificacion,
+                    'coordinador' => $participacion['coordinador'],
+                ];
+            }
+
+            $estadoAnterior = $oficio->estado_id;
+
+            $oficio->update([
+                'estado_id' => EstadoOficio::TURNADO,
+            ]);
+
+            $oficio->historial()->create([
+                'usuario_id' => auth()->id(),
+                'accion' => 'oficio_turnado',
+                'descripcion' => 'Se registró un nuevo turnado.',
+                'estado_anterior_id' => $estadoAnterior,
+                'estado_nuevo_id' => EstadoOficio::TURNADO,
+            ]);
+
+            return $turnados;
+        });
+
+        $notificacionesExitosas = 0;
+        $notificacionesFallidas = 0;
+
+        foreach ($turnados as $item) {
+
+            $turnado = $item['turnado'];
+            $notificacion = $item['notificacion'];
+            $coordinador = $item['coordinador'];
+
+            $notificacion->update([
+                'intentos' => $notificacion->intentos + 1,
+                'ultimo_intento_en' => now(),
+                'ultimo_error' => null,
             ]);
 
             try {
+
                 Mail::to($coordinador->email)
-                    ->send(new OficioTurnadoMail($turnado->load('oficio.archivos.versiones')));
+                    ->send(
+                        new OficioTurnadoMail(
+                            $turnado->load('oficio.archivos.versiones')
+                        )
+                    );
+
+                $notificacion->update([
+                    'estado' => NotificacionTurnado::ESTADO_EXITOSO,
+                    'enviado_en' => now(),
+                    'ultimo_error' => null,
+                ]);
+
+                $notificacionesExitosas++;
+
             } catch (\Throwable $e) {
+
                 report($e);
+
+                $notificacion->update([
+                    'estado' => NotificacionTurnado::ESTADO_FALLIDO,
+                    'ultimo_error' => $e->getMessage(),
+                ]);
+
+                $notificacionesFallidas++;
             }
-
-            if ((int) $tipoId === 1) {
-
-                $responsableEncontrado = true;
-
-            }
-
-        }// Fin foreach
-
-        if (!$responsableEncontrado) {
-
-            return back()->with(
-                'error',
-                'Debe existir al menos un Responsable Operativo'
-            );
-
         }
 
-        //Registro bitácora - Turnado
-        $estadoAnterior = $oficio->estado_id;
+        if ($notificacionesFallidas > 0) {
 
-        $oficio->update([
-            'estado_id' => EstadoOficio::TURNADO
-        ]);
-
-        $oficio->historial()->create([
-
-            'usuario_id' => auth()->id(),
-            'accion' => 'oficio_turnado',
-            'descripcion' => 'Se registró un nuevo turnado',
-            'estado_anterior_id' => $estadoAnterior,
-            'estado_nuevo_id' => EstadoOficio::TURNADO,
-
-        ]);
-
+            return back()->with(
+                'warning',
+                "Turnado registrado. {$notificacionesExitosas} notificación(es) enviada(s) correctamente y {$notificacionesFallidas} quedó(aron) pendiente(s) de atención."
+            );
+        }
 
         return back()->with(
             'success',
-            'Turnado registrado correctamente'
+            'Turnado registrado y notificado correctamente.'
         );
     }
 
@@ -982,54 +1101,127 @@ class OficioController extends Controller
     }
 
 
-    /*
-    |--------------------------------------------------------------------------
-    | CERRAR OFICIO
-    |--------------------------------------------------------------------------
-    */
-    public function cerrar(Oficio $oficio)
+    public function reintentarNotificacion(NotificacionTurnado $notificacion)
     {
-        $this->authorize('cerrar', $oficio);
+        $notificacion->load([
+            'turnado.oficio.archivos.versiones',
+            'turnado.usuario',
+            'turnado.coordinacion',
+        ]);
 
-        if ($oficio->requiere_respuesta) {
+        if ($notificacion->estado === NotificacionTurnado::ESTADO_EXITOSO) {
             return back()->with(
-                'error',
-                'Este oficio requiere respuesta y será cerrado automáticamente al registrar el oficio relacionado.'
+                'info',
+                'Esta notificación ya fue enviada correctamente.'
             );
         }
 
-        $pendientes = $oficio->turnados()
-            ->where('tipo_participacion_id', 1)
-            ->whereNull('atendido_en')
-            ->exists();
-
-        if ($pendientes) {
+        if ($notificacion->estado === NotificacionTurnado::ESTADO_ENVIADO_MANUAL) {
             return back()->with(
-                'error',
-                'Aún existen responsables pendientes por atender.'
+                'info',
+                'Esta notificación ya fue continuada por vía manual.'
             );
         }
 
-        $estadoAnterior = $oficio->estado_id;
+        $turnado = $notificacion->turnado;
 
-        $oficio->update([
-            'estado_id' => EstadoOficio::CERRADO,
-            'cerrado_en' => now(),
+        $notificacion->update([
+            'intentos' => $notificacion->intentos + 1,
+            'ultimo_intento_en' => now(),
+            'ultimo_error' => null,
         ]);
 
-        $oficio->historial()->create([
-            'usuario_id' => auth()->id(),
-            'accion' => 'oficio_cerrado',
-            'descripcion' => 'El coordinador cerró el oficio',
-            'estado_anterior_id' => $estadoAnterior,
-            'estado_nuevo_id' => EstadoOficio::CERRADO,
-        ]);
+        try {
 
-        return back()->with(
-            'success',
-            'Oficio cerrado correctamente.'
-        );
+            Mail::to($notificacion->destinatario_email)
+                ->send(
+                    new OficioTurnadoMail(
+                        $turnado
+                    )
+                );
+
+            $notificacion->update([
+                'estado' => NotificacionTurnado::ESTADO_EXITOSO,
+                'enviado_en' => now(),
+                'ultimo_error' => null,
+            ]);
+
+            return back()->with(
+                'success',
+                'La notificación fue enviada correctamente.'
+            );
+
+        } catch (\Throwable $e) {
+
+            report($e);
+
+            $notificacion->update([
+                'estado' => NotificacionTurnado::ESTADO_FALLIDO,
+                'ultimo_error' => $e->getMessage(),
+            ]);
+
+            return back()->with(
+                'error',
+                'No fue posible enviar la notificación. Puede intentar nuevamente o continuar por vía manual.'
+            );
+        }
     }
+
+
+    public function copiarAvisoNotificacion(NotificacionTurnado $notificacion)
+    {
+        $notificacion->load([
+            'turnado.oficio',
+            'turnado.coordinacion',
+        ]);
+
+        if ($notificacion->estado === NotificacionTurnado::ESTADO_EXITOSO) {
+            return back()->with(
+                'info',
+                'Esta notificación ya fue enviada correctamente.'
+            );
+        }
+
+        if ($notificacion->estado === NotificacionTurnado::ESTADO_ENVIADO_MANUAL) {
+            return back()->with(
+                'info',
+                'Esta notificación ya fue registrada como enviada manualmente.'
+            );
+        }
+
+        $turnado = $notificacion->turnado;
+        $oficio = $turnado->oficio;
+
+        $urlSco = route('home', [
+            'buscar' => $oficio->numero_oficio,
+        ]);
+
+        $mensaje = "Buen día.\n\n";
+
+        $mensaje .= "Se le informa que se le ha turnado el oficio ";
+        $mensaje .= $oficio->numero_oficio;
+        $mensaje .= " — ";
+        $mensaje .= $oficio->asunto;
+        $mensaje .= ".\n\n";
+
+        $mensaje .= "Puede consultar y dar seguimiento al oficio en SCO:\n";
+        $mensaje .= $urlSco;
+        $mensaje .= "\n\n";
+
+        $mensaje .= "Saludos.";
+
+        $notificacion->update([
+            'estado' => NotificacionTurnado::ESTADO_ENVIADO_MANUAL,
+            'notificado_manualmente_en' => now(),
+            'notificado_manualmente_por_id' => auth()->id(),
+            'ultimo_error' => $notificacion->ultimo_error,
+        ]);
+
+        return back()
+            ->with('success', 'La notificación quedó registrada como enviada manualmente.')
+            ->with('avisoNotificacion', $mensaje);
+    }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -1046,7 +1238,8 @@ class OficioController extends Controller
         ])) {
             return response()->json([
                 'success' => false,
-                'message' => 'El oficio está cerrado o cancelado y no puede cancelarse.'
+                'message' =>
+                    'El oficio está cerrado o cancelado y no puede cancelarse.',
             ], 422);
         }
 
@@ -1054,7 +1247,7 @@ class OficioController extends Controller
 
         $oficio->update([
             'estado_id' => EstadoOficio::CANCELADO,
-            'cerrado_en' => now(),
+            'cancelado_en' => now(),
         ]);
 
         $oficio->historial()->create([
@@ -1067,7 +1260,8 @@ class OficioController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Oficio cancelado correctamente'
+            'message' =>
+                'Oficio cancelado correctamente',
         ]);
     }
 
@@ -1143,6 +1337,7 @@ class OficioController extends Controller
             'quien_elabora_nombre' => $oficio->quien_elabora_nombre,
             'quien_elabora_cargo' => $oficio->quien_elabora_cargo,
             'link_documento' => $oficio->link_documento,
+            'link_drive' => $oficio->link_drive,
             'requiere_respuesta' => $oficio->requiere_respuesta,
             'es_sensible' => $oficio->es_sensible,
             'respuesta_a_oficio_id' => $oficio->respuesta_a_oficio_id,

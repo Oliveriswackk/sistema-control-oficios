@@ -408,6 +408,37 @@
                                           rows="2"></textarea>
                             </div>
                         </div>
+
+                        <div class="form-block mb-3">
+
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="actor-title mb-0">
+                                    Documento en Drive
+                                </div>
+
+                                <span id="asteriscoLinkDrive"
+                                    class="text-danger font-weight-bold ml-1"
+                                    style="display: none;">
+                                    *
+                                </span>
+                            </div>
+
+                            <label class="mb-1">
+                                Enlace del documento
+                            </label>
+
+                            <input type="url"
+                                id="link_drive"
+                                name="link_drive"
+                                class="form-control form-control-sm font-mono"
+                                placeholder="https://drive.google.com/...">
+
+                            <small id="ayudaLinkDrive"
+                                class="text-muted d-block mt-1">
+                                Opcional para oficios enviados.
+                            </small>
+
+                        </div>
                     </div>
 
                     {{-- 5. ACTORES --}}
@@ -474,8 +505,8 @@
                             </div>
                         </div>
 
-
                         <div class="row mt-3 pt-3 border-top">
+
                             <div class="col-md-6" id="bloqueElaborador">
                                 <div class="actor-title mb-2">
                                     Elaborador interno
@@ -484,35 +515,49 @@
                                 <div class="row">
                                     <div class="col-md-7">
                                         <label class="mb-1">Nombre</label>
+
                                         <input type="text"
-                                               name="quien_elabora_nombre"
-                                               class="form-control form-control-sm">
+                                            name="quien_elabora_nombre"
+                                            class="form-control form-control-sm">
                                     </div>
 
                                     <div class="col-md-5">
                                         <label class="mb-1">Cargo</label>
+
                                         <input type="text"
-                                               name="quien_elabora_cargo"
-                                               class="form-control form-control-sm">
+                                            name="quien_elabora_cargo"
+                                            class="form-control form-control-sm">
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="col-md-6 pl-md-4 mt-3 mt-md-0">
+                        </div>
+
+                        <div class="row mt-3 pt-3 border-top">
+
+                            <div class="col-md-12">
+
                                 <div class="actor-title mb-2">
-                                    Transparencia
+                                    Referencia externa
                                 </div>
 
                                 <label class="mb-1">
-                                    Link de referencia
+                                    Link de Transparencia
                                 </label>
 
-                                <input type="text"
-                                       name="link_documento"
-                                       class="form-control form-control-sm font-mono"
-                                       placeholder="https://...">
+                                <input type="url"
+                                    name="link_documento"
+                                    class="form-control form-control-sm font-mono"
+                                    placeholder="https://...">
+
+                                <small class="text-muted d-block mt-1">
+                                    Enlace a la versión pública del oficio.
+                                </small>
+
                             </div>
+
                         </div>
+
                     </div>
 
                 </div>
@@ -1048,6 +1093,25 @@
                                 {{-- JS inyecta PDF --}}
                             </div>
 
+                            <div class="mt-3 pt-3 border-top">
+
+                                <label class="mb-1">
+                                    Enlace del documento en Drive
+                                </label>
+
+                                <input
+                                    type="url"
+                                    id="detalleLinkDrive"
+                                    name="link_drive"
+                                    class="form-control form-control-sm font-mono"
+                                    placeholder="https://drive.google.com/...">
+
+                                <small class="text-muted d-block mt-1">
+                                    Ubicación del documento institucional en Drive.
+                                </small>
+
+                            </div>
+
                         </div>
 
 
@@ -1470,144 +1534,4 @@
         }
     });
 
-    function setTipoOficio(valorId, tipoStr) {
-        const radioTipo = document.querySelector(
-            'input[name="tipo_oficio_id"][value="' + valorId + '"]'
-        );
-
-        if (radioTipo) {
-            radioTipo.checked = true;
-        }
-
-        document
-            .querySelectorAll('.tipo-oficio-card')
-            .forEach(function (card) {
-                card.classList.remove('active');
-            });
-
-        if (valorId === '1') {
-            document.getElementById('btnTipoEnviado').classList.add('active');
-        } else if (valorId === '2') {
-            document.getElementById('btnTipoRecibido').classList.add('active');
-        } else if (valorId === '3') {
-            document.getElementById('btnTipoRecibidoCPC').classList.add('active');
-        }
-
-        const contenedorCoordinacion =
-            document.getElementById('contenedorCoordinacion');
-
-        const selectCoordinacion =
-            document.getElementById('selectCoordinacion');
-
-        const inputNumeroOficio =
-            document.getElementById('numero_oficio');
-
-        const opcionesNumeracion =
-            document.getElementById('opcionesNumeracion');
-
-        const bloqueElaborador =
-            document.getElementById('bloqueElaborador');
-
-        const remitenteDependencia =
-            document.getElementById('remitente_dependencia');
-
-        const destinatarioDependencia =
-            document.getElementById('destinatario_dependencia');
-
-        if (valorId === '1') {
-            contenedorCoordinacion.style.display = 'block';
-
-            selectCoordinacion.setAttribute(
-                'required',
-                'required'
-            );
-
-            inputNumeroOficio.setAttribute(
-                'readonly',
-                'readonly'
-            );
-
-            bloqueElaborador.style.display = 'block';
-
-            if (remitenteDependencia) {
-                remitenteDependencia.value =
-                    'Secretaría Ejecutiva del Sistema Estatal Anticorrupción';
-            }
-
-            if (destinatarioDependencia) {
-                destinatarioDependencia.value = '';
-            }
-
-            document.getElementById('labelFechaCrear').innerHTML =
-                'Fecha de envío <span class="text-danger">*</span>';
-
-            if (typeof generarNumeroOficio === 'function') {
-                generarNumeroOficio();
-            }
-        } else {
-            contenedorCoordinacion.style.display = 'none';
-
-            selectCoordinacion.removeAttribute(
-                'required'
-            );
-
-            selectCoordinacion.value = '';
-
-            inputNumeroOficio.removeAttribute(
-                'readonly'
-            );
-
-            inputNumeroOficio.value = '';
-
-            opcionesNumeracion.style.display = 'none';
-
-            bloqueElaborador.style.display = 'none';
-
-            if (remitenteDependencia) {
-                remitenteDependencia.value = '';
-            }
-
-            if (destinatarioDependencia) {
-                destinatarioDependencia.value =
-                    'Secretaría Ejecutiva del Sistema Estatal Anticorrupción';
-            }
-
-            document.getElementById('labelFechaCrear').innerHTML =
-                'Fecha de recepción <span class="text-danger">*</span>';
-        }
-    }
-
-    document.addEventListener('change', function (e) {
-        if (!e.target.matches('input[name="tipo_relacion"]')) {
-            return;
-        }
-
-        const bloque =
-            document.getElementById('bloqueOficioRelacionado');
-
-        const oficioRelacionado =
-            document.getElementById('oficio_relacionado');
-
-        const respuestaId =
-            document.getElementById('respuesta_a_oficio_id');
-
-        const resultados =
-            document.getElementById('oficiosRelacionadosResultados');
-
-        if (e.target.value === 'relacionado') {
-            bloque.style.display = 'block';
-            oficioRelacionado.required = true;
-        } else {
-            bloque.style.display = 'none';
-            oficioRelacionado.required = false;
-            oficioRelacionado.value = '';
-            respuestaId.value = '';
-            resultados.innerHTML = '';
-            resultados.style.display = 'none';
-        }
-    });
-
-    document.addEventListener('DOMContentLoaded', function () {
-        setTipoOficio('1', 'enviado');
-    });
 </script>

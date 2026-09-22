@@ -14,9 +14,12 @@ class OficioTurnadoMail extends Mailable
 
     public Turnado $turnado;
 
+    public bool $esResponsable;
+
     public function __construct(Turnado $turnado)
     {
         $this->turnado = $turnado;
+        $this->esResponsable = (int) $turnado->tipo_participacion_id === 1;
     }
 
     public function build()

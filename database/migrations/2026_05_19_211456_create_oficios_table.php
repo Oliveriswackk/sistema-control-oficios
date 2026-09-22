@@ -123,7 +123,7 @@ return new class extends Migration
             |--------------------------------------------------------------------------
             */
 
-            $table->string('link_documento')->nullable();
+            $table->string('link_documento')->nullable(); // Transparencia
 
             /*
             |--------------------------------------------------------------------------

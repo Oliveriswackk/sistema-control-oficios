@@ -130,14 +130,19 @@ Route::middleware('auth')->group(function () {
     Route::put('/oficios/{oficio}', [OficioController::class, 'update'])
         ->name('oficios.update');
 
-    // MODAL TURNAR (GET)
+    // TURNAR
     Route::get('/oficios/{oficio}/turnar', [OficioController::class, 'turnarModal'])
         ->name('oficios.turnar.modal');
         
-    // GUARDAR TURNAR (POST SINGLE)
     Route::post('/oficios/{oficio}/turnar', [OficioController::class, 'turnar'])
         ->middleware('permission:puede_turnar')
         ->name('oficios.turnar');
+
+    Route::post('/notificaciones/{notificacion}/reintentar', [OficioController::class, 'reintentarNotificacion'])
+        ->name('notificaciones.reintentar');
+
+    Route::post('/notificaciones/{notificacion}/copiar-aviso', [OficioController::class, 'copiarAvisoNotificacion'])
+        ->name('notificaciones.copiar-aviso');
 
     // CARGAR ARCHIVO PDF
     Route::post('/oficios/{oficio}/archivos', [OficioArchivoController::class, 'store'])
