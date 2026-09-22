@@ -737,6 +737,13 @@ class OficioController extends Controller
     */
     public function turnar(Request $request, Oficio $oficio)
     {
+        if ((int) $oficio->tipo_oficio_id === 1) {
+            return back()->with(
+                'error',
+                'Los oficios enviados no se pueden turnar.'
+            );
+        }
+
         if (in_array($oficio->estado_id, [
             EstadoOficio::CERRADO,
             EstadoOficio::CANCELADO,

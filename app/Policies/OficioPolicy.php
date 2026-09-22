@@ -150,6 +150,7 @@ class OficioPolicy
         ]);
     }
 
+    
     /*
     |--------------------------------------------------------------------------
     | CANCELAR
@@ -185,6 +186,7 @@ class OficioPolicy
         return $user->hasPermission('puede_ver_sensibles');
     }
 
+
     /*
     |--------------------------------------------------------------------------
     | SUBIR ARCHIVO
@@ -192,17 +194,20 @@ class OficioPolicy
     */
     public function subirArchivo(User $user, Oficio $oficio): bool
     {
-        if (
-            in_array($oficio->estado->clave, [
-                'cerrado',
-                'cancelado',
-            ])
-        ) {
+        if ($oficio->estado->clave === 'cancelado') {
             return false;
         }
 
         if ($user->hasRole('admin')) {
             return true;
+        }
+
+        if (
+            $oficio->estado->clave === 'cerrado' &&
+            $oficio->cerrado_en &&
+            $oficio->cerrado_en->lt(now()->subDays(14))
+        ) {
+            return false;
         }
 
         return

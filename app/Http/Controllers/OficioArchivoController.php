@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 use App\Models\Oficio;
 use App\Models\OficioArchivo;
 use App\Models\OficioArchivoVersion;
+use App\Models\EstadoOficio;
 
 class OficioArchivoController extends Controller
 {
@@ -67,6 +68,28 @@ class OficioArchivoController extends Controller
             'es_publica' => true,
             'subido_por_id' => auth()->id(),
         ]);
+
+        if (
+            (int) $oficio->tipo_oficio_id === 1 &&
+            !$oficio->requiere_respuesta &&
+            (int) $oficio->estado_id === EstadoOficio::REGISTRADO
+        ) {
+            $estadoAnterior = $oficio->estado_id;
+
+            $oficio->update([
+                'estado_id' => EstadoOficio::CERRADO,
+                'cerrado_en' => now(),
+            ]);
+
+            $oficio->historial()->create([
+                'usuario_id' => auth()->id(),
+                'accion' => 'oficio_cerrado_automaticamente',
+                'descripcion' =>
+                    'Oficio enviado cerrado automáticamente al contar con un PDF vigente y no requerir respuesta.',
+                'estado_anterior_id' => $estadoAnterior,
+                'estado_nuevo_id' => EstadoOficio::CERRADO,
+            ]);
+        }
 
         // 6. Registro bitácora - Archivo del Oficio
         $oficio->historial()->create([

@@ -457,7 +457,7 @@
                 <div class="copyright text-center my-auto">
 
                     <span>
-                        Sistema de Control de Oficios &copy; {{ date('Y') }} - Desarrollado por SESEA <span class="badge badge-secondary ml-1">v1.2.0</span>
+                        Sistema de Control de Oficios &copy; {{ date('Y') }} - Desarrollado por SESEA <span class="badge badge-secondary ml-1">v1.1.0</span>
                     </span>
 
                 </div>
