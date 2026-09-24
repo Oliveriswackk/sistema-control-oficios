@@ -9,6 +9,12 @@ class EstadoTurnado extends Model
 {
     protected $table = 'estados_turnado';
 
+    public const ACTIVO = 'activo';
+    public const EN_ATENCION = 'en_atencion';
+    public const ATENDIDO = 'atendido';
+    public const COMUNICADO_EXTERNAMENTE = 'comunicado_externamente';
+    public const CERRADO = 'cerrado';
+
     protected $fillable = [
         'clave',
         'nombre',

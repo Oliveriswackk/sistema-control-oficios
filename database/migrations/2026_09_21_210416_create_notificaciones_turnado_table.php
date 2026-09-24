@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('notificaciones_turnado', function (Blueprint $table) {
@@ -23,11 +20,17 @@ return new class extends Migration
 
             $table->string('estado');
 
+            $table->string('message_id')
+                ->nullable()
+                ->index();
+
             $table->unsignedInteger('intentos')->default(0);
 
             $table->timestamp('ultimo_intento_en')->nullable();
 
             $table->timestamp('enviado_en')->nullable();
+
+            $table->timestamp('no_entregado_en')->nullable();
 
             $table->timestamp('notificado_manualmente_en')->nullable();
 
@@ -44,7 +47,6 @@ return new class extends Migration
         });
     }
 
-    
     public function down(): void
     {
         Schema::dropIfExists('notificaciones_turnado');

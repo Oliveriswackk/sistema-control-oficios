@@ -1903,6 +1903,39 @@ window.Oficios.enableChangeDetection();
 window.Oficios.bindSave();
 window.Oficios.bindCloseGuard();
 
+window.toggleNotificaciones = function (oficioId) {
+
+    const menu = document.getElementById(
+        `notificaciones-${oficioId}`
+    );
+
+    if (!menu) {
+        return;
+    }
+
+    document.querySelectorAll('.notificaciones-menu').forEach(function (otroMenu) {
+
+        if (otroMenu !== menu) {
+            otroMenu.style.display = 'none';
+        }
+
+    });
+
+    menu.style.display =
+        menu.style.display === 'none' || menu.style.display === ''
+            ? 'block'
+            : 'none';
+};
+
+
+document.addEventListener('click', function () {
+
+    document.querySelectorAll('.notificaciones-menu').forEach(function (menu) {
+        menu.style.display = 'none';
+    });
+
+});
+
 </script>
 
 </body>

@@ -26,6 +26,11 @@ class EstadosTurnadoSeeder extends Seeder
                 'activo' => true,
             ],
             [
+                'clave' => 'comunicado_externamente',
+                'nombre' => 'Comunicado externamente',
+                'activo' => true,
+            ],
+            [
                 'clave' => 'cerrado',
                 'nombre' => 'Cerrado',
                 'activo' => true,

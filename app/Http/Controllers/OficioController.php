@@ -156,10 +156,13 @@ class OficioController extends Controller
             'recibidos_cpc' => 'recibido_cpc',
         ];
 
-        $query = Oficio::with([
+        $oficiosQuery = Oficio::with([
             'estado',
-            'turnados',
-            'tags'
+            'turnados.usuario',
+            'turnados.tipoParticipacion',
+            'turnados.estadoTurnado',
+            'turnados.notificacion',
+            'tags',
         ]);
 
         if ($vista !== 'todos') {
@@ -168,18 +171,18 @@ class OficioController extends Controller
                 $tipoVista[$vista]
             )->value('id');
 
-            $query->where(
+            $oficiosQuery->where(
                 'tipo_oficio_id',
                 $tipoOficioId
             );
         }
 
         $this->aplicarFiltros(
-            $query,
+            $oficiosQuery,
             $request
         );
 
-        $oficios = $query
+        $oficios = $oficiosQuery
             ->latest()
             ->get();
 
@@ -532,7 +535,12 @@ class OficioController extends Controller
 
                 $pendientes = $padre->turnados()
                     ->where('tipo_participacion_id', 1)
-                    ->whereNull('atendido_en')
+                    ->whereHas('estadoTurnado', function ($query) {
+                        $query->whereNotIn('clave', [
+                            \App\Models\EstadoTurnado::ATENDIDO,
+                            \App\Models\EstadoTurnado::COMUNICADO_EXTERNAMENTE,
+                        ]);
+                    })
                     ->exists();
 
                 if (!$pendientes) {
@@ -926,10 +934,19 @@ class OficioController extends Controller
             $notificacion = $item['notificacion'];
             $coordinador = $item['coordinador'];
 
+            /* Identificador Único */
+            $messageId = 'sco-notificacion-' .
+                $notificacion->id .
+                '-' .
+                Str::uuid() .
+                '@sco.local';
+
             $notificacion->update([
+                'message_id' => $messageId,
                 'intentos' => $notificacion->intentos + 1,
                 'ultimo_intento_en' => now(),
                 'ultimo_error' => null,
+                'no_entregado_en' => null,
             ]);
 
             try {
@@ -937,7 +954,8 @@ class OficioController extends Controller
                 Mail::to($coordinador->email)
                     ->send(
                         new OficioTurnadoMail(
-                            $turnado->load('oficio.archivos.versiones')
+                            $turnado->load('oficio.archivos.versiones'),
+                            $notificacion
                         )
                     );
 
@@ -1042,7 +1060,12 @@ class OficioController extends Controller
 
         $pendientes = $oficio->turnados()
             ->where('tipo_participacion_id', 1)
-            ->whereNull('atendido_en')
+            ->whereHas('estadoTurnado', function ($query) {
+                $query->whereNotIn('clave', [
+                    \App\Models\EstadoTurnado::ATENDIDO,
+                    \App\Models\EstadoTurnado::COMUNICADO_EXTERNAMENTE,
+                ]);
+            })
             ->exists();
 
         if ($pendientes) {
@@ -1123,19 +1146,30 @@ class OficioController extends Controller
             );
         }
 
-        if ($notificacion->estado === NotificacionTurnado::ESTADO_ENVIADO_MANUAL) {
+        if (!in_array($notificacion->estado, [
+            NotificacionTurnado::ESTADO_FALLIDO,
+            NotificacionTurnado::ESTADO_NO_ENTREGADO,
+        ], true)) {
             return back()->with(
                 'info',
-                'Esta notificación ya fue continuada por vía manual.'
+                'Esta notificación ya fue comunicada externamente.'
             );
         }
 
         $turnado = $notificacion->turnado;
 
+        $messageId = 'sco-notificacion-' .
+            $notificacion->id .
+            '-' .
+            Str::uuid() .
+            '@sco.local';
+
         $notificacion->update([
+            'message_id' => $messageId,
             'intentos' => $notificacion->intentos + 1,
             'ultimo_intento_en' => now(),
             'ultimo_error' => null,
+            'no_entregado_en' => null,
         ]);
 
         try {
@@ -1143,7 +1177,8 @@ class OficioController extends Controller
             Mail::to($notificacion->destinatario_email)
                 ->send(
                     new OficioTurnadoMail(
-                        $turnado
+                        $turnado,
+                        $notificacion
                     )
                 );
 
@@ -1169,7 +1204,7 @@ class OficioController extends Controller
 
             return back()->with(
                 'error',
-                'No fue posible enviar la notificación. Puede intentar nuevamente o continuar por vía manual.'
+                'No fue posible enviar la notificación. Puede intentar nuevamente.'
             );
         }
     }
@@ -1178,8 +1213,7 @@ class OficioController extends Controller
     public function copiarAvisoNotificacion(NotificacionTurnado $notificacion)
     {
         $notificacion->load([
-            'turnado.oficio',
-            'turnado.coordinacion',
+            'turnado.estadoTurnado',
         ]);
 
         if ($notificacion->estado === NotificacionTurnado::ESTADO_EXITOSO) {
@@ -1192,41 +1226,40 @@ class OficioController extends Controller
         if ($notificacion->estado === NotificacionTurnado::ESTADO_ENVIADO_MANUAL) {
             return back()->with(
                 'info',
-                'Esta notificación ya fue registrada como enviada manualmente.'
+                'Esta comunicación ya fue registrada como externa.'
             );
         }
 
         $turnado = $notificacion->turnado;
-        $oficio = $turnado->oficio;
-
-        $urlSco = route('home', [
-            'buscar' => $oficio->numero_oficio,
-        ]);
-
-        $mensaje = "Buen día.\n\n";
-
-        $mensaje .= "Se le informa que se le ha turnado el oficio ";
-        $mensaje .= $oficio->numero_oficio;
-        $mensaje .= " — ";
-        $mensaje .= $oficio->asunto;
-        $mensaje .= ".\n\n";
-
-        $mensaje .= "Puede consultar y dar seguimiento al oficio en SCO:\n";
-        $mensaje .= $urlSco;
-        $mensaje .= "\n\n";
-
-        $mensaje .= "Saludos.";
 
         $notificacion->update([
             'estado' => NotificacionTurnado::ESTADO_ENVIADO_MANUAL,
             'notificado_manualmente_en' => now(),
             'notificado_manualmente_por_id' => auth()->id(),
-            'ultimo_error' => $notificacion->ultimo_error,
         ]);
 
-        return back()
-            ->with('success', 'La notificación quedó registrada como enviada manualmente.')
-            ->with('avisoNotificacion', $mensaje);
+        if (!in_array(
+            $turnado->estadoTurnado->clave,
+            [
+                \App\Models\EstadoTurnado::ATENDIDO,
+                \App\Models\EstadoTurnado::CERRADO,
+            ],
+            true
+        )) {
+            $estadoExterno = \App\Models\EstadoTurnado::where(
+                'clave',
+                \App\Models\EstadoTurnado::COMUNICADO_EXTERNAMENTE
+            )->firstOrFail();
+
+            $turnado->update([
+                'estado_turnado_id' => $estadoExterno->id,
+            ]);
+        }
+
+        return back()->with(
+            'success',
+            'La comunicación externa quedó registrada.'
+        );
     }
 
 

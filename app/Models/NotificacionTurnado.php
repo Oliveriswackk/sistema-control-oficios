@@ -13,9 +13,11 @@ class NotificacionTurnado extends Model
         'turnado_id',
         'destinatario_email',
         'estado',
+        'message_id',
         'intentos',
         'ultimo_intento_en',
         'enviado_en',
+        'no_entregado_en',
         'notificado_manualmente_en',
         'notificado_manualmente_por_id',
         'ultimo_error',
@@ -24,12 +26,15 @@ class NotificacionTurnado extends Model
     protected $casts = [
         'ultimo_intento_en' => 'datetime',
         'enviado_en' => 'datetime',
+        'no_entregado_en' => 'datetime',
         'notificado_manualmente_en' => 'datetime',
     ];
 
     public const ESTADO_EXITOSO = 'EXITOSO';
 
     public const ESTADO_FALLIDO = 'FALLIDO';
+
+    public const ESTADO_NO_ENTREGADO = 'NO_ENTREGADO';
 
     public const ESTADO_ENVIADO_MANUAL = 'ENVIADO_MANUAL';
 
