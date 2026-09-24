@@ -8,8 +8,9 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Str;
+use Illuminate\Http\Request;
 use App\Services\OficioService;
 use App\Mail\OficioTurnadoMail;
 use App\Models\Oficio;
@@ -22,6 +23,7 @@ use App\Models\FolioReservado;
 use App\Models\Tag;
 use App\Models\NotificacionTurnado;
 use App\Models\TipoParticipacion;
+use App\Jobs\DetectarRebotesJob;
 use Carbon\Carbon;
 
 class OficioController extends Controller
@@ -1187,6 +1189,9 @@ class OficioController extends Controller
                 'enviado_en' => now(),
                 'ultimo_error' => null,
             ]);
+
+            DetectarRebotesJob::dispatch()
+                ->delay(now()->addSeconds(30));
 
             return back()->with(
                 'success',
