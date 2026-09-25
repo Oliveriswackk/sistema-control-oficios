@@ -19,6 +19,16 @@ window.OficiosApi = {
         });
     },
 
+    cancelar(oficioId) {
+        return $.ajax({
+            url: `${window.LaravelBaseUrl}/oficios/${oficioId}/cancelar`,
+            method: 'POST',
+            data: {
+                _token: $('meta[name="csrf-token"]').attr('content')
+            }
+        });$('#btnCancelarOficio').toggle(puedeCancelar);
+    },
+
     datatable(filters = {}) {
         return $.ajax({
             url: `${window.LaravelBaseUrl}/oficios/datatable`,

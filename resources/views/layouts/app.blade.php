@@ -506,6 +506,12 @@
     );
 </script>
 
+<script>
+    window.USER_CAN_CANCEL = @json(
+        auth()->user()->hasPermission('puede_registrar_oficios')
+    );
+</script>
+
 {{-- =========================================================
 |  SISTEMA DE ALERTAS (GLOBAL)
 ========================================================= --}}
@@ -865,11 +871,12 @@ window.Oficios = {
                 |--------------------------------------------------------------------------
                 */
 
-                if (oficio.puede_cancelar === true) {
-                    $('#btnCancelarOficio').show();
-                } else {
-                    $('#btnCancelarOficio').hide();
-                }
+                const puedeCancelar =
+                    window.USER_CAN_CANCEL === true &&
+                    oficio.estado?.clave !== 'cerrado' &&
+                    oficio.estado?.clave !== 'cancelado';
+
+                $('#btnCancelarOficio').toggle(puedeCancelar);
 
                 const bloqueado =
                     oficio.estado?.clave === 'cerrado' ||
@@ -886,6 +893,7 @@ window.Oficios = {
 
                 $('#btnCorregirIdentidad')
                     .toggle(!bloqueado);
+
 
 
                 /*
@@ -1599,48 +1607,43 @@ window.Oficios = {
                         return;
                     }
 
-                    $.ajax({
-                        url: `${window.LaravelBaseUrl}/oficios/${oficioId}/cancelar`,
-                        method: 'POST',
-                        data: {
-                            _token: $('meta[name="csrf-token"]').attr('content')
-                        }
-                    })
+                    OficiosApi.cancelar(oficioId)
 
-                    .done(function () {
+                        .done(function () {
 
-                        Alerts.success(
-                            'Oficio cancelado correctamente'
-                        )
-                        .then(function () {
+                            Alerts.success(
+                                'Oficio cancelado correctamente'
+                            )
+                            .then(function () {
 
-                            $('#modalDetalleOficio')
-                                .modal('hide');
+                                $('#modalDetalleOficio')
+                                    .modal('hide');
 
-                            location.reload();
+                                location.reload();
 
-                        });
+                            });
 
-                    })
+                        })
 
-                    .fail(function (xhr) {
+                        .fail(function (xhr) {
 
-                        console.error(xhr.responseText);
+                            console.error(xhr.responseText);
 
-                        if (xhr.status === 403) {
+                            if (xhr.status === 403) {
+
+                                Alerts.error(
+                                    'No tiene permiso para cancelar este oficio.'
+                                );
+
+                                return;
+                            }
 
                             Alerts.error(
-                                'No tiene permiso para cancelar este oficio.'
+                                xhr.responseJSON?.message ||
+                                'No se pudo cancelar el oficio.'
                             );
 
-                            return;
-                        }
-
-                        Alerts.error(
-                            'No se pudo cancelar el oficio.'
-                        );
-
-                    });
+                        });
 
                 });
 

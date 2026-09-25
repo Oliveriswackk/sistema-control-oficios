@@ -158,17 +158,14 @@ class OficioPolicy
     */
     public function cancelar(User $user, Oficio $oficio): bool
     {
-        if (
-            $user->hasRole('admin') ||
-            $user->hasRole('recepcion')
-        ) {
-            return !in_array($oficio->estado->clave, [
-                'cerrado',
-                'cancelado'
-            ]);
+        if (!$user->hasPermission('puede_registrar_oficios')) {
+            return false;
         }
 
-        return false;
+        return !in_array($oficio->estado->clave, [
+            'cerrado',
+            'cancelado'
+        ]);
     }
 
     
