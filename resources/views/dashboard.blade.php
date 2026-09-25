@@ -390,7 +390,7 @@
                         tablaOficios
                             .clear()
                             .rows
-                            .add(filas)
+                            .add(filas.toArray())
                             .draw(false);
 
                         window.history.pushState(
@@ -529,19 +529,12 @@
             }
         })
         .done((res) => {
-
             Alerts.success('Oficio creado correctamente');
-
             $('#modalCrearOficio').modal('hide');
 
-            const table = $('#tabla-oficios').DataTable();
-
-            table.row
-                .add($(res.row))
-                .draw(false);
+            cargarOficios();
 
             $('#formCrearOficio')[0].reset();
-
         })
         .fail((xhr) => {
 
@@ -943,9 +936,9 @@
 
 
     // =========================================================
-    // ABRIR MODAL TURNAR
+    // ABRIR MODAL TURNAR / RETURNAR
     // =========================================================
-    function abrirTurnar(oficioId, numeroOficio, action) {
+    function abrirTurnar(oficioId, numeroOficio, action, returnar = false) {
 
         $('#turnarNumeroOficio').text(numeroOficio);
 
@@ -958,6 +951,16 @@
         $('#modalTurnar .participacion-select')
             .prop('disabled', true)
             .val('');
+
+        $('#turnarEsReturnado').val(returnar ? '1' : '0');
+
+        if (returnar) {
+            $('#turnarTitulo').text('Returnar oficio');
+            $('#turnarBotonTexto').text('Returnar oficio');
+        } else {
+            $('#turnarTitulo').text('Turnar oficio');
+            $('#turnarBotonTexto').text('Turnar oficio');
+        }
 
         $('#modalTurnar').modal('show');
     }

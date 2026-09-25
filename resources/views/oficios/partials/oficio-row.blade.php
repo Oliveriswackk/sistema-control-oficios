@@ -117,13 +117,16 @@
             </button>
 
 
+            {{-- =====================================================
+                 ACCIONES QUE SOLO EXISTEN SI EL OFICIO ESTÁ ABIERTO
+                 ===================================================== --}}
             @if(
                 $oficio->estado_id != \App\Models\EstadoOficio::CERRADO &&
                 $oficio->estado_id != \App\Models\EstadoOficio::CANCELADO
             )
 
 
-                {{-- Turnar --}}
+                {{-- Turnar / Returnar --}}
                 @if(
                     $oficio->tipo_oficio_id == 2 &&
                     (
@@ -132,269 +135,326 @@
                     )
                 )
 
-                    <button
-                        type="button"
-                        class="btn btn-sm btn-light text-info border-0 rounded mr-1 px-2"
-                        title="Turnar oficio"
-                        onclick="abrirTurnar(
-                            {{ $oficio->id }},
-                            '{{ $oficio->numero_oficio }}',
-                            '{{ route('oficios.turnar', $oficio->id) }}'
-                        )"
-                    >
-                        <i class="fas fa-share fa-xs"></i>
-                    </button>
-
-                @endif
-
-
-                {{-- Notificaciones --}}
-                @if(
-                    $oficio->tipo_oficio_id == 2 &&
-                    $oficio->turnados->count() > 0
-                )
-
                     @php
 
-                        $notificaciones = $oficio->turnados
-                            ->filter(fn($turnado) => $turnado->notificacion);
-
-                        $enviadas = $notificaciones
-                            ->filter(fn($turnado) =>
-                                $turnado->notificacion->estado ===
-                                \App\Models\NotificacionTurnado::ESTADO_EXITOSO
-                            )
-                            ->count();
-
-                        $totalNotificaciones = $notificaciones->count();
-
-                        $fallidas = $notificaciones
-                            ->filter(fn($turnado) =>
+                        $tieneTurnadoVigente = $oficio->turnados->contains(
+                            fn($turnado) =>
                                 in_array(
-                                    $turnado->notificacion->estado,
+                                    $turnado->estadoTurnado?->clave,
                                     [
-                                        \App\Models\NotificacionTurnado::ESTADO_FALLIDO,
-                                        \App\Models\NotificacionTurnado::ESTADO_NO_ENTREGADO,
+                                        \App\Models\EstadoTurnado::ACTIVO,
+                                        \App\Models\EstadoTurnado::EN_ATENCION,
                                     ],
                                     true
                                 )
-                            );
+                        );
 
                     @endphp
 
 
-                    {{-- Botón + menú de notificaciones --}}
+                    @if($tieneTurnadoVigente)
+
+                        {{-- Returnar --}}
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-light text-warning border-0 rounded mr-1 px-2"
+                            title="Returnar oficio"
+                            onclick="abrirTurnar(
+                                {{ $oficio->id }},
+                                '{{ $oficio->numero_oficio }}',
+                                '{{ route('oficios.turnar', $oficio->id) }}',
+                                true
+                            )"
+                        >
+                            <i class="fas fa-share fa-xs"></i>
+                        </button>
+
+                    @else
+
+                        {{-- Turnar --}}
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-light text-info border-0 rounded mr-1 px-2"
+                            title="Turnar oficio"
+                            onclick="abrirTurnar(
+                                {{ $oficio->id }},
+                                '{{ $oficio->numero_oficio }}',
+                                '{{ route('oficios.turnar', $oficio->id) }}',
+                                false
+                            )"
+                        >
+                            <i class="fas fa-share fa-xs"></i>
+                        </button>
+
+                    @endif
+
+                @endif
+
+            @endif
+
+
+            {{-- =====================================================
+                 NOTIFICACIONES
+                 SE MUESTRAN AUNQUE EL OFICIO ESTÉ CERRADO
+                 ===================================================== --}}
+            @if(
+                $oficio->tipo_oficio_id == 2 &&
+                $oficio->turnados->count() > 0
+            )
+
+                @php
+
+                    /*
+                     * Solo se muestran las participaciones vigentes/finales.
+                     * Los turnados CERRADO corresponden a ciclos anteriores
+                     * que fueron returnados y se conservan únicamente como
+                     * historial en la base de datos.
+                     */
+                    $notificaciones = $oficio->turnados
+                        ->filter(fn($turnado) =>
+                            $turnado->notificacion &&
+                            $turnado->estadoTurnado?->clave !==
+                                \App\Models\EstadoTurnado::CERRADO
+                        );
+
+                    $enviadas = $notificaciones
+                        ->filter(fn($turnado) =>
+                            $turnado->notificacion->estado ===
+                            \App\Models\NotificacionTurnado::ESTADO_EXITOSO
+                        )
+                        ->count();
+
+                    $totalNotificaciones = $notificaciones->count();
+
+                    $fallidas = $notificaciones
+                        ->filter(fn($turnado) =>
+                            in_array(
+                                $turnado->notificacion->estado,
+                                [
+                                    \App\Models\NotificacionTurnado::ESTADO_FALLIDO,
+                                    \App\Models\NotificacionTurnado::ESTADO_NO_ENTREGADO,
+                                ],
+                                true
+                            )
+                        );
+
+                @endphp
+
+
+                {{-- Botón + menú de notificaciones --}}
+                <div
+                    class="d-inline-block position-relative"
+                    onclick="event.stopPropagation();"
+                >
+
+
+                    {{-- Indicador --}}
+                    <button
+                        type="button"
+                        class="btn btn-sm btn-light text-secondary border-0 rounded px-2"
+                        title="Notificaciones por correo"
+                        onclick="
+                            event.stopPropagation();
+                            toggleNotificaciones({{ $oficio->id }})
+                        "
+                    >
+                        <i class="fas fa-envelope fa-xs"></i>
+
+                        <span style="font-size:.82rem;">
+                            {{ $enviadas }}/{{ $totalNotificaciones }}
+                        </span>
+                    </button>
+
+
+                    {{-- Menú --}}
                     <div
-                        class="d-inline-block position-relative"
+                        id="notificaciones-{{ $oficio->id }}"
+                        class="notificaciones-menu shadow-sm"
+                        style="
+                            display:none;
+                            position:absolute;
+                            right:0;
+                            top:calc(100% + 4px);
+                            z-index:1050;
+                            width:320px;
+                            background:#fff;
+                            border:1px solid #e3e6f0;
+                            border-radius:.4rem;
+                            overflow:hidden;
+                        "
                         onclick="event.stopPropagation();"
                     >
 
-                        {{-- Indicador --}}
-                        <button
-                            type="button"
-                            class="btn btn-sm btn-light text-secondary border-0 rounded px-2"
-                            title="Notificaciones por correo"
-                            onclick="
-                                event.stopPropagation();
-                                toggleNotificaciones({{ $oficio->id }})
-                            "
-                        >
-                            <i class="fas fa-envelope fa-xs"></i>
 
-                            <span style="font-size:.82rem;">
-                                {{ $enviadas }}/{{ $totalNotificaciones }}
-                            </span>
-                        </button>
+                        {{-- Turnados vigentes/finales --}}
+                        @foreach($notificaciones as $turnado)
 
+                            @php
 
-                        {{-- Menú --}}
-                        <div
-                            id="notificaciones-{{ $oficio->id }}"
-                            class="notificaciones-menu shadow-sm"
-                            style="
-                                display:none;
-                                position:absolute;
-                                right:0;
-                                top:calc(100% + 4px);
-                                z-index:1050;
-                                width:320px;
-                                background:#fff;
-                                border:1px solid #e3e6f0;
-                                border-radius:.4rem;
-                                overflow:hidden;
-                            "
-                            onclick="event.stopPropagation();"
-                        >
+                                $estado =
+                                    $turnado->notificacion->estado;
 
+                                $esExitosa =
+                                    $estado ===
+                                    \App\Models\NotificacionTurnado::ESTADO_EXITOSO;
 
-                            {{-- Turnados --}}
-                            @foreach($notificaciones as $turnado)
+                                $esFallida =
+                                    in_array(
+                                        $estado,
+                                        [
+                                            \App\Models\NotificacionTurnado::ESTADO_FALLIDO,
+                                            \App\Models\NotificacionTurnado::ESTADO_NO_ENTREGADO,
+                                        ],
+                                        true
+                                    );
 
-                                @php
+                                $esManual =
+                                    $estado ===
+                                    \App\Models\NotificacionTurnado::ESTADO_ENVIADO_MANUAL;
 
-                                    $estado =
-                                        $turnado->notificacion->estado;
+                                $color =
+                                    $esExitosa
+                                        ? '#28a745'
+                                        : ($esFallida
+                                            ? '#dc3545'
+                                            : '#f6c23e');
 
-                                    $esExitosa =
-                                        $estado ===
-                                        \App\Models\NotificacionTurnado::ESTADO_EXITOSO;
+                                $textoEstado =
+                                    $esExitosa
+                                        ? 'Correo enviado y sin rebote'
+                                        : ($esFallida
+                                            ? (
+                                                $estado ===
+                                                \App\Models\NotificacionTurnado::ESTADO_NO_ENTREGADO
+                                                    ? 'Correo no entregado'
+                                                    : 'No se pudo enviar'
+                                            )
+                                            : 'Comunicado externamente');
 
-                                    $esFallida =
-                                        in_array(
-                                            $estado,
-                                            [
-                                                \App\Models\NotificacionTurnado::ESTADO_FALLIDO,
-                                                \App\Models\NotificacionTurnado::ESTADO_NO_ENTREGADO,
-                                            ],
-                                            true
-                                        );
-
-                                    $esManual =
-                                        $estado ===
-                                        \App\Models\NotificacionTurnado::ESTADO_ENVIADO_MANUAL;
-
-                                    $color =
-                                        $esExitosa
-                                            ? '#28a745'
-                                            : ($esFallida
-                                                ? '#dc3545'
-                                                : '#f6c23e');
-
-                                    $textoEstado =
-                                        $esExitosa
-                                            ? 'Correo enviado y sin rebote'
-                                            : ($esFallida
-                                                ? (
-                                                    $estado === \App\Models\NotificacionTurnado::ESTADO_NO_ENTREGADO
-                                                        ? 'Correo no entregado'
-                                                        : 'No se pudo enviar'
-                                                )
-                                                : 'Comunicado externamente');
-
-                                @endphp
+                            @endphp
 
 
+                            <div
+                                class="px-3 py-2 d-flex align-items-center"
+                                style="
+                                    border-bottom:1px solid #f1f1f1;
+                                "
+                            >
+
+
+                                {{-- Nombre + responsabilidad --}}
                                 <div
-                                    class="px-3 py-2 d-flex align-items-center"
                                     style="
-                                        border-bottom:1px solid #f1f1f1;
+                                        flex:1;
+                                        min-width:0;
                                     "
                                 >
 
-                                    {{-- Nombre + responsabilidad --}}
                                     <div
+                                        class="text-dark font-weight-bold"
                                         style="
-                                            flex:1;
-                                            min-width:0;
+                                            font-size:.8rem;
+                                            line-height:1.2;
                                         "
                                     >
-
-                                        <div
-                                            class="text-dark font-weight-bold"
-                                            style="
-                                                font-size:.8rem;
-                                                line-height:1.2;
-                                            "
-                                        >
-                                            {{ $turnado->usuario->name }}
-                                        </div>
-
-                                        <div
-                                            class="text-muted"
-                                            style="
-                                                font-size:.68rem;
-                                            "
-                                        >
-                                            {{ $turnado->tipoParticipacion->nombre ?? 'Turnado' }}
-                                        </div>
-
+                                        {{ $turnado->usuario->name }}
                                     </div>
 
-
-                                    {{-- Punto de estado --}}
-                                    <span
-                                        title="{{ $textoEstado }}"
-                                        style="
-                                            width:9px;
-                                            height:9px;
-                                            border-radius:50%;
-                                            background:{{ $color }};
-                                            display:block;
-                                            flex:none;
-                                            margin-left:12px;
-                                        "
-                                    ></span>
-
-                                </div>
-
-                            @endforeach
-
-
-                            {{-- Acciones para fallidas --}}
-                            @if($fallidas->count() > 0)
-
-                                <div class="px-3 py-2">
-
                                     <div
-                                        class="text-muted mb-2"
+                                        class="text-muted"
                                         style="
                                             font-size:.68rem;
                                         "
                                     >
-                                        {{ $fallidas->count() }}
-                                        notificación(es) no enviada(s)
-                                    </div>
-
-
-                                    <div class="d-flex">
-
-                                        {{-- Reenviar --}}
-                                        <button
-                                            type="button"
-                                            class="btn btn-sm btn-outline-danger mr-2"
-                                            onclick="
-                                                event.stopPropagation();
-                                                reintentarNotificaciones(
-                                                    @json($fallidas->pluck('notificacion.id')->values())
-                                                )
-                                            "
-                                        >
-                                            <i
-                                                class="fas fa-redo-alt mr-1"
-                                            ></i>
-                                            Reenviar
-                                        </button>
-
-
-                                        {{-- Copiar link --}}
-                                        <button
-                                            type="button"
-                                            class="btn btn-sm btn-outline-secondary"
-                                            onclick='
-                                                event.stopPropagation();
-                                                copiarLinkNotificaciones(
-                                                    @json($fallidas->pluck("notificacion.id")->values()),
-                                                    @json($oficio->link_drive)
-                                                )
-                                            '
-                                        >
-                                            <i
-                                                class="fas fa-link mr-1"
-                                            ></i>
-                                            Copiar link
-                                        </button>
-
+                                        {{ $turnado->tipoParticipacion->nombre ?? 'Turnado' }}
                                     </div>
 
                                 </div>
 
-                            @endif
 
-                        </div>
+                                {{-- Punto de estado --}}
+                                <span
+                                    title="{{ $textoEstado }}"
+                                    style="
+                                        width:9px;
+                                        height:9px;
+                                        border-radius:50%;
+                                        background:{{ $color }};
+                                        display:block;
+                                        flex:none;
+                                        margin-left:12px;
+                                    "
+                                ></span>
+
+                            </div>
+
+                        @endforeach
+
+
+                        {{-- Acciones para notificaciones fallidas --}}
+                        @if($fallidas->count() > 0)
+
+                            <div class="px-3 py-2">
+
+                                <div
+                                    class="text-muted mb-2"
+                                    style="
+                                        font-size:.68rem;
+                                    "
+                                >
+                                    {{ $fallidas->count() }}
+                                    notificación(es) no enviada(s)
+                                </div>
+
+
+                                <div class="d-flex">
+
+
+                                    {{-- Reenviar --}}
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-outline-danger mr-2"
+                                        onclick="
+                                            event.stopPropagation();
+                                            reintentarNotificaciones(
+                                                @json($fallidas->pluck('notificacion.id')->values())
+                                            )
+                                        "
+                                    >
+                                        <i
+                                            class="fas fa-redo-alt mr-1"
+                                        ></i>
+                                        Reenviar
+                                    </button>
+
+
+                                    {{-- Copiar link --}}
+                                    <button
+                                        type="button"
+                                        class="btn btn-sm btn-outline-secondary"
+                                        onclick='
+                                            event.stopPropagation();
+                                            copiarLinkNotificaciones(
+                                                @json($fallidas->pluck("notificacion.id")->values()),
+                                                @json($oficio->link_drive)
+                                            )
+                                        '
+                                    >
+                                        <i
+                                            class="fas fa-link mr-1"
+                                        ></i>
+                                        Copiar link
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                        @endif
 
                     </div>
 
-                @endif
+                </div>
 
             @endif
 

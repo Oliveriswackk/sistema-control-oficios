@@ -249,7 +249,13 @@ class OficioController extends Controller
     {
         $turnados = Turnado::with('oficio')
             ->where('usuario_id', Auth::id())
-            ->whereIn('estado_turnado_id', [1, 2])
+            ->whereHas('estadoTurnado', function ($query) {
+                $query->whereIn('clave', [
+                    \App\Models\EstadoTurnado::ACTIVO,
+                    \App\Models\EstadoTurnado::EN_ATENCION,
+                    \App\Models\EstadoTurnado::COMUNICADO_EXTERNAMENTE,
+                ]);
+            })
             ->latest()
             ->get();
 
@@ -541,6 +547,7 @@ class OficioController extends Controller
                         $query->whereNotIn('clave', [
                             \App\Models\EstadoTurnado::ATENDIDO,
                             \App\Models\EstadoTurnado::COMUNICADO_EXTERNAMENTE,
+                            \App\Models\EstadoTurnado::CERRADO,
                         ]);
                     })
                     ->exists();
@@ -578,8 +585,17 @@ class OficioController extends Controller
             ]);
         }
 
+        $vistaDestino = match ((int) $oficio->tipo_oficio_id) {
+            1 => 'enviados',
+            2 => 'recibidos',
+            3 => 'recibidos_cpc',
+            default => 'enviados',
+        };
+
         return redirect()
-            ->route('dashboard')
+            ->route('dashboard', [
+                'vista' => $vistaDestino,
+            ])
             ->with(
                 'success',
                 'Oficio creado correctamente'
@@ -764,6 +780,8 @@ class OficioController extends Controller
             );
         }
 
+        $esReturnado = $request->boolean('returnar');
+
         $participaciones = $request->input('participacion', []);
 
         if (!is_array($participaciones) || empty($participaciones)) {
@@ -875,11 +893,76 @@ class OficioController extends Controller
             );
         }
 
+        /* ESTADOS DE TURNADO */
+
+        $estadoActivo = \App\Models\EstadoTurnado::where(
+            'clave',
+            \App\Models\EstadoTurnado::ACTIVO
+        )->firstOrFail();
+
+        $estadoEnAtencion = \App\Models\EstadoTurnado::where(
+            'clave',
+            \App\Models\EstadoTurnado::EN_ATENCION
+        )->firstOrFail();
+
+        $estadoCerrado = \App\Models\EstadoTurnado::where(
+            'clave',
+            \App\Models\EstadoTurnado::CERRADO
+        )->firstOrFail();
+
+        /* CREAR TURNADOS */
+
         $turnados = DB::transaction(function () use (
             $oficio,
             $participacionesValidas,
-            $request
+            $request,
+            $esReturnado,
+            $estadoActivo,
+            $estadoEnAtencion,
+            $estadoCerrado
         ) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | RETURNAR
+            |--------------------------------------------------------------------------
+            |
+            | Si es returnado, se cierran únicamente los turnados que
+            | actualmente están vigentes.
+            |
+            | Los registros NO se eliminan. Permanecen como historial.
+            |
+            */
+
+            if ($esReturnado) {
+
+                $turnadosActuales = $oficio->turnados()
+                    ->whereIn('estado_turnado_id', [
+                        $estadoActivo->id,
+                        $estadoEnAtencion->id,
+                    ])
+                    ->get();
+
+                foreach ($turnadosActuales as $turnadoAnterior) {
+
+                    $turnadoAnterior->update([
+                        'estado_turnado_id' => $estadoCerrado->id,
+                        'cerrado_en' => now(),
+                    ]);
+
+                    $oficio->historial()->create([
+                        'usuario_id' => auth()->id(),
+                        'accion' => 'turnado_returnado',
+                        'descripcion' =>
+                            'El turnado fue returnado y sustituido por un nuevo turnado.',
+                        'entidad_relacionada' => Turnado::class,
+                        'entidad_relacionada_id' => $turnadoAnterior->id,
+                    ]);
+                }
+            }
+
+            /* NUEVO TURNADO */
+
             $turnados = [];
 
             foreach ($participacionesValidas as $participacion) {
@@ -889,7 +972,7 @@ class OficioController extends Controller
                     'usuario_id' => $participacion['coordinador']->id,
                     'coordinacion_id' => $participacion['coordinacion_id'],
                     'tipo_participacion_id' => $participacion['tipo_participacion_id'],
-                    'estado_turnado_id' => 1,
+                    'estado_turnado_id' => $estadoActivo->id,
                     'turnado_por_id' => auth()->id(),
                     'turnado_en' => now(),
                     'es_principal' => false,
@@ -910,6 +993,8 @@ class OficioController extends Controller
                 ];
             }
 
+            /* ESTADO DEL OFICIO */
+
             $estadoAnterior = $oficio->estado_id;
 
             $oficio->update([
@@ -918,14 +1003,20 @@ class OficioController extends Controller
 
             $oficio->historial()->create([
                 'usuario_id' => auth()->id(),
-                'accion' => 'oficio_turnado',
-                'descripcion' => 'Se registró un nuevo turnado.',
+                'accion' => $esReturnado
+                    ? 'oficio_returnado'
+                    : 'oficio_turnado',
+                'descripcion' => $esReturnado
+                    ? 'Se registró un returnado y se generó un nuevo turnado.'
+                    : 'Se registró un nuevo turnado.',
                 'estado_anterior_id' => $estadoAnterior,
                 'estado_nuevo_id' => EstadoOficio::TURNADO,
             ]);
 
             return $turnados;
         });
+
+        /* NOTIFICACIONES */
 
         $notificacionesExitosas = 0;
         $notificacionesFallidas = 0;
@@ -936,7 +1027,6 @@ class OficioController extends Controller
             $notificacion = $item['notificacion'];
             $coordinador = $item['coordinador'];
 
-            /* Identificador Único */
             $messageId = 'sco-notificacion-' .
                 $notificacion->id .
                 '-' .
@@ -982,17 +1072,25 @@ class OficioController extends Controller
             }
         }
 
+        /* RESPUESTA */
+
+        $accion = $esReturnado
+            ? 'Returnado'
+            : 'Turnado';
+
         if ($notificacionesFallidas > 0) {
 
             return back()->with(
                 'warning',
-                "Turnado registrado. {$notificacionesExitosas} notificación(es) enviada(s) correctamente y {$notificacionesFallidas} quedó(aron) pendiente(s) de atención."
+                "{$accion} registrado. {$notificacionesExitosas} notificación(es) enviada(s) correctamente y {$notificacionesFallidas} quedó(aron) pendiente(s) de atención."
             );
         }
 
         return back()->with(
             'success',
-            'Turnado registrado y notificado correctamente.'
+            $esReturnado
+                ? 'Returnado registrado y nuevo turnado notificado correctamente.'
+                : 'Turnado registrado y notificado correctamente.'
         );
     }
 
@@ -1047,6 +1145,13 @@ class OficioController extends Controller
             return;
         }
 
+        if (
+            $turnado->estadoTurnado &&
+            $turnado->estadoTurnado->clave === \App\Models\EstadoTurnado::CERRADO
+        ) {
+            return;
+        }
+
         $turnado->update([
             'estado_turnado_id' => 3,
             'atendido_en' => now(),
@@ -1057,18 +1162,14 @@ class OficioController extends Controller
         $oficio->historial()->create([
             'usuario_id' => $usuarioId,
             'accion' => 'turnado_atendido',
-            'descripcion' => 'El responsable marcó el turnado como atendido',
+            'descripcion' => 'El responsable marcó el turnado como atendido.',
         ]);
 
-        $pendientes = $oficio->turnados()
-            ->where('tipo_participacion_id', 1)
-            ->whereHas('estadoTurnado', function ($query) {
-                $query->whereNotIn('clave', [
-                    \App\Models\EstadoTurnado::ATENDIDO,
-                    \App\Models\EstadoTurnado::COMUNICADO_EXTERNAMENTE,
-                ]);
-            })
-            ->exists();
+        if ($oficio->estado_id === EstadoOficio::CERRADO) {
+            return;
+        }
+
+        $pendientes = $this->tieneResponsablesPendientes($oficio);
 
         if ($pendientes) {
             $oficio->update([
@@ -1097,7 +1198,8 @@ class OficioController extends Controller
             $oficio->historial()->create([
                 'usuario_id' => $usuarioId,
                 'accion' => 'oficio_cerrado_automaticamente',
-                'descripcion' => 'Oficio cerrado automáticamente al quedar atendidos todos los responsables y cumplirse las condiciones de cierre.',
+                'descripcion' =>
+                    'Oficio cerrado automáticamente al quedar atendidos o comunicados externamente todos los responsables y cumplirse las condiciones de cierre.',
                 'estado_anterior_id' => $estadoAnterior,
                 'estado_nuevo_id' => EstadoOficio::CERRADO,
             ]);
@@ -1259,6 +1361,47 @@ class OficioController extends Controller
             $turnado->update([
                 'estado_turnado_id' => $estadoExterno->id,
             ]);
+
+            /*
+            * Solo el Responsable Operativo participa
+            * en la condición de cierre del oficio.
+            */
+            if ((int) $turnado->tipo_participacion_id === 1) {
+
+                $oficio = $turnado->oficio;
+
+                if (
+                    $oficio->estado_id !== EstadoOficio::CERRADO &&
+                    $oficio->estado_id !== EstadoOficio::CANCELADO &&
+                    !$this->tieneResponsablesPendientes($oficio)
+                ) {
+                    $tieneRespuesta = Oficio::where(
+                        'respuesta_a_oficio_id',
+                        $oficio->id
+                    )->exists();
+
+                    if (
+                        !$oficio->requiere_respuesta ||
+                        $tieneRespuesta
+                    ) {
+                        $estadoAnterior = $oficio->estado_id;
+
+                        $oficio->update([
+                            'estado_id' => EstadoOficio::CERRADO,
+                            'cerrado_en' => now(),
+                        ]);
+
+                        $oficio->historial()->create([
+                            'usuario_id' => auth()->id(),
+                            'accion' => 'oficio_cerrado_automaticamente',
+                            'descripcion' =>
+                                'Oficio cerrado automáticamente al quedar atendidos o comunicados externamente todos los responsables y cumplirse las condiciones de cierre.',
+                            'estado_anterior_id' => $estadoAnterior,
+                            'estado_nuevo_id' => EstadoOficio::CERRADO,
+                        ]);
+                    }
+                }
+            }
         }
 
         return back()->with(
@@ -1485,6 +1628,13 @@ class OficioController extends Controller
         return $oficio->turnados()
             ->where('tipo_participacion_id', 1)
             ->whereNull('atendido_en')
+            ->whereHas('estadoTurnado', function ($query) {
+                $query->whereNotIn('clave', [
+                    \App\Models\EstadoTurnado::ATENDIDO,
+                    \App\Models\EstadoTurnado::COMUNICADO_EXTERNAMENTE,
+                    \App\Models\EstadoTurnado::CERRADO,
+                ]);
+            })
             ->exists();
     }
 

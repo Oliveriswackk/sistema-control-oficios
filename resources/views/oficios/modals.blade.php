@@ -744,13 +744,15 @@
             <form id="formTurnar" method="POST">
 
                 @csrf
+                
+                <input type="hidden" name="returnar" id="turnarEsReturnado" value="0">
 
                 <div class="modal-header bg-light px-4 py-3 border-bottom">
 
                     <h5 class="modal-title text-primary font-weight-bold"
                         id="modalTurnarLabel">
                         <i class="fas fa-share mr-2"></i>
-                        Turnar oficio
+                        <span id="turnarTitulo">Turnar oficio</span>
                     </h5>
 
                     <button type="button"
@@ -866,7 +868,7 @@
                     <button type="submit"
                             class="btn btn-primary btn-sm px-3 font-weight-bold">
                         <i class="fas fa-share mr-1"></i>
-                        Turnar oficio
+                        <span id="turnarBotonTexto">Turnar oficio</span>
                     </button>
 
                 </div>
