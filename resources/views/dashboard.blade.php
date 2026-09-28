@@ -330,220 +330,318 @@
 
     $(document).ready(function () {
 
-        $(document).on('click', '.btn-ver-oficio', function () {
+    $(document).on('click', '.btn-ver-oficio', function () {
 
-            Oficios.open(
-                $(this).data('id'),
-                false
-            );
-
-        });
-
-
-        const tablaOficios = $('#tabla-oficios').DataTable({
-            pageLength: 10,
-            order: [[0, 'desc']],
-            dom:
-                '<"tabla-oficios-contenido"t>'
-                + '<"px-3 pb-3 pt-2"<"row align-items-center"<"col-md-6"l><"col-md-6 text-right"p>>>',
-            language: {
-                url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-MX.json'
-            },
-            columnDefs: [
-                {
-                    targets: [3],
-                    visible: false,
-                    searchable: true
-                }
-            ]
-        });
-
-
-        const formFiltrosOficios =
-            $('#formFiltrosOficios');
-
-        const cargarOficios =
-            function () {
-
-                const url =
-                    formFiltrosOficios.attr('action') +
-                    '?' +
-                    formFiltrosOficios.serialize();
-
-                $.ajax({
-                    url: url,
-                    method: 'GET',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    beforeSend: function () {
-                        $('#tabla-oficios tbody')
-                            .css('opacity', '0.5');
-                    },
-                    success: function (html) {
-
-                        const filas =
-                            $('<tbody>')
-                                .html(html)
-                                .children('tr');
-
-                        tablaOficios
-                            .clear()
-                            .rows
-                            .add(filas.toArray())
-                            .draw(false);
-
-                        window.history.pushState(
-                            {},
-                            '',
-                            url
-                        );
-                    },
-                    error: function (xhr) {
-
-                        console.error(
-                            'Error filtrando oficios:',
-                            xhr
-                        );
-
-                    },
-                    complete: function () {
-
-                        $('#tabla-oficios tbody')
-                            .css('opacity', '1');
-
-                    }
-                });
-            };
-
-
-        $(document).on(
-            'change',
-            '#formFiltrosOficios select[name="coordinacion_origen_id"], #formFiltrosOficios select[name="estado_id"]',
-            function () {
-
-                cargarOficios();
-
-            }
-        );
-
-        let timeoutBusqueda;
-
-        $(document).on(
-            'input',
-            '#inputBuscadorGlobal',
-            function () {
-
-                clearTimeout(timeoutBusqueda);
-
-                timeoutBusqueda = setTimeout(function () {
-                    cargarOficios();
-                }, 500);
-
-            }
-        );
-
-        const convertirAISO = function (fecha) {
-            return [
-                fecha.getFullYear(),
-                String(fecha.getMonth() + 1).padStart(2, '0'),
-                String(fecha.getDate()).padStart(2, '0')
-            ].join('-');
-        };
-
-        flatpickr('#fechaDesdeVisible', {
-            locale: 'es',
-            dateFormat: 'd/m/Y',
-            allowInput: true,
-            disableMobile: true,
-
-            onChange: function (selectedDates) {
-
-                if (!selectedDates.length) {
-                    $('#fechaDesde').val('');
-                    cargarOficios();
-                    return;
-                }
-
-                $('#fechaDesde').val(
-                    convertirAISO(selectedDates[0])
-                );
-
-                cargarOficios();
-            }
-        });
-
-        flatpickr('#fechaHastaVisible', {
-            locale: 'es',
-            dateFormat: 'd/m/Y',
-            allowInput: true,
-            disableMobile: true,
-
-            onChange: function (selectedDates) {
-
-                if (!selectedDates.length) {
-                    $('#fechaHasta').val('');
-                    cargarOficios();
-                    return;
-                }
-
-                $('#fechaHasta').val(
-                    convertirAISO(selectedDates[0])
-                );
-
-                cargarOficios();
-            }
-        });
-
-        // Modals
-        flatpickr(
-            '#formCrearOficio input[name="fecha_oficio"], #formCrearOficio input[name="fecha_recepcion"], #formCrearOficio input[name="fecha_limite"]',
-            {
-                locale: 'es',
-                dateFormat: 'Y-m-d',
-                altInput: true,
-                altFormat: 'd/m/Y',
-                allowInput: true,
-                disableMobile: true
-            }
+        Oficios.open(
+            $(this).data('id'),
+            false
         );
 
     });
 
 
+    const tablaOficios = $('#tabla-oficios').DataTable({
+        pageLength: 10,
+        order: [[0, 'desc']],
+        dom:
+            '<"tabla-oficios-contenido"t>'
+            + '<"px-3 pb-3 pt-2"<"row align-items-center"<"col-md-6"l><"col-md-6 text-right"p>>>',
+        language: {
+            url: 'https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-MX.json'
+        },
+        columnDefs: [
+            {
+                targets: [3],
+                visible: false,
+                searchable: true
+            }
+        ]
+    });
+
+
+    const formFiltrosOficios =
+        $('#formFiltrosOficios');
+
+
+    // =========================================================
+    // CARGAR OFICIOS
+    // =========================================================
+
+    window.cargarOficios = function () {
+
+        const url =
+            formFiltrosOficios.attr('action') +
+            '?' +
+            formFiltrosOficios.serialize();
+
+        $.ajax({
+            url: url,
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            beforeSend: function () {
+
+                $('#tabla-oficios tbody')
+                    .css('opacity', '0.5');
+
+            },
+            success: function (html) {
+
+                const filas =
+                    $('<tbody>')
+                        .html(html)
+                        .children('tr');
+
+                tablaOficios
+                    .clear()
+                    .rows
+                    .add(filas.toArray())
+                    .draw(false);
+
+                window.history.pushState(
+                    {},
+                    '',
+                    url
+                );
+
+            },
+            error: function (xhr) {
+
+                console.error(
+                    'Error cargando oficios:',
+                    xhr
+                );
+
+            },
+            complete: function () {
+
+                $('#tabla-oficios tbody')
+                    .css('opacity', '1');
+
+            }
+        });
+
+    };
+
+
+    $(document).on(
+        'change',
+        '#formFiltrosOficios select[name="coordinacion_origen_id"], #formFiltrosOficios select[name="estado_id"]',
+        function () {
+
+            cargarOficios();
+
+        }
+    );
+
+
+    let timeoutBusqueda;
+
+    $(document).on(
+        'input',
+        '#inputBuscadorGlobal',
+        function () {
+
+            clearTimeout(timeoutBusqueda);
+
+            timeoutBusqueda = setTimeout(function () {
+
+                cargarOficios();
+
+            }, 500);
+
+        }
+    );
+
+
+    const convertirAISO = function (fecha) {
+
+        return [
+            fecha.getFullYear(),
+            String(fecha.getMonth() + 1).padStart(2, '0'),
+            String(fecha.getDate()).padStart(2, '0')
+        ].join('-');
+
+    };
+
+
+    flatpickr('#fechaDesdeVisible', {
+
+        locale: 'es',
+        dateFormat: 'd/m/Y',
+        allowInput: true,
+        disableMobile: true,
+
+        onChange: function (selectedDates) {
+
+            if (!selectedDates.length) {
+
+                $('#fechaDesde').val('');
+                cargarOficios();
+
+                return;
+
+            }
+
+            $('#fechaDesde').val(
+                convertirAISO(selectedDates[0])
+            );
+
+            cargarOficios();
+
+        }
+
+    });
+
+
+    flatpickr('#fechaHastaVisible', {
+
+        locale: 'es',
+        dateFormat: 'd/m/Y',
+        allowInput: true,
+        disableMobile: true,
+
+        onChange: function (selectedDates) {
+
+            if (!selectedDates.length) {
+
+                $('#fechaHasta').val('');
+                cargarOficios();
+
+                return;
+
+            }
+
+            $('#fechaHasta').val(
+                convertirAISO(selectedDates[0])
+            );
+
+            cargarOficios();
+
+        }
+
+    });
+
+
+    // Modals
+
+    flatpickr(
+        '#formCrearOficio input[name="fecha_oficio"], #formCrearOficio input[name="fecha_recepcion"], #formCrearOficio input[name="fecha_limite"]',
+        {
+            locale: 'es',
+            dateFormat: 'Y-m-d',
+            altInput: true,
+            altFormat: 'd/m/Y',
+            allowInput: true,
+            disableMobile: true
+        }
+    );
+
+});
+
+
     // =========================================================
     // CREAR OFICIO
     // =========================================================
+
     $(document).on('submit', '#formCrearOficio', function (e) {
+
         e.preventDefault();
 
         const $form = $(this);
+        const $boton = $form.find('button[type="submit"]');
 
-        const data = $form.serialize();
+        // EVITAR DOBLE ENVÍO 
+        if ($boton.prop('disabled')) {
+            return;
+        }
+
+        $boton
+            .prop('disabled', true)
+            .data('texto-original', $boton.html())
+            .html(`
+                <i class="fas fa-spinner fa-spin mr-1"></i>
+                Guardando...
+            `);
+
+        // ENVIAR FORMULARIO
         $.ajax({
             url: `${window.LaravelBaseUrl}/oficios`,
             method: 'POST',
-            data: data,
+            data: $form.serialize(),
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             }
         })
-        .done((res) => {
-            Alerts.success('Oficio creado correctamente');
+
+        .done(function (res) {
+
+            $form[0].reset();
+
+            // RESTAURAR ESTADO DINÁMICO
+
+            $('#bloqueOficioRelacionado').hide();
+
+            $('#oficio_relacionado')
+                .prop('required', false)
+                .val('');
+
+            $('#respuesta_a_oficio_id').val('');
+
+            $('#oficiosRelacionadosResultados')
+                .empty()
+                .hide();
+
+            $('#opcionesNumeracion').hide();
+
+            $('#folio_reservado_id').val('');
+            $('#folio_reservado_select').empty();
+
+            // CERRAR MODAL
+
             $('#modalCrearOficio').modal('hide');
 
-            cargarOficios();
+            // ACTUALIZAR TABLA
 
-            $('#formCrearOficio')[0].reset();
+            window.cargarOficios();
+
+            // MENSAJE
+
+            Alerts.success(
+                res.message || 'Oficio creado correctamente'
+            );
         })
-        .fail((xhr) => {
 
-            console.log(xhr.responseJSON);
+        .fail(function (xhr) {
 
-            const msg = xhr.responseJSON?.message || 'Error al crear oficio';
+            console.error(
+                'Error al crear oficio:',
+                xhr
+            );
+
+            const msg =
+                xhr.responseJSON?.message ||
+                'Error al crear oficio.';
 
             Alerts.error(msg);
+
+        })
+
+        .always(function () {
+
+            // =====================================================
+            // RESTAURAR BOTÓN
+            // =====================================================
+
+            $boton
+                .prop('disabled', false)
+                .html(
+                    $boton.data('texto-original')
+                );
+
         });
+
     });
 
 

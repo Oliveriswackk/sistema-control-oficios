@@ -125,10 +125,51 @@ window.copiarLinkNotificaciones = function (notificacionIds, link) {
     Promise.allSettled(peticiones)
         .then(function () {
 
-            navigator.clipboard.writeText(link)
-                .finally(function () {
-                    location.reload();
-                });
+            let copiaExitosa = false;
 
+            if (
+                navigator.clipboard &&
+                window.isSecureContext
+            ) {
+                copiaExitosa = navigator.clipboard.writeText(link);
+            } else {
+                const textarea = document.createElement('textarea');
+
+                textarea.value = link;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+
+                document.body.appendChild(textarea);
+
+                textarea.focus();
+                textarea.select();
+
+                try {
+                    copiaExitosa = document.execCommand('copy');
+                } catch (error) {
+                    copiaExitosa = false;
+                }
+
+                textarea.remove();
+            }
+
+            if (copiaExitosa instanceof Promise) {
+                copiaExitosa
+                    .then(function () {
+                        location.reload();
+                    })
+                    .catch(function (error) {
+                        console.error('No se pudo copiar el enlace:', error);
+                        location.reload();
+                    });
+            } else if (copiaExitosa) {
+                location.reload();
+            } else {
+                Alerts.error(
+                    'No se pudo copiar el enlace al portapapeles.'
+                );
+
+                location.reload();
+            }
         });
 };
