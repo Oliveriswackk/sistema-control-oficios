@@ -21,10 +21,7 @@ class ImportarOficiosService
 
     public function ejecutar(string $rutaOficios): array
     {
-        $rutaOficios = rtrim(
-            $rutaOficios,
-            DIRECTORY_SEPARATOR
-        );
+        $rutaOficios = rtrim($rutaOficios, DIRECTORY_SEPARATOR);
 
         if (!is_dir($rutaOficios)) {
             throw new \RuntimeException(
@@ -32,22 +29,18 @@ class ImportarOficiosService
             );
         }
 
-        $archivos = $this->detectarArchivos(
-            $rutaOficios
-        );
+        $archivos = $this->detectarArchivos($rutaOficios);
 
         if (
             $archivos['enviados'] === null &&
-            $archivos['recibidos'] === null
+            empty($archivos['recibidos'])
         ) {
             throw new \RuntimeException(
-                'No se encontraron los CSV de Enviados ni Recibidos.'
+                'No se encontraron los CSV de Enviados, Recibidos ni Recibidos CPC.'
             );
         }
 
-        $anioHistorico = basename(
-            dirname($rutaOficios)
-        );
+        $anioHistorico = basename(dirname($rutaOficios));
 
         if (!preg_match('/^\d{4}$/', $anioHistorico)) {
             throw new \RuntimeException(
@@ -64,6 +57,7 @@ class ImportarOficiosService
                     'descartados' => 0,
                     'reservados' => 0,
                     'reservados_existentes' => 0,
+                    'coordinaciones_corregidas' => 0,
                 ],
                 'Recibidos' => [
                     'leidos' => 0,
@@ -74,35 +68,32 @@ class ImportarOficiosService
                     'reservados_existentes' => 0,
                 ],
             ],
-
             'reservados' => [],
-
             'descartados_sin_numero' => [],
             'descartados_con_numero' => [],
-
             'oficios_objetivo' => [],
         ];
 
         DB::beginTransaction();
 
         try {
-            foreach ($archivos as $tipo => $ruta) {
-                if ($ruta === null) {
-                    continue;
-                }
-
-                $tipoOficio = $tipo === 'enviados'
-                    ? self::TIPO_ENVIADO
-                    : self::TIPO_RECIBIDO;
-
-                $nombre = $tipo === 'enviados'
-                    ? 'Enviados'
-                    : 'Recibidos';
-
+            if ($archivos['enviados'] !== null) {
                 $this->importarArchivo(
-                    $ruta,
-                    $tipoOficio,
-                    $nombre,
+                    $archivos['enviados'],
+                    self::TIPO_ENVIADO,
+                    'Enviados',
+                    (int) $anioHistorico,
+                    $resultado
+                );
+            }
+
+            // Recibidos y Recibidos CPC son del mismo tipo.
+            // No necesitan coordinación de origen.
+            foreach ($archivos['recibidos'] as $rutaRecibidos) {
+                $this->importarArchivo(
+                    $rutaRecibidos,
+                    self::TIPO_RECIBIDO,
+                    'Recibidos',
                     (int) $anioHistorico,
                     $resultado
                 );
@@ -114,44 +105,49 @@ class ImportarOficiosService
 
         } catch (\Throwable $e) {
             DB::rollBack();
-
             throw $e;
         }
     }
 
-    private function detectarArchivos(
-        string $rutaOficios
-    ): array {
+    private function detectarArchivos(string $rutaOficios): array
+    {
         $archivos = glob(
-            $rutaOficios .
-            DIRECTORY_SEPARATOR .
-            '*.csv'
+            $rutaOficios . DIRECTORY_SEPARATOR . '*.csv'
         );
 
         $resultado = [
             'enviados' => null,
-            'recibidos' => null,
+            'recibidos' => [],
         ];
 
         foreach ($archivos as $archivo) {
             $nombre = mb_strtoupper(
-                basename($archivo)
+                pathinfo(basename($archivo), PATHINFO_FILENAME)
             );
 
-            if (
-                str_contains($nombre, 'ENVIADOS') &&
-                !str_contains($nombre, 'CPC')
-            ) {
+            if (str_contains($nombre, 'ENVIADOS')) {
+                if ($resultado['enviados'] !== null) {
+                    throw new \RuntimeException(
+                        'Se encontró más de un CSV de Enviados. Deja un solo archivo para evitar importar el incorrecto.'
+                    );
+                }
+
                 $resultado['enviados'] = $archivo;
+                continue;
             }
 
-            if (
-                str_contains($nombre, 'RECIBIDOS') &&
-                !str_contains($nombre, 'CPC')
-            ) {
-                $resultado['recibidos'] = $archivo;
+            if (str_contains($nombre, 'RECIBIDOS')) {
+                $resultado['recibidos'][] = $archivo;
             }
         }
+
+        // Recibidos normal antes de Recibidos CPC.
+        usort($resultado['recibidos'], function ($a, $b) {
+            $aCpc = str_contains(mb_strtoupper(basename($a)), 'CPC');
+            $bCpc = str_contains(mb_strtoupper(basename($b)), 'CPC');
+
+            return $aCpc <=> $bCpc;
+        });
 
         return $resultado;
     }
@@ -181,10 +177,7 @@ class ImportarOficiosService
             );
         }
 
-        $headers = $this->normalizarHeaders(
-            $headers,
-            $tipoOficio
-        );
+        $headers = $this->normalizarHeaders($headers, $tipoOficio);
 
         $numeroFila = 1;
 
@@ -205,14 +198,9 @@ class ImportarOficiosService
                 continue;
             }
 
-            $data = $this->crearRegistroDesdeFila(
-                $headers,
-                $row
-            );
+            $data = $this->crearRegistroDesdeFila($headers, $row);
 
-            $numeroOficio = trim(
-                $data['numero_oficio'] ?? ''
-            );
+            $numeroOficio = trim($data['numero_oficio'] ?? '');
 
             if ($numeroOficio === '') {
                 $this->descartar(
@@ -251,23 +239,11 @@ class ImportarOficiosService
             }
 
             /*
-            |--------------------------------------------------------------------------
-            | RESERVADOS HISTÓRICOS
-            |--------------------------------------------------------------------------
-            |
-            | Los folios terminados en 1899 representan números reservados.
-            | Se guardan como FolioReservado para el año de la migración.
-            |
-            | Para desactivar esta funcionalidad posteriormente, basta con
-            | comentar este bloque completo.
-            |
-            */
-
+             * FOLIOS RESERVADOS HISTÓRICOS
+             */
             if (
                 $tipoOficio === self::TIPO_ENVIADO &&
-                $this->esFolioReservadoHistorico(
-                    $numeroOficio
-                )
+                $this->esFolioReservadoHistorico($numeroOficio)
             ) {
                 if (
                     $this->crearFolioReservadoHistorico(
@@ -282,27 +258,10 @@ class ImportarOficiosService
             }
 
             /*
-            |--------------------------------------------------------------------------
-            | FIN RESERVADOS HISTÓRICOS
-            |--------------------------------------------------------------------------
-            */
-
-            /*
-            |--------------------------------------------------------------------------
-            | VALIDACIÓN DE AÑO PARA ENVIADOS
-            |--------------------------------------------------------------------------
-            |
-            | Solo los oficios enviados de SESEA tienen un año codificado
-            | en el número que debe coincidir con el año de la migración.
-            |
-            | Los recibidos NO pasan por esta validación.
-            |
-            */
-
+             * VALIDACIÓN DE AÑO PARA ENVIADOS
+             */
             if ($tipoOficio === self::TIPO_ENVIADO) {
-                $anioNumero = $this->obtenerAnioDelNumero(
-                    $numeroOficio
-                );
+                $anioNumero = $this->obtenerAnioDelNumero($numeroOficio);
 
                 if (
                     $anioNumero !== null &&
@@ -320,6 +279,47 @@ class ImportarOficiosService
                 }
             }
 
+            /*
+             * COORDINACIÓN DE ENVIADOS
+             *
+             * La clave del folio es la fuente principal.
+             * Para recibidos, la coordinación permanece en NULL.
+             */
+            $coordinacionId = null;
+
+            if ($tipoOficio === self::TIPO_ENVIADO) {
+                $coordinacionId = $this->resolverCoordinacionEnviado(
+                    $numeroOficio,
+                    $data['coordinacion'] ?? null
+                );
+
+                if (!$coordinacionId) {
+                    $claveDetectada = $this->obtenerClaveCoordinacion(
+                        $numeroOficio
+                    );
+
+                    $motivo = $claveDetectada
+                        ? "No existe una coordinación registrada con clave {$claveDetectada}"
+                        : 'No fue posible identificar la coordinación a partir del folio ni del CSV';
+
+                    $this->descartar(
+                        $resultado,
+                        $nombre,
+                        $numeroFila,
+                        $numeroOficio,
+                        $motivo
+                    );
+
+                    continue;
+                }
+            }
+
+            /*
+             * DETECCIÓN DE DUPLICADOS
+             *
+             * Si ya existe, no se crea otro registro.
+             * En enviados, se repara la coordinación si hace falta.
+             */
             $oficioExistente = Oficio::where(
                 'numero_oficio',
                 $numeroOficio
@@ -327,6 +327,17 @@ class ImportarOficiosService
 
             if ($oficioExistente) {
                 $resultado['estadisticas'][$nombre]['duplicados']++;
+
+                if (
+                    $tipoOficio === self::TIPO_ENVIADO &&
+                    (int) $oficioExistente->coordinacion_origen_id !== (int) $coordinacionId
+                ) {
+                    $oficioExistente->update([
+                        'coordinacion_origen_id' => $coordinacionId,
+                    ]);
+
+                    $resultado['estadisticas']['Enviados']['coordinaciones_corregidas']++;
+                }
 
                 $resultado['oficios_objetivo'][$numeroOficio] =
                     $oficioExistente->id;
@@ -358,21 +369,6 @@ class ImportarOficiosService
                 $fechaRecepcion = $fechaOficio;
             }
 
-            $coordinacionId = null;
-
-            if ($tipoOficio === self::TIPO_ENVIADO) {
-                $nombreCoordinacion = trim(
-                    $data['coordinacion'] ?? ''
-                );
-
-                if ($nombreCoordinacion !== '') {
-                    $coordinacionId = Coordinacion::where(
-                        'nombre',
-                        $nombreCoordinacion
-                    )->value('id');
-                }
-            }
-
             $oficio = Oficio::create([
                 'uuid' => (string) Str::uuid(),
 
@@ -401,56 +397,46 @@ class ImportarOficiosService
 
                 'respuesta_a_oficio_id' => null,
 
-                'remitente_nombre' =>
-                    $this->limpiar(
-                        $data['remitente_nombre'] ?? null
-                    ),
+                'remitente_nombre' => $this->limpiar(
+                    $data['remitente_nombre'] ?? null
+                ),
 
-                'remitente_cargo' =>
-                    $this->limpiar(
-                        $data['remitente_cargo'] ?? null
-                    ),
+                'remitente_cargo' => $this->limpiar(
+                    $data['remitente_cargo'] ?? null
+                ),
 
-                'remitente_dependencia' =>
-                    $this->limpiar(
-                        $data['remitente_dependencia'] ?? null
-                    ),
+                'remitente_dependencia' => $this->limpiar(
+                    $data['remitente_dependencia'] ?? null
+                ),
 
-                'destinatario_nombre' =>
-                    $this->limpiar(
-                        $data['destinatario_nombre'] ?? null
-                    ),
+                'destinatario_nombre' => $this->limpiar(
+                    $data['destinatario_nombre'] ?? null
+                ),
 
-                'destinatario_cargo' =>
-                    $this->limpiar(
-                        $data['destinatario_cargo'] ?? null
-                    ),
+                'destinatario_cargo' => $this->limpiar(
+                    $data['destinatario_cargo'] ?? null
+                ),
 
-                'destinatario_dependencia' =>
-                    $this->limpiar(
-                        $data['destinatario_dependencia'] ?? null
-                    ),
+                'destinatario_dependencia' => $this->limpiar(
+                    $data['destinatario_dependencia'] ?? null
+                ),
 
-                'quien_elabora_nombre' =>
-                    $this->limpiar(
-                        $data['quien_elabora_nombre'] ?? null
-                    ),
+                'quien_elabora_nombre' => $this->limpiar(
+                    $data['quien_elabora_nombre'] ?? null
+                ),
 
-                'quien_elabora_cargo' =>
-                    $this->limpiar(
-                        $data['quien_elabora_cargo'] ?? null
-                    ),
+                'quien_elabora_cargo' => $this->limpiar(
+                    $data['quien_elabora_cargo'] ?? null
+                ),
 
                 'responsable_inicial_id' => null,
                 'coordinacion_origen_id' => $coordinacionId,
 
-                'usuario_registro_id' =>
-                    self::USUARIO_MIGRACION,
+                'usuario_registro_id' => self::USUARIO_MIGRACION,
 
-                'link_documento' =>
-                    $this->extraerUrl(
-                        $data['link'] ?? null
-                    ),
+                'link_documento' => $this->extraerUrl(
+                    $data['link'] ?? null
+                ),
 
                 'respondido_en' => null,
                 'cerrado_en' => null,
@@ -464,6 +450,74 @@ class ImportarOficiosService
         }
 
         fclose($handle);
+    }
+
+    /**
+     * Resuelve la coordinación de un oficio enviado.
+     * Primero utiliza la clave codificada en SESEA-CLAVE-NNN-AAAA.
+     * Solo si el número no tiene ese formato recurre al nombre del CSV.
+     */
+    private function resolverCoordinacionEnviado(
+        string $numeroOficio,
+        ?string $nombreCoordinacion
+    ): ?int {
+        $clave = $this->obtenerClaveCoordinacion($numeroOficio);
+
+        if ($clave !== null) {
+            return Coordinacion::whereRaw(
+                'UPPER(clave) = ?',
+                [mb_strtoupper($clave)]
+            )->value('id');
+        }
+
+        $nombreNormalizado = $this->normalizarTextoCoordinacion(
+            $nombreCoordinacion
+        );
+
+        if ($nombreNormalizado === '') {
+            return null;
+        }
+
+        foreach (Coordinacion::select('id', 'nombre')->get() as $coordinacion) {
+            if (
+                $this->normalizarTextoCoordinacion($coordinacion->nombre)
+                === $nombreNormalizado
+            ) {
+                return (int) $coordinacion->id;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Extrae la clave de folios oficiales SESEA-CLAVE-NNN-AAAA.
+     */
+    private function obtenerClaveCoordinacion(
+        string $numeroOficio
+    ): ?string {
+        if (preg_match(
+            '/^SESEA-([^-]+)-\d+-\d{4}$/i',
+            trim($numeroOficio),
+            $matches
+        )) {
+            return mb_strtoupper(trim($matches[1]));
+        }
+
+        return null;
+    }
+
+    /**
+     * Normaliza nombres para comparar el respaldo del CSV.
+     */
+    private function normalizarTextoCoordinacion(
+        ?string $texto
+    ): string {
+        $texto = trim((string) $texto);
+        $texto = Str::ascii($texto);
+        $texto = preg_replace('/\s+/u', ' ', $texto);
+
+        return mb_strtoupper($texto);
     }
 
     private function esFolioReservadoHistorico(
@@ -481,20 +535,15 @@ class ImportarOficiosService
         int $numeroFila,
         array &$resultado
     ): bool {
-        if (
-            !preg_match(
-                '/^SESEA-([^-]+)-(\d+)-1899$/i',
-                trim($numeroOficio),
-                $matches
-            )
-        ) {
+        if (!preg_match(
+            '/^SESEA-([^-]+)-(\d+)-1899$/i',
+            trim($numeroOficio),
+            $matches
+        )) {
             return false;
         }
 
-        $clave = mb_strtoupper(
-            trim($matches[1])
-        );
-
+        $clave = mb_strtoupper(trim($matches[1]));
         $numero = (int) $matches[2];
 
         if ($numero <= 0) {
@@ -534,8 +583,7 @@ class ImportarOficiosService
                 'numero_oficio' => null,
                 'estado' => 'reservado',
                 'grupo_uuid' => null,
-                'usuario_reserva_id' =>
-                    self::USUARIO_MIGRACION,
+                'usuario_reserva_id' => self::USUARIO_MIGRACION,
                 'motivo_cancelacion' => null,
             ]);
 
@@ -594,13 +642,11 @@ class ImportarOficiosService
     private function obtenerAnioDelNumero(
         string $numeroOficio
     ): ?int {
-        if (
-            preg_match(
-                '/-(\d{4})$/',
-                trim($numeroOficio),
-                $matches
-            )
-        ) {
+        if (preg_match(
+            '/-(\d{4})$/',
+            trim($numeroOficio),
+            $matches
+        )) {
             return (int) $matches[1];
         }
 
@@ -611,11 +657,7 @@ class ImportarOficiosService
         string $numeroOficio
     ): bool {
         $numeroOficio = mb_strtoupper(
-            preg_replace(
-                '/\s+/u',
-                '',
-                trim($numeroOficio)
-            )
+            preg_replace('/\s+/u', '', trim($numeroOficio))
         );
 
         return in_array(
@@ -660,15 +702,8 @@ class ImportarOficiosService
         $headersNormalizados = [];
 
         foreach ($headers as $index => $header) {
-            $header = preg_replace(
-                '/^\xEF\xBB\xBF/',
-                '',
-                $header
-            );
-
-            $header = trim(
-                mb_strtoupper($header)
-            );
+            $header = preg_replace('/^\xEF\xBB\xBF/', '', $header);
+            $header = trim(mb_strtoupper($header));
 
             if ($tipoOficio === self::TIPO_RECIBIDO) {
                 $headersNormalizados[] = match ($index) {
@@ -692,30 +727,21 @@ class ImportarOficiosService
             $headersNormalizados[] = match ($header) {
                 'FECHA' => 'fecha_oficio',
                 'FECHA DE RECIBIDO' => 'fecha_recepcion',
-
                 'COORDINACIÓN' => 'coordinacion',
                 'COORDINACION' => 'coordinacion',
-
                 'NÚMERO DE OFICIO' => 'numero_oficio',
                 'NUMERO DE OFICIO' => 'numero_oficio',
-
                 'ASUNTO' => 'asunto',
-
                 'REMITENTE' => 'remitente_nombre',
                 'CARGO REMITENTE' => 'remitente_cargo',
                 'DEPENDENCIA REMITENTE' => 'remitente_dependencia',
-
                 'QUIÉN ELABORA' => 'quien_elabora_nombre',
                 'QUIEN ELABORA' => 'quien_elabora_nombre',
-
                 'CARGO QUIEN ELABORA' => 'quien_elabora_cargo',
-
                 'DESTINATARIO' => 'destinatario_nombre',
                 'CARGO DESTINADO' => 'destinatario_cargo',
                 'DEPENDENCIA' => 'destinatario_dependencia',
-
                 'LINK' => 'link',
-
                 default => strtolower($header),
             };
         }
@@ -727,12 +753,7 @@ class ImportarOficiosService
         array $headers,
         array $row
     ): array {
-        $row = array_pad(
-            $row,
-            count($headers),
-            null
-        );
-
+        $row = array_pad($row, count($headers), null);
         $registro = [];
 
         foreach ($headers as $index => $header) {
@@ -770,13 +791,11 @@ class ImportarOficiosService
             return null;
         }
 
-        if (
-            preg_match(
-                '/^SESEA-.+-(\d+)-\d{4}$/i',
-                $numeroOficio,
-                $matches
-            )
-        ) {
+        if (preg_match(
+            '/^SESEA-.+-(\d+)-\d{4}$/i',
+            $numeroOficio,
+            $matches
+        )) {
             return $matches[1];
         }
 
@@ -819,13 +838,8 @@ class ImportarOficiosService
 
         if (is_numeric($fecha)) {
             try {
-                $fechaCarbon = Carbon::create(
-                    1899,
-                    12,
-                    30
-                )->addDays(
-                    (int) $fecha
-                );
+                $fechaCarbon = Carbon::create(1899, 12, 30)
+                    ->addDays((int) $fecha);
 
                 if ($fechaCarbon->year < 1900) {
                     return null;
@@ -849,13 +863,11 @@ class ImportarOficiosService
             return null;
         }
 
-        if (
-            preg_match(
-                '/https?:\/\/[^\s\]\)]+/i',
-                $valor,
-                $matches
-            )
-        ) {
+        if (preg_match(
+            '/https?:\/\/[^\s\]\)]+/i',
+            $valor,
+            $matches
+        )) {
             return $matches[0];
         }
 
@@ -867,9 +879,7 @@ class ImportarOficiosService
     ): ?string {
         $valor = trim((string) $valor);
 
-        return $valor !== ''
-            ? $valor
-            : null;
+        return $valor !== '' ? $valor : null;
     }
 
     public function mostrarResultado(
@@ -878,46 +888,21 @@ class ImportarOficiosService
     ): void {
         $output->newLine();
 
-        $output->info(
-            '======================================'
-        );
+        $output->info('======================================');
+        $output->info('       IMPORTACIÓN COMPLETADA');
+        $output->info('======================================');
 
-        $output->info(
-            '       IMPORTACIÓN COMPLETADA'
-        );
-
-        $output->info(
-            '======================================'
-        );
-
-        foreach (
-            $resultado['estadisticas']
-            as $tipo => $datos
-        ) {
+        foreach ($resultado['estadisticas'] as $tipo => $datos) {
             $output->newLine();
-
             $output->line($tipo);
 
-            $output->line(
-                "  Leídos      : {$datos['leidos']}"
-            );
-
-            $output->line(
-                "  Importados  : {$datos['importados']}"
-            );
-
-            $output->line(
-                "  Duplicados  : {$datos['duplicados']}"
-            );
-
-            $output->line(
-                "  Descartados : {$datos['descartados']}"
-            );
+            $output->line("  Leídos      : {$datos['leidos']}");
+            $output->line("  Importados  : {$datos['importados']}");
+            $output->line("  Duplicados  : {$datos['duplicados']}");
+            $output->line("  Descartados : {$datos['descartados']}");
 
             if ($datos['reservados'] > 0) {
-                $output->line(
-                    "  Reservados  : {$datos['reservados']}"
-                );
+                $output->line("  Reservados  : {$datos['reservados']}");
             }
 
             if ($datos['reservados_existentes'] > 0) {
@@ -925,84 +910,58 @@ class ImportarOficiosService
                     "  Ya reservados: {$datos['reservados_existentes']}"
                 );
             }
-        }
 
-        if (!empty($resultado['reservados'])) {
-            $output->newLine();
-
-            $output->info(
-                'FOLIOS RESERVADOS'
-            );
-
-            foreach (
-                $resultado['reservados']
-                as $reservado
-            ) {
+            if (!empty($datos['coordinaciones_corregidas'])) {
                 $output->line(
-                    "{$reservado['numero_oficio']} — " .
-                    "Reservado para {$reservado['anio']}"
+                    "  Coordinaciones corregidas: {$datos['coordinaciones_corregidas']}"
                 );
             }
         }
 
-        $this->mostrarDescartados(
-            $resultado,
-            $output
-        );
+        if (!empty($resultado['reservados'])) {
+            $output->newLine();
+            $output->info('FOLIOS RESERVADOS');
+
+            foreach ($resultado['reservados'] as $reservado) {
+                $output->line(
+                    "{$reservado['numero_oficio']} — Reservado para {$reservado['anio']}"
+                );
+            }
+        }
+
+        $this->mostrarDescartados($resultado, $output);
     }
 
     private function mostrarDescartados(
         array $resultado,
         $output
     ): void {
-        $conNumero =
-            $resultado['descartados_con_numero'];
+        $conNumero = $resultado['descartados_con_numero'];
+        $sinNumero = $resultado['descartados_sin_numero'];
 
-        $sinNumero =
-            $resultado['descartados_sin_numero'];
-
-        if (
-            empty($conNumero) &&
-            empty($sinNumero)
-        ) {
+        if (empty($conNumero) && empty($sinNumero)) {
             $output->newLine();
-
-            $output->info(
-                'No hubo registros descartados.'
-            );
-
+            $output->info('No hubo registros descartados.');
             return;
         }
 
         if (!empty($conNumero)) {
             $output->newLine();
-
-            $output->warn(
-                '======================================'
-            );
-
-            $output->warn(
-                '      OFICIOS NO IMPORTADOS'
-            );
-
-            $output->warn(
-                '======================================'
-            );
+            $output->warn('======================================');
+            $output->warn('      OFICIOS NO IMPORTADOS');
+            $output->warn('======================================');
 
             foreach ($conNumero as $omitido) {
                 $output->line(
-                    "{$omitido['numero']} — " .
-                    "{$omitido['motivo']}"
+                    "{$omitido['numero']} — {$omitido['motivo']}"
                 );
             }
         }
 
         if (!empty($sinNumero)) {
             $output->newLine();
-
             $output->warn(
-                'Registros descartados sin número: ' .
-                count($sinNumero)
+                'Registros descartados sin número: ' . count($sinNumero)
             );
         }
     }

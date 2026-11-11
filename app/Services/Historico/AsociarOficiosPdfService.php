@@ -31,16 +31,21 @@ class AsociarOficiosPdfService
             );
         }
 
+        /*
+         * Se permiten los nombres actuales y los anteriores
+         * para conservar compatibilidad con otras migraciones.
+         */
         $rutas = [
-            'Enviados' =>
-                $rutaPdf .
-                DIRECTORY_SEPARATOR .
-                'enviados',
+            'Enviados' => [
+                $rutaPdf . DIRECTORY_SEPARATOR . 'enviado',
+                $rutaPdf . DIRECTORY_SEPARATOR . 'enviados',
+            ],
 
-            'Recibidos' =>
-                $rutaPdf .
-                DIRECTORY_SEPARATOR .
-                'recibidos',
+            'Recibidos' => [
+                $rutaPdf . DIRECTORY_SEPARATOR . 'recibido',
+                $rutaPdf . DIRECTORY_SEPARATOR . 'recibidos',
+                $rutaPdf . DIRECTORY_SEPARATOR . 'recibidoCPC',
+            ],
         ];
 
         $descartados = [];
@@ -56,33 +61,39 @@ class AsociarOficiosPdfService
             'asociados' => 0,
             'ya_existentes' => 0,
             'ignorados_descartados' => 0,
+            'ignorados_acta' => 0,
             'sin_oficio' => [],
             'oficios_sin_pdf' => [],
         ];
 
-        $oficiosConPdf = [];
-
         DB::beginTransaction();
 
         try {
-            foreach ($rutas as $tipo => $ruta) {
-                if (!is_dir($ruta)) {
-                    continue;
-                }
+            foreach ($rutas as $tipo => $directorios) {
+                foreach ($directorios as $ruta) {
+                    if (!is_dir($ruta)) {
+                        continue;
+                    }
 
-                $this->procesarDirectorio(
-                    $ruta,
-                    $tipo,
-                    $descartados,
-                    $resultado,
-                    $oficiosConPdf
-                );
+                    $this->procesarDirectorio(
+                        $ruta,
+                        $tipo,
+                        $descartados,
+                        $resultado
+                    );
+                }
             }
 
+            /*
+             * La consulta se hace contra la base de datos,
+             * no solamente contra los PDFs encontrados en esta ejecución.
+             *
+             * Así no reportamos como faltante un oficio que ya tenía
+             * un documento asociado antes de ejecutar la migración.
+             */
             $resultado['oficios_sin_pdf'] =
                 $this->obtenerOficiosSinPdf(
-                    $oficiosObjetivo,
-                    $oficiosConPdf
+                    $oficiosObjetivo
                 );
 
             DB::commit();
@@ -100,13 +111,25 @@ class AsociarOficiosPdfService
         string $ruta,
         string $tipo,
         array $descartados,
-        array &$resultado,
-        array &$oficiosConPdf
+        array &$resultado
     ): void {
         $archivos = $this->obtenerPdfs($ruta);
 
         foreach ($archivos as $archivo) {
             $resultado['encontrados']++;
+
+            /*
+             * Ignorar ACTA sin importar mayúsculas/minúsculas.
+             */
+            if (
+                stripos(
+                    pathinfo($archivo, PATHINFO_FILENAME),
+                    'ACTA'
+                ) !== false
+            ) {
+                $resultado['ignorados_acta']++;
+                continue;
+            }
 
             $numero = $this->obtenerNumeroDesdePdf(
                 $archivo,
@@ -124,16 +147,12 @@ class AsociarOficiosPdfService
                 continue;
             }
 
-            $numeroNormalizado =
-                $this->normalizarNumero($numero);
+            $numeroNormalizado = $this->normalizarNumero(
+                $numero
+            );
 
-            if (
-                isset(
-                    $descartados[$numeroNormalizado]
-                )
-            ) {
+            if (isset($descartados[$numeroNormalizado])) {
                 $resultado['ignorados_descartados']++;
-
                 continue;
             }
 
@@ -159,31 +178,35 @@ class AsociarOficiosPdfService
                 continue;
             }
 
-            $hash = hash_file(
-                'sha256',
-                $archivo
-            );
+            /*
+             * PROTECCIÓN CONTRA SOBRESCRITURA
+             *
+             * Si el oficio ya tiene cualquier versión de archivo,
+             * no se crea una versión nueva, aunque el hash sea distinto.
+             *
+             * Esto evita reemplazar documentos que ya estaban cargados.
+             */
+            $yaTieneDocumento = OficioArchivo::where(
+                'oficio_id',
+                $oficio->id
+            )
+            ->whereHas('versiones')
+            ->exists();
 
-            $versionExistente =
-                OficioArchivo::where(
-                    'oficio_id',
-                    $oficio->id
-                )
-                ->whereHas(
-                    'versiones',
-                    function ($query) use ($hash) {
-                        $query->where(
-                            'hash_sha256',
-                            $hash
-                        );
-                    }
-                )
-                ->exists();
-
-            if ($versionExistente) {
+            if ($yaTieneDocumento) {
                 $resultado['ya_existentes']++;
+                continue;
+            }
 
-                $oficiosConPdf[$oficio->id] = true;
+            $hash = hash_file('sha256', $archivo);
+
+            if ($hash === false) {
+                $resultado['sin_oficio'][] = [
+                    'archivo' => basename($archivo),
+                    'numero' => $numero,
+                    'motivo' =>
+                        'No fue posible calcular el hash del archivo',
+                ];
 
                 continue;
             }
@@ -195,14 +218,11 @@ class AsociarOficiosPdfService
             );
 
             $resultado['asociados']++;
-
-            $oficiosConPdf[$oficio->id] = true;
         }
     }
 
-    private function obtenerPdfs(
-        string $ruta
-    ): array {
+    private function obtenerPdfs(string $ruta): array
+    {
         $resultado = [];
 
         $iterator = new \RecursiveIteratorIterator(
@@ -215,13 +235,14 @@ class AsociarOficiosPdfService
         foreach ($iterator as $archivo) {
             if (
                 $archivo->isFile() &&
-                mb_strtolower(
-                    $archivo->getExtension()
-                ) === 'pdf'
+                mb_strtolower($archivo->getExtension()) === 'pdf'
             ) {
                 $resultado[] = $archivo->getPathname();
             }
         }
+
+        // Orden estable para que el procesamiento sea reproducible.
+        sort($resultado, SORT_NATURAL | SORT_FLAG_CASE);
 
         return $resultado;
     }
@@ -241,6 +262,12 @@ class AsociarOficiosPdfService
             return null;
         }
 
+        /*
+         * Los recibidos pueden llevar fecha al inicio:
+         * 2026-01-15-NUMERO-OFICIO.pdf
+         *
+         * Se elimina únicamente ese prefijo.
+         */
         if ($tipo === 'Recibidos') {
             $nombre = preg_replace(
                 '/^\d{4}-\d{2}-\d{2}-/',
@@ -248,6 +275,8 @@ class AsociarOficiosPdfService
                 $nombre
             );
         }
+
+        $nombre = trim($nombre);
 
         return $nombre !== ''
             ? $nombre
@@ -257,8 +286,7 @@ class AsociarOficiosPdfService
     private function buscarOficioNormalizado(
         string $numero
     ): ?Oficio {
-        $normalizado =
-            $this->normalizarNumero($numero);
+        $normalizado = $this->normalizarNumero($numero);
 
         $oficios = Oficio::query()
             ->select([
@@ -311,12 +339,14 @@ class AsociarOficiosPdfService
         Oficio $oficio,
         string $hash
     ): void {
-        $nombreOriginal = basename(
-            $rutaOrigen
-        );
+        $nombreOriginal = basename($rutaOrigen);
 
         $mimeType = 'application/pdf';
 
+        /*
+         * Si existe un registro de archivo sin versiones,
+         * se reutiliza en lugar de crear otro.
+         */
         $archivo = OficioArchivo::firstOrCreate(
             [
                 'oficio_id' => $oficio->id,
@@ -333,90 +363,92 @@ class AsociarOficiosPdfService
             'tipo_archivo' => $mimeType,
         ]);
 
-        $ultimaVersion =
-            $archivo->versiones()->max('version');
+        $ultimaVersion = $archivo->versiones()->max('version');
 
         $version = ($ultimaVersion ?? 0) + 1;
 
-        $path =
-            "oficios/{$oficio->id}/{$nombreOriginal}";
+        $path = "oficios/{$oficio->id}/{$nombreOriginal}";
 
-        Storage::disk('public')->put(
+        $contenido = file_get_contents($rutaOrigen);
+
+        if ($contenido === false) {
+            throw new \RuntimeException(
+                "No fue posible leer el PDF: {$rutaOrigen}"
+            );
+        }
+
+        $guardado = Storage::disk('public')->put(
             $path,
-            file_get_contents($rutaOrigen)
+            $contenido
         );
+
+        if (!$guardado) {
+            throw new \RuntimeException(
+                "No fue posible guardar el PDF: {$nombreOriginal}"
+            );
+        }
+
+        $versionAnteriorId = $archivo->versiones()
+            ->where('version', $version - 1)
+            ->value('id');
 
         $archivo->versiones()->update([
             'es_actual' => false,
         ]);
 
-        $versionCreada =
-            $archivo->versiones()->create([
-                'ruta' => $path,
-                'mime_type' => $mimeType,
-                'tamano' => filesize($rutaOrigen),
-                'hash_sha256' => $hash,
-                'version' => $version,
-                'es_actual' => true,
-                'es_publica' => true,
-                'subido_por_id' =>
-                    self::USUARIO_MIGRACION,
-                'motivo_reemplazo' => null,
-                'version_anterior_id' =>
-                    $archivo->versiones()
-                        ->where(
-                            'version',
-                            $version - 1
-                        )
-                        ->value('id'),
-            ]);
+        $archivo->versiones()->create([
+            'ruta' => $path,
+            'mime_type' => $mimeType,
+            'tamano' => filesize($rutaOrigen),
+            'hash_sha256' => $hash,
+            'version' => $version,
+            'es_actual' => true,
+            'es_publica' => true,
+            'subido_por_id' => self::USUARIO_MIGRACION,
+            'motivo_reemplazo' => null,
+            'version_anterior_id' => $versionAnteriorId,
+        ]);
 
         $oficio->historial()->create([
-            'usuario_id' =>
-                self::USUARIO_MIGRACION,
-
+            'usuario_id' => self::USUARIO_MIGRACION,
             'accion' => 'archivo_subido',
-
             'descripcion' =>
                 'Se cargó el documento histórico del oficio',
-
-            'entidad_relacionada' =>
-                'oficio_archivo',
-
-            'entidad_relacionada_id' =>
-                $archivo->id,
+            'entidad_relacionada' => 'oficio_archivo',
+            'entidad_relacionada_id' => $archivo->id,
         ]);
     }
 
     private function obtenerOficiosSinPdf(
-        array $oficiosObjetivo,
-        array $oficiosConPdf
+        array $oficiosObjetivo
     ): array {
         if (empty($oficiosObjetivo)) {
             return [];
         }
 
         $ids = array_values(
-            $oficiosObjetivo
+            array_unique($oficiosObjetivo)
         );
 
-        $oficios = Oficio::whereIn(
-            'id',
+
+        $oficiosConVersion = OficioArchivo::whereIn(
+            'oficio_id',
             $ids
-        )->get();
+        )
+        ->whereHas('versiones')
+        ->pluck('oficio_id')
+        ->unique()
+        ->flip();
+
+        $oficios = Oficio::whereIn('id', $ids)->get();
 
         $resultado = [];
 
         foreach ($oficios as $oficio) {
-            if (
-                !isset(
-                    $oficiosConPdf[$oficio->id]
-                )
-            ) {
+            if (!isset($oficiosConVersion[$oficio->id])) {
                 $resultado[] = [
                     'id' => $oficio->id,
-                    'numero' =>
-                        $oficio->numero_oficio,
+                    'numero' => $oficio->numero_oficio,
                 ];
             }
         }
