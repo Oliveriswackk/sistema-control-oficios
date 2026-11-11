@@ -191,24 +191,18 @@ class OficioPolicy
     */
     public function subirArchivo(User $user, Oficio $oficio): bool
     {
+        // Nunca permitir archivos en oficios cancelados.
         if ($oficio->estado->clave === 'cancelado') {
             return false;
         }
 
+        // Los administradores conservan acceso total.
         if ($user->hasRole('admin')) {
             return true;
         }
 
-        if (
-            $oficio->estado->clave === 'cerrado' &&
-            $oficio->cerrado_en &&
-            $oficio->cerrado_en->lt(now()->subDays(14))
-        ) {
-            return false;
-        }
-
-        return
-            $user->hasPermission('puede_registrar_oficios') &&
-            $oficio->usuario_registro_id === $user->id;
+        // Permitir a usuarios autorizados registrar y actualizar archivos,
+        // incluso cuando el oficio esté cerrado.
+        return $user->hasPermission('puede_registrar_oficios');
     }
 }
