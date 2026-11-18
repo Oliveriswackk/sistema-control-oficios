@@ -381,111 +381,119 @@ class OficioController extends Controller
         $respuestaId = $request->input('respuesta_a_oficio_id');
         $tipo = (int) $request->tipo_oficio_id;
 
-        if ($tipo === 1) {
+        $oficio = \Illuminate\Support\Facades\DB::transaction(function () use (
+            $request,
+            $oficioService,
+            $respuestaId,
+            $tipo
+        ) {
 
-            if ($request->filled('folio_reservado_id')) {
+            if ($tipo === 1) {
 
-                $folio = \App\Models\FolioReservado::where(
-                    'id',
-                    $request->folio_reservado_id
-                )
-                ->where('estado', 'reservado')
-                ->lockForUpdate()
-                ->first();
+                if ($request->filled('folio_reservado_id')) {
 
-                if (!$folio) {
-                    return back()->with(
-                        'error',
-                        'El folio reservado no está disponible'
+                    $folio = \App\Models\FolioReservado::where(
+                            'id',
+                            $request->folio_reservado_id
+                        )
+                        ->where('estado', 'reservado')
+                        ->lockForUpdate()
+                        ->first();
+
+                    if (!$folio) {
+                        throw \Illuminate\Validation\ValidationException::withMessages([
+                            'folio_reservado_id' => 'El folio reservado no está disponible.',
+                        ]);
+                    }
+
+                    $coordinacionId = $folio->coordinacion_id;
+                    $numero = $folio->numero;
+                    $anio = $folio->anio;
+
+                    $coordinacion = \App\Models\Coordinacion::findOrFail(
+                        $coordinacionId
                     );
+
+                    $numeroOficio =
+                        "SESEA-{$coordinacion->clave}-" .
+                        str_pad($numero, 3, '0', STR_PAD_LEFT) .
+                        "-{$anio}";
+
+                    $consecutivo = $numero;
+
+                    $folio->update([
+                        'estado' => 'usado',
+                        'numero_oficio' => $numeroOficio,
+                    ]);
+
+                } else {
+
+                    $datos = $oficioService->consumirSiguienteNumero(
+                        $request->coordinacion_origen_id,
+                        $request->fecha_oficio
+                    );
+
+                    $numeroOficio = $datos['numero_oficio'];
+                    $consecutivo = $datos['consecutivo'];
+                    $coordinacionId = $request->coordinacion_origen_id;
                 }
-
-                $coordinacionId = $folio->coordinacion_id;
-                $numero = $folio->numero;
-                $anio = $folio->anio;
-
-                $coordinacion = \App\Models\Coordinacion::findOrFail(
-                    $coordinacionId
-                );
-
-                $numeroOficio =
-                    "SESEA-{$coordinacion->clave}-" .
-                    str_pad($numero, 3, '0', STR_PAD_LEFT) .
-                    "-{$anio}";
-
-                $consecutivo = $numero;
-
-                $folio->update([
-                    'estado' => 'usado',
-                    'numero_oficio' => $numeroOficio,
-                ]);
 
             } else {
 
-                $datos = $oficioService->consumirSiguienteNumero(
-                    $request->coordinacion_origen_id,
-                    $request->fecha_oficio
-                );
-
-                $numeroOficio = $datos['numero_oficio'];
-                $consecutivo = $datos['consecutivo'];
-
-                $coordinacionId = $request->coordinacion_origen_id;
+                $numeroOficio = $request->numero_oficio;
+                $consecutivo = 0;
+                $coordinacionId = null;
             }
 
-        } else {
+            return Oficio::create([
 
-            $numeroOficio = $request->numero_oficio;
-            $consecutivo = 0;
-            $coordinacionId = null;
-        }
+                'uuid' => (string) Str::uuid(),
 
-        $oficio = Oficio::create([
+                'numero_oficio' => $numeroOficio,
+                'consecutivo' => $consecutivo,
 
-            'uuid' => (string) Str::uuid(),
+                'estado_id' => EstadoOficio::REGISTRADO,
 
-            'numero_oficio' => $numeroOficio,
-            'consecutivo' => $consecutivo,
+                'tipo_oficio_id' => $request->tipo_oficio_id,
 
-            'estado_id' => EstadoOficio::REGISTRADO,
+                'asunto' => $request->asunto,
+                'descripcion' => $request->descripcion,
 
-            'tipo_oficio_id' => $request->tipo_oficio_id,
+                'fecha_oficio' => $request->fecha_oficio,
+                'fecha_recepcion' => $request->fecha_recepcion,
+                'fecha_limite' => $request->fecha_limite,
 
-            'asunto' => $request->asunto,
-            'descripcion' => $request->descripcion,
+                'requiere_respuesta' => $request->requiere_respuesta ?? 0,
 
-            'fecha_oficio' => $request->fecha_oficio,
-            'fecha_recepcion' => $request->fecha_recepcion,
-            'fecha_limite' => $request->fecha_limite,
+                'respuesta_a_oficio_id' =>
+                    $respuestaId && $respuestaId != 0
+                        ? $respuestaId
+                        : null,
 
-            'requiere_respuesta' => $request->requiere_respuesta ?? 0,
+                'es_sensible' => $request->es_sensible ?? 0,
 
-            'respuesta_a_oficio_id' =>
-                $respuestaId && $respuestaId != 0
-                    ? $respuestaId
-                    : null,
+                'remitente_nombre' => $request->remitente_nombre,
+                'remitente_cargo' => $request->remitente_cargo,
+                'remitente_dependencia' => $request->remitente_dependencia,
 
-            'es_sensible' => $request->es_sensible ?? 0,
+                'destinatario_nombre' => $request->destinatario_nombre,
+                'destinatario_cargo' => $request->destinatario_cargo,
+                'destinatario_dependencia' => $request->destinatario_dependencia,
 
-            'remitente_nombre' => $request->remitente_nombre,
-            'remitente_cargo' => $request->remitente_cargo,
-            'remitente_dependencia' => $request->remitente_dependencia,
+                'quien_elabora_nombre' => $request->quien_elabora_nombre,
+                'quien_elabora_cargo' => $request->quien_elabora_cargo,
 
-            'destinatario_nombre' => $request->destinatario_nombre,
-            'destinatario_cargo' => $request->destinatario_cargo,
-            'destinatario_dependencia' => $request->destinatario_dependencia,
+                'link_documento' => $request->link_documento,
+                'link_drive' => $request->link_drive,
 
-            'quien_elabora_nombre' => $request->quien_elabora_nombre,
-            'quien_elabora_cargo' => $request->quien_elabora_cargo,
+                'usuario_registro_id' => auth()->id(),
+                'responsable_inicial_id' => auth()->id(),
 
-            'link_documento' => $request->link_documento,
-            'link_drive' => $request->link_drive,
+                'coordinacion_origen_id' => $coordinacionId,
+            ]);
 
-            'usuario_registro_id' => auth()->id(),
-            'responsable_inicial_id' => auth()->id(),
+        });
 
-            'coordinacion_origen_id' => $coordinacionId,
-        ]);
 
         if ($request->filled('tags')) {
 
@@ -577,11 +585,25 @@ class OficioController extends Controller
 
             $oficio->load('estado', 'tags');
 
+            $mensaje = 'Oficio creado correctamente';
+
+            if (
+                $tipo === 1 &&
+                !$request->filled('folio_reservado_id') &&
+                $request->input('numero_oficio') !== $oficio->numero_oficio
+            ) {
+                $mensaje = "Otro usuario pensó igual que tu y registraron un oficio al mismo tiempo. " .
+                    "Se asignó el folio {$oficio->numero_oficio}.";
+            }
+
             return response()->json([
                 'row' => view(
                     'oficios.partials.oficio-row',
                     compact('oficio')
                 )->render(),
+
+                'message' => $mensaje,
+                'numero_oficio' => $oficio->numero_oficio,
             ]);
         }
 

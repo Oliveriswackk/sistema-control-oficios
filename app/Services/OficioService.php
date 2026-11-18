@@ -20,7 +20,9 @@ class OficioService
 
         $anio = date('Y', strtotime($fecha));
 
-        $coordinacion = Coordinacion::findOrFail($coordinacionId);
+        $coordinacion = Coordinacion::whereKey($coordinacionId)
+            ->lockForUpdate()
+            ->firstOrFail();
 
         /*
         |--------------------------------------------------------------------------
@@ -136,28 +138,15 @@ class OficioService
     }
 
 
-    /*
-    Consume definitivamente el consecutivo
-    ESTE SÍ escribe en BD
-    */
     public function consumirSiguienteNumero(int $coordinacionId, string $fecha): array
     {
-
-        return DB::transaction(function () use (
-            $coordinacionId,
-            $fecha
-        ) {
+        return DB::transaction(function () use ($coordinacionId, $fecha) {
 
             $anio = date('Y', strtotime($fecha));
 
-            $coordinacion = Coordinacion::findOrFail($coordinacionId);
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Bloqueamos el control de consecutivos
-            |--------------------------------------------------------------------------
-            */
+            $coordinacion = Coordinacion::whereKey($coordinacionId)
+                ->lockForUpdate()
+                ->firstOrFail();
 
             $consecutivo = ConsecutivoOficio::where(
                     'coordinacion_id',
@@ -168,15 +157,7 @@ class OficioService
                 ->first();
 
 
-            $ultimoControl =
-                $consecutivo?->ultimo_numero ?? 0;
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Revisamos también los oficios existentes
-            |--------------------------------------------------------------------------
-            */
+            $ultimoControl = $consecutivo?->ultimo_numero ?? 0;
 
             $ultimoOficio = Oficio::where(
                     'coordinacion_origen_id',
@@ -184,28 +165,14 @@ class OficioService
                 )
                 ->where('tipo_oficio_id', 1)
                 ->whereYear('fecha_oficio', $anio)
-                ->max('consecutivo');
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | El siguiente debe partir del mayor existente
-            |--------------------------------------------------------------------------
-            */
+                ->max(DB::raw('CAST(consecutivo AS UNSIGNED)'));
 
             $ultimo = max(
-                $ultimoControl,
-                $ultimoOficio ?? 0
+                (int) $ultimoControl,
+                (int) ($ultimoOficio ?? 0)
             );
 
             $numero = $ultimo + 1;
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Actualizamos el control
-            |--------------------------------------------------------------------------
-            */
 
             if (!$consecutivo) {
 
@@ -222,7 +189,6 @@ class OficioService
                 ]);
 
             }
-
 
             return [
 
@@ -241,7 +207,6 @@ class OficioService
             ];
 
         });
-
     }
 
 
