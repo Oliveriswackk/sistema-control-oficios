@@ -577,6 +577,10 @@
 
         .done(function (res) {
 
+            const fechaOficio = $form
+                .find('[name="fecha_oficio"]')
+                .val();
+
             $form[0].reset();
 
             // RESTAURAR ESTADO DINÁMICO
@@ -603,6 +607,17 @@
             $('#modalCrearOficio').modal('hide');
 
             // ACTUALIZAR TABLA
+
+            const $fechaHasta = $('#formFiltrosOficios [name="fecha_hasta"]');
+            const fechaHasta = $fechaHasta.val();
+
+            if (
+                fechaOficio &&
+                fechaHasta &&
+                fechaOficio > fechaHasta
+            ) {
+                $fechaHasta.val(fechaOficio);
+            }
 
             window.cargarOficios();
 
