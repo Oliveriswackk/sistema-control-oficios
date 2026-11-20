@@ -69,7 +69,12 @@ class MigrarHistorico extends Command
                     $numerosDescartados,
                     $importacion[
                         'oficios_objetivo'
-                    ]
+                    ],
+                    function (string $tipo, string $ruta): void {
+                        $this->line(
+                            "Procesando {$tipo}: {$ruta}"
+                        );
+                    }
                 );
 
             $this->mostrarPdf(
@@ -77,7 +82,6 @@ class MigrarHistorico extends Command
             );
 
             $this->mostrarFinal(
-                $importacion,
                 $pdfs
             );
 
@@ -198,140 +202,226 @@ class MigrarHistorico extends Command
     private function mostrarPdf(
         array $resultado
     ): void {
+        $this->mostrarAsociados(
+            $resultado['asociados_detalle']
+        );
+
+        $this->mostrarYaExistentes(
+            $resultado['ya_existentes_detalle']
+        );
+
+        $this->mostrarOficiosSinPdf(
+            $resultado['oficios_sin_pdf']
+        );
+
+        $this->mostrarSinOficio(
+            $resultado['sin_oficio']
+        );
+
+        $this->mostrarDetalles(
+            'PDFs AMBIGUOS',
+            $resultado['ambiguos'],
+            'warn'
+        );
+
+        $this->mostrarDetalles(
+            'ERRORES AL PROCESAR PDFs',
+            $resultado['errores_detalle'],
+            'error'
+        );
+
+        $this->mostrarDetalles(
+            'PDFs OMITIDOS POR REGLAS',
+            $resultado['ignorados_detalle'],
+            'warn'
+        );
+
+        $this->mostrarSinNumero(
+            $resultado['sin_numero']
+        );
+    }
+
+    private function mostrarAsociados(
+        array $registros
+    ): void {
+        if (empty($registros)) {
+            return;
+        }
+
+        $this->newLine();
+        $this->info('PDFs ASOCIADOS (' . count($registros) . ')');
+
+        foreach ($registros as $registro) {
+            $this->line(
+                "ID {$registro['oficio_id']} | " .
+                "{$this->numeroMostrable($registro['numero'])} | " .
+                "{$registro['archivo']}"
+            );
+        }
+    }
+
+    private function mostrarYaExistentes(
+        array $registros
+    ): void {
+        if (empty($registros)) {
+            return;
+        }
+
+        $this->newLine();
+        $this->warn('PDFs YA EXISTENTES (' . count($registros) . ')');
+
+        foreach ($registros as $registro) {
+            $this->line(
+                "ID {$registro['oficio_id']} | " .
+                "{$this->numeroMostrable($registro['numero'])} | " .
+                "PDF omitido: {$registro['archivo']}"
+            );
+        }
+    }
+
+    private function mostrarSinOficio(
+        array $registros
+    ): void {
+        if (empty($registros)) {
+            return;
+        }
+
+        $this->newLine();
+        $this->warn('PDFs SIN OFICIO (' . count($registros) . ')');
+
+        foreach ($registros as $registro) {
+            $numero = $registro['numero'] ?? 'SIN NÚMERO';
+
+            $this->line(
+                "{$registro['archivo']} | " .
+                $this->numeroMostrable($numero)
+            );
+        }
+    }
+
+    private function numeroMostrable(
+        ?string $numero
+    ): string {
+        if ($numero === null || $numero === '') {
+            return 'SIN NÚMERO';
+        }
+
+        return preg_replace(
+            '/^[\s\-\._\/\\\\]+/u',
+            '',
+            $numero
+        ) ?: 'SIN NÚMERO';
+    }
+
+    private function mostrarDetalles(
+        string $titulo,
+        array $registros,
+        string $estilo
+    ): void {
+        if (empty($registros)) {
+            return;
+        }
+
         $this->newLine();
 
-        $this->line(
-            "  PDFs encontrados : " .
-            $resultado['encontrados']
+        $this->{$estilo}(
+            $titulo . ' (' . count($registros) . ')'
         );
 
-        $this->line(
-            "  PDFs asociados   : " .
-            $resultado['asociados']
-        );
-
-        $this->line(
-            "  Ya existentes    : " .
-            $resultado['ya_existentes']
-        );
-
-        $this->line(
-            "  Ignorados        : " .
-            $resultado['ignorados_descartados']
-        );
-
-        if (!empty($resultado['sin_oficio'])) {
-            $this->newLine();
-
-            $this->warn(
-                'PDFs SIN OFICIO CORRESPONDIENTE'
+        foreach ($registros as $registro) {
+            $numero = $this->numeroMostrable(
+                $registro['numero'] ?? null
             );
+            $oficioId = $registro['oficio_id'] ?? 'SIN ID';
+            $motivo = $registro['motivo'] ?? '';
+            $etapa = $registro['etapa'] ?? '';
 
-            foreach (
-                $resultado['sin_oficio']
-                as $registro
-            ) {
-                $numero =
-                    $registro['numero'] ??
-                    'SIN NÚMERO';
+            $this->line(
+                "{$registro['archivo']} | {$numero} | ID {$oficioId}" .
+                ($etapa !== '' ? " | Etapa: {$etapa}" : '') .
+                ($motivo !== '' ? " | {$motivo}" : '')
+            );
+        }
+    }
 
-                $this->line(
-                    "{$numero} — {$registro['archivo']} — " .
-                    "{$registro['motivo']}"
-                );
-            }
+    private function mostrarOficiosSinPdf(
+        array $registros
+    ): void {
+        if (empty($registros)) {
+            return;
+        }
+
+        $this->newLine();
+
+        $this->warn(
+            'OFICIOS SIN PDF (' . count($registros) . ')'
+        );
+
+        foreach ($registros as $registro) {
+            $this->line(
+                "ID {$registro['id']} | {$registro['numero']} | " .
+                "Tipo {$registro['tipo_oficio_id']} " .
+                "({$registro['tipo']}) | {$registro['motivo']}"
+            );
+        }
+    }
+
+    private function mostrarSinNumero(
+        array $registros
+    ): void {
+        if (empty($registros)) {
+            return;
+        }
+
+        $this->newLine();
+
+        $this->warn(
+            'PDFs SIN NÚMERO (' . count($registros) . ')'
+        );
+
+        foreach ($registros as $registro) {
+            $this->line(
+                "{$registro['archivo']} | {$registro['ruta']}"
+            );
         }
     }
 
     private function mostrarFinal(
-        array $importacion,
         array $pdfs
     ): void {
         $this->newLine();
 
-        $this->info(
-            '======================================'
-        );
-
-        $this->info(
-            '       MIGRACIÓN COMPLETADA'
-        );
-
-        $this->info(
-            '======================================'
-        );
-
-        $importados =
-            collect(
-                $importacion['estadisticas']
-            )->sum('importados');
-
-        $duplicados =
-            collect(
-                $importacion['estadisticas']
-            )->sum('duplicados');
-
-        $descartados =
-            collect(
-                $importacion['estadisticas']
-            )->sum('descartados');
-
-        $this->newLine();
+        $this->info('RESUMEN');
 
         $this->line(
-            "Oficios importados : {$importados}"
+            "PDFs encontrados: {$pdfs['encontrados']}"
         );
-
         $this->line(
-            "Oficios duplicados : {$duplicados}"
+            "Asociaciones exitosas: {$pdfs['asociados']}"
         );
-
         $this->line(
-            "Oficios descartados: {$descartados}"
+            "Documentos ya existentes: {$pdfs['ya_existentes']}"
         );
-
         $this->line(
-            "PDFs encontrados   : {$pdfs['encontrados']}"
+            'Oficios sin PDF: ' . count($pdfs['oficios_sin_pdf'])
         );
-
         $this->line(
-            "PDFs asociados     : {$pdfs['asociados']}"
+            'PDFs sin oficio: ' . count($pdfs['sin_oficio'])
         );
-
         $this->line(
-            "PDFs ya existentes : {$pdfs['ya_existentes']}"
+            'PDFs ambiguos: ' . count($pdfs['ambiguos'])
         );
-
         $this->line(
-            "PDFs sin oficio    : " .
-            count($pdfs['sin_oficio'])
+            "Errores técnicos: {$pdfs['errores']}"
         );
-
         $this->line(
-            "Oficios sin PDF    : " .
-            count($pdfs['oficios_sin_pdf'])
+            'PDFs sin número (S-N): ' . count($pdfs['sin_numero'])
         );
-
-        if (!empty($pdfs['oficios_sin_pdf'])) {
-            $this->newLine();
-
-            $this->warn(
-                'OFICIOS QUE QUEDARON SIN PDF'
-            );
-
-            foreach (
-                $pdfs['oficios_sin_pdf']
-                as $registro
-            ) {
-                $this->line(
-                    $registro['numero']
-                );
-            }
-        }
-
         $this->line(
-            "Folios reservados  : " .
-            count($importacion['reservados'])
+            'Estado: ' .
+            ($pdfs['errores'] > 0
+                ? 'COMPLETADO CON INCIDENCIAS'
+                : 'COMPLETADO')
         );
     }
 }

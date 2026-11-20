@@ -15,6 +15,7 @@ use App\Models\Turnado;
 | RUTAS PÚBLICAS
 |--------------------------------------------------------------------------
 */
+Route::get('logs', [\Rap2hpoutre\LaravelLogViewer\LogViewerController::class, 'index']);
 
 Route::get('/', function () {
     if (auth()->check()) {
