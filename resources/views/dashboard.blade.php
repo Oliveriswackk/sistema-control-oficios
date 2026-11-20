@@ -300,7 +300,7 @@
             </p>
         </div>
 
-        @if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('recepcion'))
+        @if(auth()->user()->hasRole('admin') || auth()->user()->hasPermission('puede_registrar_oficios'))
             <button
                 type="button"
                 class="btn btn-sage btn-sm rounded shadow-sm px-3 font-weight-bold"
