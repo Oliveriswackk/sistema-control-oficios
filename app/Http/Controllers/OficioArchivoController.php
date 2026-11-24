@@ -21,6 +21,20 @@ class OficioArchivoController extends Controller
             'archivo' => 'required|file|mimes:pdf|max:20480',
         ]);
 
+        if (!$oficio->relacionDefinida()) {
+            $mensaje =
+                'Antes de subir el PDF, define la relación del oficio en Información. Esta confirmación es necesaria para evitar relaciones incorrectas y cierres automáticos indebidos.';
+
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $mensaje,
+                ], 422);
+            }
+
+            return back()->with('error', $mensaje);
+        }
+
         $file = $request->file('archivo');
 
         $hash = hash_file('sha256', $file->getRealPath());

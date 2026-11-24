@@ -299,7 +299,6 @@
                             <div class="col-md-7">
                                 <label class="small font-weight-bold text-dark mb-1">
                                     ¿Inicia nueva petición o responde a otro oficio?
-                                    <span class="text-danger">*</span>
                                 </label>
 
                                 <div class="d-flex pt-1 mb-2">
@@ -308,8 +307,7 @@
                                                id="relacion_nueva"
                                                name="tipo_relacion"
                                                value="nueva"
-                                               class="custom-control-input"
-                                               required>
+                                               class="custom-control-input">
 
                                         <label class="custom-control-label small"
                                                for="relacion_nueva">
@@ -1036,19 +1034,6 @@
                                          class="d-inline-block">
                                     </div>
 
-                                    <div class="mt-1">
-
-                                        <a href="javascript:void(0)"
-                                           id="btnCorregirIdentidad"
-                                           class="small text-primary font-weight-bold">
-
-                                            <i class="fas fa-pen mr-1"></i>
-                                            Corregir identidad
-
-                                        </a>
-
-                                    </div>
-
                                 </div>
 
                             </div>
@@ -1078,6 +1063,71 @@
                                       name="descripcion"
                                       class="form-control form-control-sm"
                                       rows="3"></textarea>
+
+                        </div>
+
+                        <div class="form-block mb-3">
+
+                            <label class="small font-weight-bold text-dark mb-1">
+                                Relación del oficio
+                            </label>
+
+                            <div class="d-flex pt-1 mb-2">
+
+                                <div class="custom-control custom-radio mr-4">
+                                    <input type="radio"
+                                           id="detalleRelacionNueva"
+                                           name="detalle_tipo_relacion"
+                                           value="nueva"
+                                           class="custom-control-input">
+
+                                    <label class="custom-control-label small"
+                                           for="detalleRelacionNueva">
+                                        Inicia nueva petición
+                                    </label>
+                                </div>
+
+                                <div class="custom-control custom-radio">
+                                    <input type="radio"
+                                           id="detalleRelacionExistente"
+                                           name="detalle_tipo_relacion"
+                                           value="relacionado"
+                                           class="custom-control-input">
+
+                                    <label class="custom-control-label small"
+                                           for="detalleRelacionExistente">
+                                        Es respuesta a otro oficio
+                                    </label>
+                                </div>
+
+                            </div>
+
+                            <div id="detalleBloqueOficioRelacionado"
+                                 class="mt-2"
+                                 style="display:none;">
+
+                                <label for="detalleOficioRelacionado">
+                                    Oficio antecedente <span class="text-danger">*</span>
+                                </label>
+
+                                <div class="position-relative">
+                                    <input type="text"
+                                           id="detalleOficioRelacionado"
+                                           class="form-control form-control-sm font-mono"
+                                           autocomplete="off"
+                                           placeholder="Buscar oficio anterior...">
+
+                                    <input type="hidden"
+                                           id="detalleRespuestaAOficioId">
+
+                                    <input type="hidden"
+                                           id="detalleOficioActualId">
+
+                                    <div id="detalleOficiosRelacionadosResultados"
+                                         class="oficio-autocomplete">
+                                    </div>
+                                </div>
+                            </div>
 
                         </div>
 

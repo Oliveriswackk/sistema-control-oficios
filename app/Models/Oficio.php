@@ -19,6 +19,9 @@ use App\Models\OficioRelacion;
 
 class Oficio extends Model
 {
+    public const ACCION_RELACION_NUEVA_CONFIRMADA =
+        'relacion_nueva_confirmada';
+
     use HasFactory;
 
     protected $table = 'oficios';
@@ -280,6 +283,32 @@ class Oficio extends Model
             'entidad_relacionada' => $entidad,
             'entidad_relacionada_id' => $entidadId,
         ]);
+    }
+
+    public function relacionDefinida(): bool
+    {
+        if (!empty($this->respuesta_a_oficio_id)) {
+            return (int) $this->respuesta_a_oficio_id !== (int) $this->getKey();
+        }
+
+        return $this->historial()
+            ->where(
+                'accion',
+                self::ACCION_RELACION_NUEVA_CONFIRMADA
+            )
+            ->exists();
+    }
+
+    public function confirmarRelacionNueva(): void
+    {
+        if ($this->relacionDefinida()) {
+            return;
+        }
+
+        $this->registrarEvento(
+            self::ACCION_RELACION_NUEVA_CONFIRMADA,
+            'Se confirmó que el oficio inicia una nueva petición.'
+        );
     }
 
 

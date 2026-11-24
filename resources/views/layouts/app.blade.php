@@ -754,6 +754,8 @@ window.Oficios = {
             id: id
         };
 
+            $('#detalleOficioActualId').val(id);
+
         $('#btnCancelarOficio').hide();
 
         $('#detalleNumeroOficio').text('Cargando...');
@@ -1062,6 +1064,46 @@ window.Oficios = {
 
                 $('#detalleLinkDrive').val(
                     oficio.link_drive || ''
+                );
+
+                const tieneOficioPadre =
+                    Boolean(oficio.respuesta_a_oficio_id) &&
+                    String(oficio.respuesta_a_oficio_id) !== String(oficio.id);
+
+                const tipoRelacion =
+                    tieneOficioPadre
+                        ? 'relacionado'
+                        : oficio.relacion_nueva_confirmada
+                            ? 'nueva'
+                            : null;
+
+                $('#modalDetalleOficio input[name="detalle_tipo_relacion"]')
+                    .prop('checked', false);
+
+                if (tipoRelacion) {
+                    $(
+                        `#modalDetalleOficio input[name="detalle_tipo_relacion"][value="${tipoRelacion}"]`
+                    ).prop('checked', true);
+                }
+
+                $('#detalleOficioRelacionado')
+                    .val(
+                        tieneOficioPadre
+                            ? oficio.respuesta_a_oficio_numero || ''
+                            : ''
+                    )
+                    .prop('required', tieneOficioPadre);
+
+                $('#detalleRespuestaAOficioId').val(
+                    tieneOficioPadre
+                        ? oficio.respuesta_a_oficio_id
+                        : ''
+                );
+
+                $('#detalleOficioActualId').val(oficio.id);
+
+                $('#detalleBloqueOficioRelacionado').toggle(
+                    tieneOficioPadre
                 );
 
 
@@ -1414,6 +1456,59 @@ window.Oficios = {
 
     },
 
+    bindPdfUploadGuard() {
+
+        $(document)
+            .off('submit.oficios', '#detalleDocumentos form')
+            .on(
+                'submit.oficios',
+                '#detalleDocumentos form',
+                function (event) {
+
+                    const tipoRelacion = $(
+                        '#modalDetalleOficio input[name="detalle_tipo_relacion"]:checked'
+                    ).val();
+
+                    const respuestaId =
+                        tipoRelacion === 'relacionado'
+                            ? $('#detalleRespuestaAOficioId').val()
+                            : '';
+
+                    if (
+                        !tipoRelacion ||
+                        (tipoRelacion === 'relacionado' && !respuestaId)
+                    ) {
+                        event.preventDefault();
+                        $('#detalle-info-tab').tab('show');
+
+                        Alerts.error(
+                            'Antes de subir el PDF, define la relación del oficio en Información. Esta confirmación es necesaria para evitar relaciones incorrectas y cierres automáticos indebidos.'
+                        );
+
+                        $('#detalleRelacionNueva').trigger('focus');
+                        return;
+                    }
+
+                    const oficio = ModalState.original;
+                    const relacionYaGuardada =
+                        tipoRelacion === 'relacionado'
+                            ? String(oficio?.respuesta_a_oficio_id || '') ===
+                                String(respuestaId)
+                            : oficio?.respuesta_a_oficio_id == null &&
+                                oficio?.relacion_nueva_confirmada === true;
+
+                    if (!relacionYaGuardada) {
+                        event.preventDefault();
+                        $('#detalle-info-tab').tab('show');
+
+                        Alerts.error(
+                            'Guarda primero la relación con el botón «Guardar cambios» y después vuelve a subir el PDF.'
+                        );
+                    }
+                }
+            );
+    },
+
 
     /*
     |--------------------------------------------------------------------------
@@ -1421,6 +1516,31 @@ window.Oficios = {
     |--------------------------------------------------------------------------
     */
     enableChangeDetection() {
+
+        $(document)
+            .off(
+                'change.oficios',
+                '#modalDetalleOficio input[name="detalle_tipo_relacion"]'
+            )
+            .on(
+                'change.oficios',
+                '#modalDetalleOficio input[name="detalle_tipo_relacion"]',
+                function () {
+
+                    const esRespuesta = this.value === 'relacionado';
+
+                    $('#detalleBloqueOficioRelacionado').toggle(esRespuesta);
+                    $('#detalleOficioRelacionado').prop('required', esRespuesta);
+
+                    if (!esRespuesta) {
+                        $('#detalleOficioRelacionado').val('');
+                        $('#detalleRespuestaAOficioId').val('');
+                        $('#detalleOficiosRelacionadosResultados')
+                            .empty()
+                            .hide();
+                    }
+                }
+            );
 
         $(document)
             .off(
@@ -1453,6 +1573,9 @@ window.Oficios = {
 
         const esSensible = $(
             '#modalDetalleOficio input[name="es_sensible"]:checked'
+        ).val();
+        const tipoRelacion = $(
+            '#modalDetalleOficio input[name="detalle_tipo_relacion"]:checked'
         ).val();
 
         return {
@@ -1500,7 +1623,14 @@ window.Oficios = {
                 $('#detalleLinkDocumento').val() || '',
                 
             link_drive:
-                $('#detalleLinkDrive').val() || ''
+                $('#detalleLinkDrive').val() || '',
+
+            tipo_relacion: tipoRelacion || '',
+
+            respuesta_a_oficio_id:
+                tipoRelacion === 'relacionado'
+                    ? $('#detalleRespuestaAOficioId').val() || ''
+                    : ''
         };
     },
 
@@ -1511,6 +1641,11 @@ window.Oficios = {
         }
 
         const current = Oficios.getEditableData();
+        const respuestaOriginal =
+            ModalState.original.respuesta_a_oficio_id;
+        const relacionOriginalValida =
+            Boolean(respuestaOriginal) &&
+            String(respuestaOriginal) !== String(ModalState.original.id);
 
         const original = {
             asunto: ModalState.original.asunto || '',
@@ -1553,7 +1688,19 @@ window.Oficios = {
                 ModalState.original.link_documento || '',
 
             link_drive:
-                ModalState.original.link_drive || ''
+                ModalState.original.link_drive || '',
+
+            tipo_relacion:
+                relacionOriginalValida
+                    ? 'relacionado'
+                    : ModalState.original.relacion_nueva_confirmada
+                        ? 'nueva'
+                        : '',
+
+            respuesta_a_oficio_id:
+                relacionOriginalValida
+                    ? String(respuestaOriginal)
+                    : ''
         };
 
         return JSON.stringify(current) !== JSON.stringify(original);
@@ -1677,6 +1824,16 @@ window.Oficios = {
                 const oficioId = ModalState.original.id;
                 const data = Oficios.getEditableData();
 
+                if (
+                    data.tipo_relacion === 'relacionado' &&
+                    !data.respuesta_a_oficio_id
+                ) {
+                    Alerts.error(
+                        'Selecciona un oficio antecedente de las sugerencias.'
+                    );
+                    return;
+                }
+
                 $button
                     .prop('disabled', true)
                     .html(`
@@ -1689,7 +1846,13 @@ window.Oficios = {
 
                         ModalState.original = {
                             ...ModalState.original,
-                            ...data
+                            ...data,
+                            respuesta_a_oficio_numero:
+                                data.tipo_relacion === 'relacionado'
+                                    ? $('#detalleOficioRelacionado').val()
+                                    : null,
+                            relacion_nueva_confirmada:
+                                data.tipo_relacion === 'nueva'
                         };
 
                         ModalState.changed = false;
@@ -1808,6 +1971,46 @@ window.Oficios = {
         $('#detalleLinkDrive').val(
             oficio.link_drive || ''
         );
+
+        const tieneOficioPadre =
+            Boolean(oficio.respuesta_a_oficio_id) &&
+            String(oficio.respuesta_a_oficio_id) !== String(oficio.id);
+
+        const tipoRelacion =
+            tieneOficioPadre
+                ? 'relacionado'
+                : oficio.relacion_nueva_confirmada
+                    ? 'nueva'
+                    : null;
+
+        $('#modalDetalleOficio input[name="detalle_tipo_relacion"]')
+            .prop('checked', false);
+
+        if (tipoRelacion) {
+            $(
+                `#modalDetalleOficio input[name="detalle_tipo_relacion"][value="${tipoRelacion}"]`
+            ).prop('checked', true);
+        }
+
+        $('#detalleOficioRelacionado')
+            .val(
+                tieneOficioPadre
+                    ? oficio.respuesta_a_oficio_numero || ''
+                    : ''
+            )
+            .prop('required', tieneOficioPadre);
+
+        $('#detalleRespuestaAOficioId').val(
+            tieneOficioPadre
+                ? oficio.respuesta_a_oficio_id
+                : ''
+        );
+
+        $('#detalleOficioActualId').val(oficio.id);
+
+        $('#detalleBloqueOficioRelacionado').toggle(
+            tieneOficioPadre
+        );
     },
 
     bindCloseGuard() {
@@ -1902,6 +2105,7 @@ window.ModalState = {
 
 window.Oficios.bindClose();
 window.Oficios.bindCancel();
+window.Oficios.bindPdfUploadGuard();
 window.Oficios.enableChangeDetection();
 window.Oficios.bindSave();
 window.Oficios.bindCloseGuard();

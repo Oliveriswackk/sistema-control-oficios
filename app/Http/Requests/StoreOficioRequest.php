@@ -39,9 +39,16 @@ class StoreOficioRequest extends FormRequest
 
             'requiere_respuesta' => ['boolean'],
 
+            'tipo_relacion' => [
+                'nullable',
+                'in:nueva,relacionado',
+            ],
+
             'respuesta_a_oficio_id' => [
+                'required_if:tipo_relacion,relacionado',
                 'nullable',
                 'integer',
+                'exists:oficios,id',
             ],
 
             'es_sensible' => ['boolean'],
@@ -60,9 +67,11 @@ class StoreOficioRequest extends FormRequest
             'link_documento' => ['nullable', 'string'],
 
             'link_drive' => [
-                'nullable',
+                in_array((int) $this->input('tipo_oficio_id'), [2, 3], true)
+                    && !$this->boolean('es_sensible')
+                    ? 'required'
+                    : 'nullable',
                 'string',
-                'required_if:tipo_oficio_id,2,3',
             ],
         ];
     }

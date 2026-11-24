@@ -18,9 +18,13 @@ window.Sugerencias = {
             });
     },
 
-    buscarOficios: function (termino) {
+    buscarOficios: function (termino, excluirId = '') {
+        const exclusion = excluirId
+            ? `&excluir_id=${encodeURIComponent(excluirId)}`
+            : '';
+
         return fetch(
-            `${window.LaravelBaseUrl}/api/sugerencias/oficios?q=${encodeURIComponent(termino)}`
+            `${window.LaravelBaseUrl}/api/sugerencias/oficios?q=${encodeURIComponent(termino)}${exclusion}`
         )
             .then(response => {
                 if (!response.ok) {
@@ -201,6 +205,9 @@ window.Sugerencias = {
         const input = document.querySelector(config.input);
         const hiddenId = document.querySelector(config.hiddenId);
         const contenedor = document.querySelector(config.resultados);
+        const exclusionInput = config.excludeId
+            ? document.querySelector(config.excludeId)
+            : null;
 
         if (!input || !hiddenId || !contenedor) return;
 
@@ -219,10 +226,20 @@ window.Sugerencias = {
                 return;
             }
 
-            Sugerencias.buscarOficios(termino)
+            const excluirId = exclusionInput
+                ? exclusionInput.value
+                : '';
+
+            Sugerencias.buscarOficios(termino, excluirId)
                 .then(data => {
 
-                    resultados = data;
+                    const idActual = exclusionInput
+                        ? exclusionInput.value
+                        : '';
+
+                    resultados = data.filter(
+                        oficio => String(oficio.id) !== String(idActual)
+                    );
 
                     if (!resultados.length) {
                         ocultar();
@@ -374,5 +391,12 @@ $(document).ready(function () {
         input: '#oficio_relacionado',
         hiddenId: '#respuesta_a_oficio_id',
         resultados: '#oficiosRelacionadosResultados'
+    });
+
+    Sugerencias.oficio({
+        input: '#detalleOficioRelacionado',
+        hiddenId: '#detalleRespuestaAOficioId',
+        resultados: '#detalleOficiosRelacionadosResultados',
+        excludeId: '#detalleOficioActualId'
     });
 });

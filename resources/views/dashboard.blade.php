@@ -921,7 +921,11 @@
     // ---- Relacion con oficio ----
     document.addEventListener('change', function (e) {
 
-        if (!e.target.matches('input[name="tipo_relacion"]')) {
+        if (
+            !e.target.matches(
+                '#formCrearOficio input[name="tipo_relacion"]'
+            )
+        ) {
             return;
         }
 
@@ -1118,6 +1122,44 @@
     // DINÁMICA TIPO DE OFICIO
     // =========================================================
 
+    function actualizarObligatoriedadLinkDrive() {
+
+        const tipo =
+            $('#formCrearOficio input[name="tipo_oficio_id"]:checked').val();
+
+        const esSensible =
+            $('#formCrearOficio input[name="es_sensible"]:checked').val() === '1';
+
+        const linkDrive =
+            $('#link_drive');
+
+        const asteriscoLinkDrive =
+            $('#asteriscoLinkDrive');
+
+        const ayudaLinkDrive =
+            $('#ayudaLinkDrive');
+
+        const esRecibido =
+            tipo === '2' || tipo === '3';
+
+        const requerido =
+            esRecibido && !esSensible;
+
+        linkDrive.prop('required', requerido);
+        asteriscoLinkDrive.toggle(requerido);
+
+        if (!esRecibido) {
+            ayudaLinkDrive.text('Opcional para oficios enviados.');
+        } else if (esSensible) {
+            ayudaLinkDrive.text('Opcional para oficios sensibles.');
+        } else {
+            ayudaLinkDrive.text(
+                'Obligatorio: enlace al documento recibido en Drive.'
+            );
+        }
+    }
+
+
     function actualizarFormularioTipoOficio() {
 
         const DEPENDENCIA_SESEA =
@@ -1147,15 +1189,6 @@
         const destinatarioDependencia =
             $('#destinatario_dependencia');
 
-        const linkDrive =
-            $('#link_drive');
-
-        const asteriscoLinkDrive =
-            $('#asteriscoLinkDrive');
-
-        const ayudaLinkDrive =
-            $('#ayudaLinkDrive');
-
         if (tipo == 1) {
 
             bloqueCoordinacion.show();
@@ -1170,13 +1203,6 @@
 
             $('#labelFechaCrear').html(
                 'Fecha de envío <span class="text-danger">*</span>'
-            );
-
-            linkDrive.prop('required', false);
-            asteriscoLinkDrive.hide();
-
-            ayudaLinkDrive.text(
-                'Opcional para oficios enviados.'
             );
 
             generarNumeroOficio();
@@ -1205,14 +1231,9 @@
                 'Fecha de recepción <span class="text-danger">*</span>'
             );
 
-            linkDrive.prop('required', true);
-
-            asteriscoLinkDrive.show();
-
-            ayudaLinkDrive.text(
-                'Obligatorio: enlace al documento recibido en Drive.'
-            );
         }
+
+        actualizarObligatoriedadLinkDrive();
     }
 
 
@@ -1252,6 +1273,12 @@
         function () {
             actualizarFormularioTipoOficio();
         }
+    );
+
+    $(document).on(
+        'change',
+        '#formCrearOficio input[name="es_sensible"]',
+        actualizarObligatoriedadLinkDrive
     );
 
     

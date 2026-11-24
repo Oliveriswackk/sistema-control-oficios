@@ -28,6 +28,9 @@ use Carbon\Carbon;
 
 class OficioController extends Controller
 {
+    private const ERROR_RELACION_CIRCULAR =
+        'No se puede guardar la relación porque el antecedente seleccionado produciría o pertenece a una relación circular.';
+
     /*
     |--------------------------------------------------------------------------
     | LISTADO
@@ -368,17 +371,20 @@ class OficioController extends Controller
     {
         $this->authorize('create', Oficio::class);
 
-        $esRespuesta = $request->respuesta_a_oficio_id != 0;
+        $respuestaId = $request->input('tipo_relacion') === 'relacionado'
+            ? $request->input('respuesta_a_oficio_id')
+            : null;
 
-        if ($esRespuesta) {
-            $padre = Oficio::find($request->respuesta_a_oficio_id);
-
-            if (!$padre) {
-                return back()->with('error', 'Oficio padre no existe');
-            }
+        if (
+            $respuestaId &&
+            $this->relacionFormariaCiclo((int) $respuestaId, null)
+        ) {
+            return response()->json([
+                'success' => false,
+                'message' => self::ERROR_RELACION_CIRCULAR,
+            ], 422);
         }
 
-        $respuestaId = $request->input('respuesta_a_oficio_id');
         $tipo = (int) $request->tipo_oficio_id;
 
         $oficio = \Illuminate\Support\Facades\DB::transaction(function () use (
@@ -521,6 +527,10 @@ class OficioController extends Controller
             'oficio_creado',
             'Oficio creado desde interfaz web'
         );
+
+        if ($request->input('tipo_relacion') === 'nueva') {
+            $oficio->confirmarRelacionNueva();
+        }
 
         if (
             (int) $oficio->tipo_oficio_id === 1 &&
@@ -671,12 +681,46 @@ class OficioController extends Controller
         }
 
         $request->validate([
-            'link_drive' => [
+            'tipo_relacion' => [
                 'nullable',
+                'in:nueva,relacionado',
+            ],
+            'respuesta_a_oficio_id' => [
+                'required_if:tipo_relacion,relacionado',
+                'nullable',
+                'integer',
+                'exists:oficios,id',
+            ],
+            'link_drive' => [
+                in_array((int) $oficio->tipo_oficio_id, [2, 3], true)
+                    && !$request->boolean('es_sensible')
+                    ? 'required'
+                    : 'nullable',
                 'string',
-                'required_if:tipo_oficio_id,2,3',
             ],
         ]);
+
+        $tipoRelacion = $request->input('tipo_relacion');
+
+        if ($tipoRelacion === 'relacionado') {
+            $respuestaId = $request->input('respuesta_a_oficio_id');
+
+            if (
+                $this->relacionFormariaCiclo(
+                    (int) $respuestaId,
+                    (int) $oficio->id
+                )
+            ) {
+                return response()->json([
+                    'success' => false,
+                    'message' => self::ERROR_RELACION_CIRCULAR,
+                ], 422);
+            }
+        } elseif ($tipoRelacion === 'nueva') {
+            $respuestaId = null;
+        } else {
+            $respuestaId = $oficio->respuesta_a_oficio_id;
+        }
 
         $oficio->update([
             'asunto' => $request->input('asunto'),
@@ -688,6 +732,7 @@ class OficioController extends Controller
                 $request->boolean('requiere_respuesta'),
             'es_sensible' =>
                 $request->boolean('es_sensible'),
+            'respuesta_a_oficio_id' => $respuestaId,
 
             'remitente_nombre' =>
                 $request->input('remitente_nombre'),
@@ -720,6 +765,10 @@ class OficioController extends Controller
             'descripcion' =>
                 'Se actualizaron datos generales del oficio',
         ]);
+
+        if ($tipoRelacion === 'nueva') {
+            $oficio->confirmarRelacionNueva();
+        }
 
         return response()->json([
             'success' => true,
@@ -1476,14 +1525,59 @@ class OficioController extends Controller
     }
 
 
+    private function relacionFormariaCiclo(
+        int $respuestaId,
+        ?int $oficioActualId
+    ): bool {
+        $visitados = [];
+        $actualId = $respuestaId;
+
+        while ($actualId > 0) {
+            if (
+                $oficioActualId !== null &&
+                $actualId === $oficioActualId
+            ) {
+                return true;
+            }
+
+            if (isset($visitados[$actualId])) {
+                return true;
+            }
+
+            $visitados[$actualId] = true;
+
+            $actual = Oficio::query()
+                ->select('id', 'respuesta_a_oficio_id')
+                ->find($actualId);
+
+            if (!$actual) {
+                return false;
+            }
+
+            $actualId = (int) ($actual->respuesta_a_oficio_id ?? 0);
+        }
+
+        return false;
+    }
+
+
     private function obtenerTrayectoria(Oficio $oficio): array
     {
         $raiz = $oficio;
+        $visitadosAntecedentes = [];
 
         while ($raiz->respuesta_a_oficio_id) {
+            if (isset($visitadosAntecedentes[$raiz->id])) {
+                break;
+            }
+
+            $visitadosAntecedentes[$raiz->id] = true;
             $padre = $raiz->oficioPadre;
 
-            if (!$padre) {
+            if (
+                !$padre ||
+                isset($visitadosAntecedentes[$padre->id])
+            ) {
                 break;
             }
 
@@ -1491,8 +1585,19 @@ class OficioController extends Controller
         }
 
         $nodos = collect();
+        $visitadosDescendientes = [];
 
-        $agregarDescendientes = function (Oficio $actual) use (&$agregarDescendientes, &$nodos) {
+        $agregarDescendientes = function (Oficio $actual) use (
+            &$agregarDescendientes,
+            &$nodos,
+            &$visitadosDescendientes
+        ) {
+            if (isset($visitadosDescendientes[$actual->id])) {
+                return;
+            }
+
+            $visitadosDescendientes[$actual->id] = true;
+
             $actual->loadMissing([
                 'estado',
                 'tipo',
@@ -1520,6 +1625,7 @@ class OficioController extends Controller
         $oficio->load([
             'estado',
             'tipo',
+            'oficioPadre',
             'responsableActual.usuario',
             'responsableActual.coordinacion',
             'tags',
@@ -1551,6 +1657,11 @@ class OficioController extends Controller
             'requiere_respuesta' => $oficio->requiere_respuesta,
             'es_sensible' => $oficio->es_sensible,
             'respuesta_a_oficio_id' => $oficio->respuesta_a_oficio_id,
+            'respuesta_a_oficio_numero' =>
+                $oficio->oficioPadre?->numero_oficio,
+            'relacion_nueva_confirmada' =>
+                $oficio->respuesta_a_oficio_id === null
+                && $oficio->relacionDefinida(),
             'estado' => [
                 'clave' => $oficio->estado->clave,
                 'nombre' => $oficio->estado->nombre,

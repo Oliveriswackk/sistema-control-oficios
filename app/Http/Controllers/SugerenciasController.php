@@ -68,6 +68,10 @@ class SugerenciasController extends Controller
     public function oficios(Request $request)
     {
         $q = trim($request->get('q', ''));
+        $excluirId = filter_var(
+            $request->input('excluir_id'),
+            FILTER_VALIDATE_INT
+        );
 
         if (mb_strlen($q) < 2) {
             return response()->json([]);
@@ -75,6 +79,10 @@ class SugerenciasController extends Controller
 
         $oficios = \App\Models\Oficio::query()
             ->where('estado_id', '!=', \App\Models\EstadoOficio::CANCELADO)
+            ->when(
+                $excluirId !== false,
+                fn ($query) => $query->where('id', '!=', $excluirId)
+            )
             ->where(function ($query) use ($q) {
                 $query->where('numero_oficio', 'like', "%{$q}%")
                     ->orWhere('asunto', 'like', "%{$q}%");
