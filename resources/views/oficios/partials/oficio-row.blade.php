@@ -31,23 +31,27 @@
     {{-- Etiquetas --}}
     <td class="align-middle">
 
-        @forelse($oficio->tags as $tag)
+        @if(!$oficio->es_sensible || auth()->user()->can('verSensible', $oficio))
+            @forelse($oficio->tags as $tag)
 
-            <span
-                class="text-muted small"
-                style="
-                    display:inline-block;
-                    margin-right:.4rem;
-                "
-            >
-                {{ $tag->nombre }}
-            </span>
+                <span
+                    class="text-muted small"
+                    style="
+                        display:inline-block;
+                        margin-right:.4rem;
+                    "
+                >
+                    {{ $tag->nombre }}
+                </span>
 
-        @empty
+            @empty
 
-            <span class="text-muted small">—</span>
+                <span class="text-muted small">—</span>
 
-        @endforelse
+            @endforelse
+        @else
+            <span class="text-muted small">Restringidas</span>
+        @endif
 
     </td>
 
@@ -116,6 +120,32 @@
                 <i class="fas fa-eye fa-xs"></i>
             </button>
 
+            @if(
+                $oficio->es_sensible &&
+                $oficio->tipo?->clave === 'enviado' &&
+                $oficio->estado?->clave !== 'cancelado' &&
+                !$oficio->yaFueMarcadoComoEnviado() &&
+                (
+                    auth()->user()->hasRole('admin') ||
+                    auth()->user()->hasPermission('puede_registrar_oficios')
+                )
+            )
+                <form
+                    method="POST"
+                    action="{{ route('oficios.marcar-enviado', $oficio) }}"
+                    class="d-inline"
+                >
+                    @csrf
+                    <button
+                        type="submit"
+                        class="btn btn-sm btn-light text-success border-0 rounded mr-1 px-2"
+                        title="Marcar como enviado"
+                    >
+                        <i class="fas fa-paper-plane fa-xs"></i>
+                    </button>
+                </form>
+            @endif
+
 
             {{-- =====================================================
                  ACCIONES QUE SOLO EXISTEN SI EL OFICIO ESTÁ ABIERTO
@@ -128,7 +158,10 @@
 
                 {{-- Turnar / Returnar --}}
                 @if(
-                    $oficio->tipo_oficio_id == 2 &&
+                    (
+                        $oficio->tipo_oficio_id == 2 ||
+                        ($oficio->es_sensible && $oficio->tipo_oficio_id == 3)
+                    ) &&
                     (
                         auth()->user()->hasRole('admin') ||
                         auth()->user()->hasPermission('puede_turnar')
@@ -163,7 +196,8 @@
                                 {{ $oficio->id }},
                                 '{{ $oficio->numero_oficio }}',
                                 '{{ route('oficios.turnar', $oficio->id) }}',
-                                true
+                                true,
+                                {{ $oficio->es_sensible ? 'true' : 'false' }}
                             )"
                         >
                             <i class="fas fa-share fa-xs"></i>
@@ -180,7 +214,8 @@
                                 {{ $oficio->id }},
                                 '{{ $oficio->numero_oficio }}',
                                 '{{ route('oficios.turnar', $oficio->id) }}',
-                                false
+                                false,
+                                {{ $oficio->es_sensible ? 'true' : 'false' }}
                             )"
                         >
                             <i class="fas fa-share fa-xs"></i>
@@ -429,6 +464,7 @@
 
 
                                     {{-- Copiar link --}}
+                                    @if(!$oficio->es_sensible || auth()->user()->can('verSensible', $oficio))
                                     <button
                                         type="button"
                                         class="btn btn-sm btn-outline-secondary"
@@ -445,6 +481,7 @@
                                         ></i>
                                         Copiar link
                                     </button>
+                                    @endif
 
                                 </div>
 

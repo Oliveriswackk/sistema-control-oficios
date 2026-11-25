@@ -4,8 +4,8 @@ namespace App\Services\Historico;
 
 use App\Models\Oficio;
 use App\Models\OficioArchivo;
+use App\Services\OficioArchivoStorageService;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 
 class AsociarOficiosPdfService
 {
@@ -147,6 +147,7 @@ class AsociarOficiosPdfService
         $indice = [];
 
         $oficios = Oficio::query()
+            ->with('tipo')
             ->get();
 
         foreach ($oficios as $oficio) {
@@ -656,6 +657,9 @@ class AsociarOficiosPdfService
         $nombreOriginal = basename($rutaOrigen);
 
         $mimeType = 'application/pdf';
+        $nivelAcceso = $oficio->es_sensible
+            ? 'privado'
+            : 'publico';
 
         $archivo = OficioArchivo::firstOrCreate(
             [
@@ -664,20 +668,19 @@ class AsociarOficiosPdfService
             [
                 'nombre_original' => $nombreOriginal,
                 'tipo_archivo' => $mimeType,
-                'nivel_acceso' => 'publico',
+                'nivel_acceso' => $nivelAcceso,
             ]
         );
 
         $archivo->update([
             'nombre_original' => $nombreOriginal,
             'tipo_archivo' => $mimeType,
+            'nivel_acceso' => $nivelAcceso,
         ]);
 
         $ultimaVersion = $archivo->versiones()->max('version');
 
         $version = ($ultimaVersion ?? 0) + 1;
-
-        $path = "oficios/{$oficio->id}/{$nombreOriginal}";
 
         $contenido = file_get_contents($rutaOrigen);
 
@@ -687,16 +690,12 @@ class AsociarOficiosPdfService
             );
         }
 
-        $guardado = Storage::disk('public')->put(
-            $path,
-            $contenido
+        $archivoStorage = new OficioArchivoStorageService();
+        $path = $archivoStorage->putHistorical(
+            $contenido,
+            $nombreOriginal,
+            $oficio
         );
-
-        if (!$guardado) {
-            throw new \RuntimeException(
-                "No fue posible guardar el PDF: {$nombreOriginal}"
-            );
-        }
 
         $versionAnteriorId = $archivo->versiones()
             ->where('version', $version - 1)
@@ -713,7 +712,7 @@ class AsociarOficiosPdfService
             'hash_sha256' => $hash,
             'version' => $version,
             'es_actual' => true,
-            'es_publica' => true,
+            'es_publica' => !$oficio->es_sensible,
             'subido_por_id' => self::USUARIO_MIGRACION,
             'motivo_reemplazo' => null,
             'version_anterior_id' => $versionAnteriorId,

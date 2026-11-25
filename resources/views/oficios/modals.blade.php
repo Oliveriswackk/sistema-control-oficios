@@ -820,7 +820,9 @@
 
                                             @foreach(App\Models\TipoParticipacion::where('activo', true)->get() as $tipo)
 
-                                                <option value="{{ $tipo->id }}">
+                                                <option
+                                                    value="{{ $tipo->id }}"
+                                                    data-clave="{{ $tipo->clave }}">
                                                     {{ $tipo->nombre }}
                                                 </option>
 

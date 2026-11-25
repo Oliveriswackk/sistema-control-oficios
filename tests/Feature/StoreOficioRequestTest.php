@@ -15,8 +15,18 @@ class StoreOficioRequestTest extends TestCase
             'es_sensible' => 0,
         ], ['link_drive']));
 
+        $this->assertFalse($this->passesRules([
+            'tipo_oficio_id' => 3,
+            'es_sensible' => 0,
+        ], ['link_drive']));
+
         $this->assertTrue($this->passesRules([
             'tipo_oficio_id' => 2,
+            'es_sensible' => 1,
+        ], ['link_drive']));
+
+        $this->assertTrue($this->passesRules([
+            'tipo_oficio_id' => 3,
             'es_sensible' => 1,
         ], ['link_drive']));
 

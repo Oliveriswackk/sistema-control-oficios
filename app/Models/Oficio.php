@@ -22,6 +22,9 @@ class Oficio extends Model
     public const ACCION_RELACION_NUEVA_CONFIRMADA =
         'relacion_nueva_confirmada';
 
+    public const ACCION_MARCADO_COMO_ENVIADO =
+        'oficio_marcado_como_enviado';
+
     use HasFactory;
 
     protected $table = 'oficios';
@@ -220,7 +223,9 @@ class Oficio extends Model
             Turnado::class,
             'oficio_id'
         )
-        ->where('tipo_participacion_id', 1)
+        ->whereHas('tipoParticipacion', function ($query) {
+            $query->where('implica_responsabilidad', true);
+        })
         ->latest('id');
     }
 
@@ -309,6 +314,21 @@ class Oficio extends Model
             self::ACCION_RELACION_NUEVA_CONFIRMADA,
             'Se confirmó que el oficio inicia una nueva petición.'
         );
+    }
+
+    public function yaFueMarcadoComoEnviado(): bool
+    {
+        $marcadoCount = $this->getAttribute(
+            'marcado_como_enviado_count'
+        );
+
+        if ($marcadoCount !== null) {
+            return (int) $marcadoCount > 0;
+        }
+
+        return $this->historial()
+            ->where('accion', self::ACCION_MARCADO_COMO_ENVIADO)
+            ->exists();
     }
 
 

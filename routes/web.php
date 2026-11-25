@@ -131,6 +131,11 @@ Route::middleware('auth')->group(function () {
     Route::put('/oficios/{oficio}', [OficioController::class, 'update'])
         ->name('oficios.update');
 
+    Route::post(
+        '/oficios/{oficio}/marcar-enviado',
+        [OficioController::class, 'marcarComoEnviado']
+    )->name('oficios.marcar-enviado');
+
     // TURNAR
     Route::get('/oficios/{oficio}/turnar', [OficioController::class, 'turnarModal'])
         ->name('oficios.turnar.modal');
@@ -148,6 +153,11 @@ Route::middleware('auth')->group(function () {
     // CARGAR ARCHIVO PDF
     Route::post('/oficios/{oficio}/archivos', [OficioArchivoController::class, 'store'])
         ->name('oficios.archivos.store');
+
+    Route::get(
+        '/oficios/{oficio}/archivos/{version}/descargar',
+        [OficioArchivoController::class, 'download']
+    )->name('oficios.archivos.download');
 
     // CANCELAR
     Route::post('/oficios/{oficio}/cancelar', 

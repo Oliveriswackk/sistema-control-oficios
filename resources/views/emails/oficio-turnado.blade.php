@@ -66,7 +66,7 @@
                 @endif
 
                 <!-- Observaciones / Nota de Recepción -->
-                @if($turnado->observaciones)
+                @if(!$turnado->oficio->es_sensible && $turnado->observaciones)
                     <div style="margin-bottom:20px; padding:14px; background:#fffdf5; border:1px solid #fef3c7; border-radius:8px;">
                         <span style="display:block; font-size:11px; font-weight:700; color:#b45309; text-transform:uppercase; margin-bottom:4px; letter-spacing:0.5px;">
                             Nota desde Recepción
@@ -92,23 +92,33 @@
                     </a>
                 </div>
 
-                <!-- Documentos anexos / Drive de forma fluida -->
-                <p style="margin:0 0 24px 0; font-size:14px; line-height:1.5; color:#4a5568;">
-                    📎 Te adjuntamos el archivo en PDF en este correo
-                    @if($turnado->oficio->link_drive)
-                        o si lo prefieres, puedes <a href="{{ $turnado->oficio->link_drive }}" style="color:#4e73df; font-weight:600; text-decoration:underline;" target="_blank">consultarlo directamente en Google Drive</a>.
-                    @else
-                        .
-                    @endif
-                </p>
+                @unless($turnado->oficio->es_sensible)
+                    <!-- Documentos anexos / Drive de forma fluida -->
+                    <p style="margin:0 0 24px 0; font-size:14px; line-height:1.5; color:#4a5568;">
+                        📎 Te adjuntamos el archivo en PDF en este correo
+                        @if($turnado->oficio->link_drive)
+                            o si lo prefieres, puedes <a href="{{ $turnado->oficio->link_drive }}" style="color:#4e73df; font-weight:600; text-decoration:underline;" target="_blank">consultarlo directamente en Google Drive</a>.
+                        @else
+                            .
+                        @endif
+                    </p>
+                @endunless
 
                 <!-- Asignación de Coordinaciones -->
                 @php
-                    $responsables = $turnado->oficio->turnados->where('tipo_participacion_id', 1);
-                    $ccp = $turnado->oficio->turnados->where('tipo_participacion_id', 2);
+                    $participaciones = $turnado->oficio->turnados;
+                    $responsables = $participaciones->filter(
+                        fn($item) => $item->tipoParticipacion?->clave === 'responsable'
+                    );
+                    $apoyos = $participaciones->filter(
+                        fn($item) => $item->tipoParticipacion?->clave === 'apoyo'
+                    );
+                    $ccp = $participaciones->filter(
+                        fn($item) => $item->tipoParticipacion?->clave === 'copiado'
+                    );
                 @endphp
 
-                @if($responsables->count() || $ccp->count())
+                @if($responsables->count() || $ccp->count() || ($turnado->oficio->es_sensible && $apoyos->count()))
                     <div style="margin-bottom:24px; padding-top:16px; border-top:1px solid #edf2f7;">
                         @if($responsables->count())
                             <div style="font-size:11px; font-weight:700; color:#718096; text-transform:uppercase; margin-bottom:6px; letter-spacing:0.5px;">
@@ -117,6 +127,17 @@
                             @foreach($responsables as $responsable)
                                 <div style="font-size:13px; font-weight:600; color:#2d3748; margin-bottom:4px;">
                                     • {{ $responsable->coordinacion->nombre }}
+                                </div>
+                            @endforeach
+                        @endif
+
+                        @if($turnado->oficio->es_sensible && $apoyos->count())
+                            <div style="font-size:11px; font-weight:700; color:#718096; text-transform:uppercase; margin-top:12px; margin-bottom:6px; letter-spacing:0.5px;">
+                                Apoyo operativo
+                            </div>
+                            @foreach($apoyos as $apoyo)
+                                <div style="font-size:13px; color:#4a5568; margin-bottom:4px;">
+                                    • {{ $apoyo->coordinacion->nombre }}
                                 </div>
                             @endforeach
                         @endif

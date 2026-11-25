@@ -9,18 +9,26 @@ class TagController extends Controller
 {
     public function buscar(Request $request)
     {
-        return Tag::query()
+        $query = Tag::query()
             ->where(
                 'nombre',
                 'like',
                 '%' . $request->q . '%'
-            )
-            ->limit(10)
-            ->get();
+            );
+
+        if (!$request->user()->hasPermission('puede_ver_sensibles')) {
+            $query->whereHas('oficios', function ($oficiosQuery) {
+                $oficiosQuery->where('es_sensible', false);
+            });
+        }
+
+        return $query->limit(10)->get();
     }
 
     public function agregarTag(Request $request, \App\Models\Oficio $oficio)
     {
+        $this->authorize('verSensible', $oficio);
+
         $tag = Tag::firstOrCreate([
             'nombre' => trim($request->nombre)
         ]);
@@ -36,6 +44,8 @@ class TagController extends Controller
 
     public function eliminarTag(\App\Models\Oficio $oficio, Tag $tag)
     {
+        $this->authorize('verSensible', $oficio);
+
         $oficio->tags()->detach($tag->id);
 
         return response()->json([

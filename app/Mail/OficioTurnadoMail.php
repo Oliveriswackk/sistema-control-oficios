@@ -26,7 +26,9 @@ class OficioTurnadoMail extends Mailable
     ) {
         $this->turnado = $turnado;
         $this->notificacion = $notificacion;
-        $this->esResponsable = (int) $turnado->tipo_participacion_id === 1;
+        $turnado->loadMissing('tipoParticipacion');
+        $this->esResponsable = (bool) $turnado->tipoParticipacion
+            ?->implica_responsabilidad;
     }
 
     public function build()
@@ -57,7 +59,11 @@ class OficioTurnadoMail extends Mailable
             )
             ->view('emails.oficio-turnado');
 
-        if ($archivo && Storage::disk('public')->exists($archivo->ruta)) {
+        if (
+            !$oficio->es_sensible &&
+            $archivo &&
+            Storage::disk('public')->exists($archivo->ruta)
+        ) {
             $mail->attach(
                 Storage::disk('public')->path($archivo->ruta),
                 [

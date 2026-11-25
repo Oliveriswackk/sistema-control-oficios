@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Services\OficioService;
+use App\Services\OficioArchivoStorageService;
 use App\Mail\OficioTurnadoMail;
 use App\Models\Oficio;
 use App\Models\Turnado;
@@ -57,6 +58,10 @@ class OficioController extends Controller
     // Filtros
     private function aplicarFiltros($query, Request $request)
     {
+        $puedeBuscarContenidoSensible =
+            auth()->check() &&
+            auth()->user()->hasPermission('puede_ver_sensibles');
+
         if ($request->filled('busqueda')) {
             $terminos = preg_split(
                 '/\s+/',
@@ -66,10 +71,29 @@ class OficioController extends Controller
             foreach ($terminos as $termino) {
                 $like = "%{$termino}%";
 
-                $query->where(function ($q) use ($like) {
+                $query->where(function ($q) use (
+                    $like,
+                    $puedeBuscarContenidoSensible
+                ) {
                     $q->where('numero_oficio', 'like', $like)
                         ->orWhere('asunto', 'like', $like)
-                        ->orWhere('descripcion', 'like', $like)
+                        ->orWhere(function ($descripcionQuery) use (
+                            $like,
+                            $puedeBuscarContenidoSensible
+                        ) {
+                            $descripcionQuery->where(
+                                'descripcion',
+                                'like',
+                                $like
+                            );
+
+                            if (!$puedeBuscarContenidoSensible) {
+                                $descripcionQuery->where(
+                                    'es_sensible',
+                                    false
+                                );
+                            }
+                        })
                         ->orWhere('remitente_nombre', 'like', $like)
                         ->orWhere('remitente_cargo', 'like', $like)
                         ->orWhere('remitente_dependencia', 'like', $like)
@@ -78,11 +102,26 @@ class OficioController extends Controller
                         ->orWhere('destinatario_dependencia', 'like', $like)
                         ->orWhere('quien_elabora_nombre', 'like', $like)
                         ->orWhere('quien_elabora_cargo', 'like', $like)
-                        ->orWhereHas('tags', function ($tagQuery) use ($like) {
-                            $tagQuery->where(
-                                'nombre',
-                                'like',
-                                $like
+                        ->orWhere(function ($tagQuery) use (
+                            $like,
+                            $puedeBuscarContenidoSensible
+                        ) {
+                            if (!$puedeBuscarContenidoSensible) {
+                                $tagQuery->where(
+                                    'es_sensible',
+                                    false
+                                );
+                            }
+
+                            $tagQuery->whereHas(
+                                'tags',
+                                function ($query) use ($like) {
+                                    $query->where(
+                                        'nombre',
+                                        'like',
+                                        $like
+                                    );
+                                }
                             );
                         });
                 });
@@ -163,11 +202,19 @@ class OficioController extends Controller
 
         $oficiosQuery = Oficio::with([
             'estado',
+            'tipo',
             'turnados.usuario',
             'turnados.tipoParticipacion',
             'turnados.estadoTurnado',
             'turnados.notificacion',
             'tags',
+        ])->withCount([
+            'historial as marcado_como_enviado_count' => function ($query) {
+                $query->where(
+                    'accion',
+                    Oficio::ACCION_MARCADO_COMO_ENVIADO
+                );
+            },
         ]);
 
         if ($vista !== 'todos') {
@@ -451,7 +498,7 @@ class OficioController extends Controller
                 $coordinacionId = null;
             }
 
-            return Oficio::create([
+            $nuevoOficio = Oficio::create([
 
                 'uuid' => (string) Str::uuid(),
 
@@ -497,6 +544,15 @@ class OficioController extends Controller
 
                 'coordinacion_origen_id' => $coordinacionId,
             ]);
+
+            if ($respuestaId) {
+                $this->cerrarPeticionSensiblePorRespuesta(
+                    (int) $respuestaId,
+                    $nuevoOficio
+                );
+            }
+
+            return $nuevoOficio;
 
         });
 
@@ -557,10 +613,16 @@ class OficioController extends Controller
                 $oficio->respuesta_a_oficio_id
             );
 
-            if ($padre && $padre->requiere_respuesta) {
+            if (
+                $padre &&
+                !$padre->es_sensible &&
+                $padre->requiere_respuesta
+            ) {
 
                 $pendientes = $padre->turnados()
-                    ->where('tipo_participacion_id', 1)
+                    ->whereHas('tipoParticipacion', function ($query) {
+                        $query->where('implica_responsabilidad', true);
+                    })
                     ->whereHas('estadoTurnado', function ($query) {
                         $query->whereNotIn('clave', [
                             \App\Models\EstadoTurnado::ATENDIDO,
@@ -634,6 +696,130 @@ class OficioController extends Controller
             );
     }
 
+    private function cerrarPeticionSensiblePorRespuesta(
+        int $oficioOriginalId,
+        Oficio $respuesta
+    ): void {
+        $oficioOriginal = Oficio::query()
+            ->whereKey($oficioOriginalId)
+            ->lockForUpdate()
+            ->first();
+
+        if (
+            !$oficioOriginal ||
+            !$oficioOriginal->es_sensible ||
+            !$oficioOriginal->requiere_respuesta ||
+            (int) $oficioOriginal->estado_id !== EstadoOficio::EN_SEGUIMIENTO
+        ) {
+            return;
+        }
+
+        $eventoExistente = $oficioOriginal->historial()
+            ->where(
+                'accion',
+                'oficio_cerrado_por_respuesta'
+            )
+            ->where(
+                'entidad_relacionada',
+                Oficio::class
+            )
+            ->where(
+                'entidad_relacionada_id',
+                $respuesta->id
+            )
+            ->exists();
+
+        if ($eventoExistente) {
+            return;
+        }
+
+        $estadoAnterior = $oficioOriginal->estado_id;
+
+        $oficioOriginal->update([
+            'estado_id' => EstadoOficio::CERRADO,
+            'cerrado_en' => now(),
+        ]);
+
+        $identificadorRespuesta = $respuesta->numero_oficio
+            ?: "ID {$respuesta->id}";
+
+        $oficioOriginal->registrarEvento(
+            'oficio_cerrado_por_respuesta',
+            "La petición se cerró al registrar la respuesta {$identificadorRespuesta}.",
+            $estadoAnterior,
+            EstadoOficio::CERRADO,
+            Oficio::class,
+            (int) $respuesta->id
+        );
+    }
+
+    public function marcarComoEnviado(Request $request, Oficio $oficio)
+    {
+        $usuario = $request->user();
+
+        abort_unless(
+            $usuario->hasRole('admin') ||
+                $usuario->hasPermission('puede_registrar_oficios'),
+            403
+        );
+
+        abort_unless(
+            $oficio->es_sensible &&
+                $oficio->tipo?->clave === 'enviado',
+            404
+        );
+
+        $marcado = DB::transaction(function () use ($oficio) {
+            $oficio = Oficio::query()
+                ->whereKey($oficio->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            abort_unless(
+                $oficio->es_sensible &&
+                    $oficio->tipo?->clave === 'enviado',
+                404
+            );
+
+            if ($oficio->yaFueMarcadoComoEnviado()) {
+                return false;
+            }
+
+            $estadoAnterior = $oficio->estado_id;
+            $requiereRespuesta = (bool) $oficio->requiere_respuesta;
+            $estadoNuevo = $requiereRespuesta
+                ? EstadoOficio::EN_SEGUIMIENTO
+                : EstadoOficio::CERRADO;
+            $fechaCierre = $requiereRespuesta ? null : now();
+
+            $oficio->update([
+                'estado_id' => $estadoNuevo,
+                'cerrado_en' => $fechaCierre,
+            ]);
+
+            $oficio->registrarEvento(
+                Oficio::ACCION_MARCADO_COMO_ENVIADO,
+                'El oficio sensible fue marcado como enviado.',
+                $estadoAnterior,
+                $estadoNuevo
+            );
+
+            return true;
+        });
+
+        if (!$marcado) {
+            return back()->with(
+                'info',
+                'El oficio ya había sido marcado como enviado.'
+            );
+        }
+
+        return back()->with(
+            'success',
+            'El oficio fue marcado como enviado.'
+        );
+    }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -669,6 +855,44 @@ class OficioController extends Controller
     {
         $this->authorize('update', $oficio);
 
+        $puedeVerContenido = $request->user()->can(
+            'verSensible',
+            $oficio
+        );
+        $esSensible = $request->has('es_sensible')
+            ? $request->boolean('es_sensible')
+            : $oficio->es_sensible;
+        $tipoOficioClave = $oficio->tipo?->clave
+            ?? $oficio->tipo()->value('clave');
+
+        if ($oficio->es_sensible && !$puedeVerContenido) {
+            if ($request->has('es_sensible') && !$esSensible) {
+                abort(403);
+            }
+
+            $esSensible = true;
+        }
+
+        if (!$oficio->es_sensible && $esSensible) {
+            $tieneVersionesPublicas = $oficio->archivos()
+                ->whereHas('versiones', function ($query) {
+                    $query->where(
+                        'ruta',
+                        'not like',
+                        'oficios-sensibles/%'
+                    );
+                })
+                ->exists();
+
+            if ($tieneVersionesPublicas) {
+                return response()->json([
+                    'success' => false,
+                    'message' =>
+                        'No se puede clasificar como sensible mientras existan versiones públicas. Requieren una migración controlada.',
+                ], 422);
+            }
+        }
+
         if (in_array($oficio->estado_id, [
             EstadoOficio::CERRADO,
             EstadoOficio::CANCELADO,
@@ -692,8 +916,12 @@ class OficioController extends Controller
                 'exists:oficios,id',
             ],
             'link_drive' => [
-                in_array((int) $oficio->tipo_oficio_id, [2, 3], true)
-                    && !$request->boolean('es_sensible')
+                in_array(
+                    $tipoOficioClave,
+                    ['recibido', 'recibido_cpc'],
+                    true
+                )
+                    && !$esSensible
                     ? 'required'
                     : 'nullable',
                 'string',
@@ -722,7 +950,7 @@ class OficioController extends Controller
             $respuestaId = $oficio->respuesta_a_oficio_id;
         }
 
-        $oficio->update([
+        $datosActualizacion = [
             'asunto' => $request->input('asunto'),
             'descripcion' => $request->input('descripcion'),
             'fecha_oficio' => $request->input('fecha_oficio'),
@@ -730,8 +958,7 @@ class OficioController extends Controller
             'fecha_limite' => $request->input('fecha_limite'),
             'requiere_respuesta' =>
                 $request->boolean('requiere_respuesta'),
-            'es_sensible' =>
-                $request->boolean('es_sensible'),
+            'es_sensible' => $esSensible,
             'respuesta_a_oficio_id' => $respuestaId,
 
             'remitente_nombre' =>
@@ -757,7 +984,17 @@ class OficioController extends Controller
                 $request->input('link_documento'),
             'link_drive' =>
                 $request->input('link_drive'),
-        ]);
+        ];
+
+        if ($oficio->es_sensible && !$puedeVerContenido) {
+            unset(
+                $datosActualizacion['descripcion'],
+                $datosActualizacion['link_documento'],
+                $datosActualizacion['link_drive']
+            );
+        }
+
+        $oficio->update($datosActualizacion);
 
         $oficio->historial()->create([
             'usuario_id' => auth()->id(),
@@ -834,10 +1071,27 @@ class OficioController extends Controller
     */
     public function turnar(Request $request, Oficio $oficio)
     {
-        if ((int) $oficio->tipo_oficio_id === 1) {
+        $tipoOficioClave = $oficio->tipo?->clave
+            ?? $oficio->tipo()->value('clave');
+
+        if ($tipoOficioClave === 'enviado') {
             return back()->with(
                 'error',
                 'Los oficios enviados no se pueden turnar.'
+            );
+        }
+
+        if (
+            $oficio->es_sensible &&
+            !in_array(
+                $tipoOficioClave,
+                ['recibido', 'recibido_cpc'],
+                true
+            )
+        ) {
+            return back()->with(
+                'error',
+                'Solo se pueden turnar oficios sensibles recibidos.'
             );
         }
 
@@ -909,7 +1163,21 @@ class OficioController extends Controller
                 );
             }
 
-            if ((int) $tipoId === 1) {
+            if (
+                $oficio->es_sensible &&
+                !in_array(
+                    $tipoParticipacion->clave,
+                    ['responsable', 'apoyo', 'copiado'],
+                    true
+                )
+            ) {
+                return back()->with(
+                    'error',
+                    'Ese tipo de participación no está permitido para oficios sensibles.'
+                );
+            }
+
+            if ($tipoParticipacion->implica_responsabilidad) {
                 $responsableEncontrado = true;
             }
 
@@ -927,41 +1195,51 @@ class OficioController extends Controller
             );
         }
 
-        $archivoActual = $oficio->archivos()
-            ->whereHas('versiones', function ($query) {
-                $query->where('es_actual', true);
-            })
-            ->with([
-                'versiones' => function ($query) {
+        if (!$oficio->es_sensible) {
+            $archivoActual = $oficio->archivos()
+                ->whereHas('versiones', function ($query) {
                     $query->where('es_actual', true);
-                }
-            ])
-            ->first();
+                })
+                ->with([
+                    'versiones' => function ($query) {
+                        $query->where('es_actual', true);
+                    }
+                ])
+                ->first();
 
-        if (!$archivoActual || $archivoActual->versiones->isEmpty()) {
-            return back()->with(
-                'error',
-                'No se puede turnar el oficio porque aún no tiene un PDF adjunto.'
+            if (!$archivoActual || $archivoActual->versiones->isEmpty()) {
+                return back()->with(
+                    'error',
+                    'No se puede turnar el oficio porque aún no tiene un PDF adjunto.'
+                );
+            }
+
+            $versionActual = $archivoActual->versiones->first();
+            $archivoStorage = app(OficioArchivoStorageService::class);
+            $disk = $archivoStorage->diskForVersion(
+                $versionActual
             );
-        }
 
-        $versionActual = $archivoActual->versiones->first();
+            if (!Storage::disk($disk)->exists($versionActual->ruta)) {
+                return back()->with(
+                    'error',
+                    'No se puede turnar el oficio porque el PDF adjunto no está disponible.'
+                );
+            }
 
-        if (!Storage::disk('public')->exists($versionActual->ruta)) {
-            return back()->with(
-                'error',
-                'No se puede turnar el oficio porque el PDF adjunto no está disponible.'
-            );
-        }
-
-        if (
-            in_array((int) $oficio->tipo_oficio_id, [2, 3]) &&
-            (!is_string($oficio->link_drive) || trim($oficio->link_drive) === '')
-        ) {
-            return back()->with(
-                'error',
-                'No se puede turnar el oficio porque falta el enlace de Drive.'
-            );
+            if (
+                in_array(
+                    $tipoOficioClave,
+                    ['recibido', 'recibido_cpc'],
+                    true
+                ) &&
+                (!is_string($oficio->link_drive) || trim($oficio->link_drive) === '')
+            ) {
+                return back()->with(
+                    'error',
+                    'No se puede turnar el oficio porque falta el enlace de Drive.'
+                );
+            }
         }
 
         /* ESTADOS DE TURNADO */
@@ -1117,7 +1395,11 @@ class OficioController extends Controller
                 Mail::to($coordinador->email)
                     ->send(
                         new OficioTurnadoMail(
-                            $turnado->load('oficio.archivos.versiones'),
+                            $turnado->load([
+                                'oficio.archivos.versiones',
+                                'oficio.turnados.tipoParticipacion',
+                                'oficio.turnados.coordinacion',
+                            ]),
                             $notificacion
                         )
                     );
@@ -1310,6 +1592,8 @@ class OficioController extends Controller
     {
         $notificacion->load([
             'turnado.oficio.archivos.versiones',
+            'turnado.oficio.turnados.tipoParticipacion',
+            'turnado.oficio.turnados.coordinacion',
             'turnado.usuario',
             'turnado.coordinacion',
         ]);
@@ -1392,6 +1676,7 @@ class OficioController extends Controller
     {
         $notificacion->load([
             'turnado.estadoTurnado',
+            'turnado.tipoParticipacion',
         ]);
 
         if ($notificacion->estado === NotificacionTurnado::ESTADO_EXITOSO) {
@@ -1437,7 +1722,7 @@ class OficioController extends Controller
             * Solo el Responsable Operativo participa
             * en la condición de cierre del oficio.
             */
-            if ((int) $turnado->tipo_participacion_id === 1) {
+            if ($turnado->tipoParticipacion?->implica_responsabilidad) {
 
                 $oficio = $turnado->oficio;
 
@@ -1622,6 +1907,11 @@ class OficioController extends Controller
 
     public function detalleJson(Oficio $oficio)
     {
+        $puedeVerContenido = auth()->user()->can(
+            'verSensible',
+            $oficio
+        );
+
         $oficio->load([
             'estado',
             'tipo',
@@ -1629,17 +1919,23 @@ class OficioController extends Controller
             'responsableActual.usuario',
             'responsableActual.coordinacion',
             'tags',
-            'archivos.versiones',
         ]);
 
+        if ($puedeVerContenido) {
+            $oficio->load('archivos.versiones');
+        }
+
         $trayectoria = $this->obtenerTrayectoria($oficio);
+        $archivoStorage = app(OficioArchivoStorageService::class);
 
         return response()->json([
             'id' => $oficio->id,
             'numero_oficio' => $oficio->numero_oficio,
             'consecutivo' => $oficio->consecutivo,
             'asunto' => $oficio->asunto,
-            'descripcion' => $oficio->descripcion,
+            'descripcion' => $puedeVerContenido
+                ? $oficio->descripcion
+                : null,
             'fecha_oficio' => optional($oficio->fecha_oficio)->format('Y-m-d'),
             'fecha_recepcion' => optional($oficio->fecha_recepcion)->format('Y-m-d'),
             'fecha_limite' => optional($oficio->fecha_limite)->format('Y-m-d'),
@@ -1652,10 +1948,15 @@ class OficioController extends Controller
             'destinatario_dependencia' => $oficio->destinatario_dependencia,
             'quien_elabora_nombre' => $oficio->quien_elabora_nombre,
             'quien_elabora_cargo' => $oficio->quien_elabora_cargo,
-            'link_documento' => $oficio->link_documento,
-            'link_drive' => $oficio->link_drive,
+            'link_documento' => $puedeVerContenido
+                ? $oficio->link_documento
+                : null,
+            'link_drive' => $puedeVerContenido
+                ? $oficio->link_drive
+                : null,
             'requiere_respuesta' => $oficio->requiere_respuesta,
             'es_sensible' => $oficio->es_sensible,
+            'puede_ver_contenido' => $puedeVerContenido,
             'respuesta_a_oficio_id' => $oficio->respuesta_a_oficio_id,
             'respuesta_a_oficio_numero' =>
                 $oficio->oficioPadre?->numero_oficio,
@@ -1671,26 +1972,45 @@ class OficioController extends Controller
                 'coordinacion' => $oficio->responsableActual->coordinacion->nombre,
                 'usuario' => $oficio->responsableActual->usuario->name,
             ] : null,
-            'tags' => $oficio->tags->map(function ($tag) {
+            'tags' => $puedeVerContenido
+                ? $oficio->tags->map(function ($tag) {
                 return [
                     'id' => $tag->id,
                     'nombre' => $tag->nombre,
                 ];
-            })->values(),
-            'archivos' => $oficio->archivos->map(function ($archivo) {
+            })->values()
+                : [],
+            'archivos' => $puedeVerContenido
+                ? $oficio->archivos->map(function ($archivo) use (
+                    $oficio,
+                    $archivoStorage
+                ) {
                 return [
                     'id' => $archivo->id,
                     'nombre_original' => $archivo->nombre_original,
-                    'versiones' => $archivo->versiones->map(function ($version) {
+                    'versiones' => $archivo->versiones->map(function ($version) use (
+                        $oficio,
+                        $archivoStorage
+                    ) {
+                        $esPrivado = $archivoStorage->isPrivatePath(
+                            $version->ruta
+                        );
+
                         return [
                             'version' => $version->version,
-                            'ruta' => $version->ruta,
-                            'url' => \Illuminate\Support\Facades\Storage::disk('public')->url($version->ruta),
+                            'ruta' => $esPrivado ? null : $version->ruta,
+                            'url' => $esPrivado || $oficio->es_sensible
+                                ? route('oficios.archivos.download', [
+                                    $oficio,
+                                    $version,
+                                ])
+                                : Storage::disk('public')->url($version->ruta),
                             'es_actual' => $version->es_actual,
                         ];
                     })->values(),
                 ];
-            })->values(),
+            })->values()
+                : [],
             'puede_cancelar' =>
                 !in_array($oficio->estado_id, [
                     EstadoOficio::CERRADO,
@@ -1745,9 +2065,22 @@ class OficioController extends Controller
             $request
         );
 
-        return response()->json(
-            $query->latest()->get()
-        );
+        $oficios = $query->latest()->get();
+
+        foreach ($oficios as $oficio) {
+            if (
+                $oficio->es_sensible &&
+                !$request->user()->can('verSensible', $oficio)
+            ) {
+                $oficio->makeHidden([
+                    'descripcion',
+                    'link_documento',
+                    'link_drive',
+                ]);
+            }
+        }
+
+        return response()->json($oficios);
     }
 
 
@@ -1759,7 +2092,9 @@ class OficioController extends Controller
     private function tieneResponsablesPendientes(Oficio $oficio): bool
     {
         return $oficio->turnados()
-            ->where('tipo_participacion_id', 1)
+            ->whereHas('tipoParticipacion', function ($query) {
+                $query->where('implica_responsabilidad', true);
+            })
             ->whereNull('atendido_en')
             ->whereHas('estadoTurnado', function ($query) {
                 $query->whereNotIn('clave', [

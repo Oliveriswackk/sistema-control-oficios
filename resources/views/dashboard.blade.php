@@ -1055,7 +1055,13 @@
     // =========================================================
     // ABRIR MODAL TURNAR / RETURNAR
     // =========================================================
-    function abrirTurnar(oficioId, numeroOficio, action, returnar = false) {
+    function abrirTurnar(
+        oficioId,
+        numeroOficio,
+        action,
+        returnar = false,
+        esSensible = false
+    ) {
 
         $('#turnarNumeroOficio').text(numeroOficio);
 
@@ -1068,6 +1074,20 @@
         $('#modalTurnar .participacion-select')
             .prop('disabled', true)
             .val('');
+
+        $('#modalTurnar .participacion-select option').each(function () {
+            const clave = $(this).data('clave');
+            const permitida = [
+                'responsable',
+                'apoyo',
+                'copiado'
+            ].includes(clave);
+
+            $(this).prop(
+                'disabled',
+                esSensible && clave && !permitida
+            );
+        });
 
         $('#turnarEsReturnado').val(returnar ? '1' : '0');
 

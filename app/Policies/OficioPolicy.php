@@ -9,6 +9,10 @@ class OficioPolicy
 {
     public function before(User $user, string $ability): ?bool
     {
+        if ($ability === 'verSensible') {
+            return null;
+        }
+
         if ($user->hasRole('admin') && $ability !== 'cancelar') {
             return true;
         }

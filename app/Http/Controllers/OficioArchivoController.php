@@ -9,10 +9,16 @@ use App\Models\Oficio;
 use App\Models\OficioArchivo;
 use App\Models\OficioArchivoVersion;
 use App\Models\EstadoOficio;
+use App\Services\OficioArchivoStorageService;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class OficioArchivoController extends Controller
 {
-    public function store(Request $request, Oficio $oficio)
+    public function store(
+        Request $request,
+        Oficio $oficio,
+        OficioArchivoStorageService $archivoStorage
+    )
     {
         
         $this->authorize('subirArchivo', $oficio);
@@ -38,6 +44,9 @@ class OficioArchivoController extends Controller
         $file = $request->file('archivo');
 
         $hash = hash_file('sha256', $file->getRealPath());
+        $nivelAcceso = $oficio->es_sensible
+            ? 'privado'
+            : 'publico';
 
         // 1. Crear registro lógico si no existe
         $archivo = OficioArchivo::firstOrCreate(
@@ -47,13 +56,14 @@ class OficioArchivoController extends Controller
             [
                 'nombre_original' => $file->getClientOriginalName(),
                 'tipo_archivo' => $file->getClientMimeType(),
-                'nivel_acceso' => 'publico',
+                'nivel_acceso' => $nivelAcceso,
             ]
         );
 
         $archivo->update([
             'nombre_original' => $file->getClientOriginalName(),
             'tipo_archivo' => $file->getClientMimeType(),
+            'nivel_acceso' => $nivelAcceso,
         ]);
 
         // 2. Calcular versión
@@ -64,7 +74,7 @@ class OficioArchivoController extends Controller
         $esReemplazo = $ultimaVersion != null;
 
         // 3. Guardar archivo físico
-        $path = $file->store("oficios/{$oficio->id}", 'public');
+        $path = $archivoStorage->storeUploaded($file, $oficio);
 
         // 4. Marcar anteriores como no actuales
         $archivo->versiones()->update([
@@ -79,12 +89,16 @@ class OficioArchivoController extends Controller
             'hash_sha256' => $hash,
             'version' => $version,
             'es_actual' => true,
-            'es_publica' => true,
+            'es_publica' => !$oficio->es_sensible,
             'subido_por_id' => auth()->id(),
         ]);
 
+        $tipoOficioClave = $oficio->tipo?->clave
+            ?? $oficio->tipo()->value('clave');
+
         if (
-            (int) $oficio->tipo_oficio_id === 1 &&
+            !$oficio->es_sensible &&
+            $tipoOficioClave === 'enviado' &&
             !$oficio->requiere_respuesta &&
             (int) $oficio->estado_id === EstadoOficio::REGISTRADO
         ) {
@@ -123,5 +137,36 @@ class OficioArchivoController extends Controller
         ]);
 
         return back()->with('success', 'Archivo subido correctamente');
+    }
+
+    public function download(
+        Oficio $oficio,
+        OficioArchivoVersion $version,
+        OficioArchivoStorageService $archivoStorage
+    ): StreamedResponse {
+        abort_unless(
+            $version->archivo()
+                ->where('oficio_id', $oficio->id)
+                ->exists(),
+            404
+        );
+
+        $this->authorize('verSensible', $oficio);
+
+        $disk = $archivoStorage->diskForVersion($version);
+
+        abort_unless(
+            Storage::disk($disk)->exists($version->ruta),
+            404
+        );
+
+        $nombre = \Illuminate\Support\Str::slug(
+            $oficio->numero_oficio ?: 'oficio'
+        ) . "-v{$version->version}.pdf";
+
+        return Storage::disk($disk)->download(
+            $version->ruta,
+            $nombre
+        );
     }
 }

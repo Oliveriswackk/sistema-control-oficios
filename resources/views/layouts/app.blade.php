@@ -893,10 +893,6 @@ window.Oficios = {
                     .prop('disabled', bloqueado || !ModalState.changed)
                     .toggle(!bloqueado);
 
-                $('#btnCorregirIdentidad')
-                    .toggle(!bloqueado);
-
-
 
                 /*
                 |--------------------------------------------------------------------------
@@ -956,6 +952,9 @@ window.Oficios = {
 
                 $('#detalleDescripcion').val(
                     oficio.descripcion || ''
+                ).prop(
+                    'readonly',
+                    oficio.puede_ver_contenido === false
                 );
 
 
@@ -1060,10 +1059,16 @@ window.Oficios = {
 
                 $('#detalleLinkDocumento').val(
                     oficio.link_documento || ''
+                ).prop(
+                    'disabled',
+                    oficio.puede_ver_contenido === false
                 );
 
                 $('#detalleLinkDrive').val(
                     oficio.link_drive || ''
+                ).prop(
+                    'disabled',
+                    oficio.puede_ver_contenido === false
                 );
 
                 const tieneOficioPadre =
@@ -1205,7 +1210,8 @@ window.Oficios = {
 
                 }
 
-                tagsHtml += `
+                if (oficio.puede_ver_contenido !== false) {
+                    tagsHtml += `
                     <button
                         type="button"
                         class="btn btn-sm btn-outline-primary"
@@ -1229,6 +1235,7 @@ window.Oficios = {
 
                     </div>
                 `;
+                }
 
                 $('#detalleTags').html(tagsHtml);
 
@@ -1241,7 +1248,13 @@ window.Oficios = {
 
                 let documentosHtml = '';
 
-                if (Array.isArray(oficio.archivos)) {
+                if (oficio.puede_ver_contenido === false) {
+                    documentosHtml = `
+                        <div class="border rounded p-3 text-muted">
+                            El contenido y los documentos de este oficio están restringidos.
+                        </div>
+                    `;
+                } else if (Array.isArray(oficio.archivos)) {
 
                     oficio.archivos.forEach(function (archivo) {
 
